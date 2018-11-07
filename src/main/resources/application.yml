@@ -1,0 +1,22 @@
+spring:
+  security:
+    user:
+      name: cbr
+      password: changeit
+      roles:
+        - ADMIN
+  data:
+    mongodb:
+      host: localhost
+      #      port: 27017
+      #      username: changeit
+      #      password: changeit
+      database: groupman
+  jackson:
+    date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
+    default-property-inclusion: non_null
+    property-naming-strategy: LOWER_CAMEL_CASE
+    locale: de_DE
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+    time-zone: GMT
