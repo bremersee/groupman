@@ -16,14 +16,16 @@
 
 package org.bremersee.groupman;
 
+import java.time.Instant;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.bremersee.groupman.model.Source;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.annotation.Version;
@@ -31,10 +33,12 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * @author Christian Bremer
  */
+@Validated
 @Getter
 @Setter
 @ToString
@@ -45,7 +49,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
         def = "{'createdBy': 1, 'name': 1 }",
         unique = true)
 })
-public class Group implements Comparable<Group> {
+public class GroupEntity implements Comparable<GroupEntity> {
 
   @Id
   private String id;
@@ -53,10 +57,13 @@ public class Group implements Comparable<Group> {
   @Version
   private Long version;
 
+  private Date createdAt = new Date();
+
   @Indexed
   private String createdBy;
 
-  private Date createdAt;
+  @Indexed
+  private Source source = Source.INTERNAL;
 
   @NotBlank
   @Size(min = 3, max = 75)
@@ -67,13 +74,13 @@ public class Group implements Comparable<Group> {
   private String description;
 
   @Indexed
-  private Set<String> members = new HashSet<>();
+  private Set<String> members = new LinkedHashSet<>();
 
   @Indexed
-  private Set<String> owners = new HashSet<>();
+  private Set<String> owners = new LinkedHashSet<>();
 
   @Override
-  public int compareTo(Group o) {
+  public int compareTo(GroupEntity o) {
     String s1 = getName() == null ? "" : getName();
     String s2 = o == null || o.getName() == null ? "" : o.getName();
     int c = s1.compareToIgnoreCase(s2);

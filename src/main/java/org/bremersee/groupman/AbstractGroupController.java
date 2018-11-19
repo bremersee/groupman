@@ -16,14 +16,19 @@
 
 package org.bremersee.groupman;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.bremersee.exception.ServiceException;
+import org.bremersee.groupman.model.Group;
+import org.modelmapper.AbstractConverter;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -32,45 +37,58 @@ import reactor.core.publisher.Mono;
  */
 abstract class AbstractGroupController {
 
-  static final ResponseEntity<Group> NOT_FOUND = new ResponseEntity<>(HttpStatus.NOT_FOUND);
-
   static final Sort SORT = Sort.by("name", "createdBy");
 
-  @Getter(AccessLevel.PROTECTED)
-  GroupRepository groupRepository;
+  @Getter(AccessLevel.PACKAGE)
+  private final ModelMapper modelMapper = new ModelMapper();
 
-  public AbstractGroupController(GroupRepository groupRepository) {
+  @Getter(AccessLevel.PACKAGE)
+  private GroupRepository groupRepository;
+
+  public AbstractGroupController(final GroupRepository groupRepository) {
     this.groupRepository = groupRepository;
+    modelMapper.addConverter(new AbstractConverter<Date, OffsetDateTime>() {
+      @Override
+      protected OffsetDateTime convert(Date date) {
+        return date == null ? null : OffsetDateTime.ofInstant(date.toInstant(), ZoneId.of("UTC"));
+      }
+    });
+    modelMapper.addConverter(new AbstractConverter<OffsetDateTime, Date>() {
+      @Override
+      protected Date convert(OffsetDateTime offsetDateTime) {
+        return offsetDateTime == null ? null : Date.from(offsetDateTime.toInstant());
+      }
+    });
   }
 
-  String getCurrentUserName(final Authentication authentication) {
-    final String name = authentication == null ? null : authentication.getName();
-    return name != null ? name : "guest";
+  Mono<GroupEntity> getGroupEntityById(final String groupId) {
+    return groupRepository
+        .findById(groupId)
+        .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId)));
   }
 
-  Mono<ResponseEntity<Group>> getGroupById(final String groupId) {
-    return groupRepository.findById(groupId)
-        .map(ResponseEntity::ok)
-        .defaultIfEmpty(NOT_FOUND);
-  }
-
-  Flux<Group> getGroupsByIds(final List<String> ids) {
+  Flux<GroupEntity> getGroupEntitiesByIds(final List<String> ids) {
     return groupRepository.findByIdIn(ids == null ? Collections.emptyList() : ids, SORT);
   }
 
-  /*
-  Mono<Group> createGroup(
-      final Group group,
-      final Authentication authentication) {
-
-    final String currentUserName = getCurrentUserName(authentication);
-    group.setId(null);
-    group.setCreatedAt(new Date());
-    group.setCreatedBy(currentUserName);
-    if (!isAdmin(authentication)) {
-      group.getOwners().add(currentUserName);
-    }
-    return groupRepository.save(group);
+  Group mapToGroup(final GroupEntity source) {
+    Group destination = new Group();
+    destination.setMembers(new ArrayList<>());
+    destination.setOwners(new ArrayList<>());
+    getModelMapper().map(source, destination);
+    return destination;
   }
-  */
+
+  GroupEntity mapToGroupEntity(final Group source) {
+    if (source.getMembers() == null) {
+      source.setMembers(Collections.emptyList());
+    }
+    if (source.getOwners() == null) {
+      source.setOwners(Collections.emptyList());
+    }
+    GroupEntity destination = new GroupEntity();
+    getModelMapper().map(source, destination);
+    return destination;
+  }
+
 }

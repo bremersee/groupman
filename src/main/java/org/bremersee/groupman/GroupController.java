@@ -16,15 +16,24 @@
 
 package org.bremersee.groupman;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.bremersee.exception.ServiceException;
+import org.bremersee.groupman.api.GroupControllerApi;
+import org.bremersee.groupman.model.Group;
+import org.bremersee.groupman.model.Source;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,9 +52,9 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping(path = "/api/groups")
 @Slf4j
-public class GroupController extends AbstractGroupController {
-
-  private static final ResponseEntity<Group> FORBIDDEN = new ResponseEntity<>(HttpStatus.FORBIDDEN);
+public class GroupController
+    extends AbstractGroupController
+    implements GroupControllerApi {
 
   @Autowired
   public GroupController(GroupRepository groupRepository) {
@@ -55,126 +64,148 @@ public class GroupController extends AbstractGroupController {
   @PostMapping(
       produces = {MediaType.APPLICATION_JSON_VALUE},
       consumes = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
   public Mono<Group> createGroup(
-      @Valid @RequestBody Group group,
-      final Authentication authentication) {
+      @Valid @RequestBody Group group) {
 
-    final String currentUserName = getCurrentUserName(authentication);
-    group.setId(null);
-    group.setCreatedAt(new Date());
-    group.setCreatedBy(currentUserName);
-    group.getOwners().add(currentUserName);
-    return groupRepository.save(group);
+    return ReactiveSecurityContextHolder
+        .getContext()
+        .map(SecurityContext::getAuthentication)
+        .map(Authentication::getName)
+        .flatMap(currentUserName -> {
+          group.setId(null);
+          group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
+          group.setCreatedBy(currentUserName);
+          group.setSource(Source.INTERNAL);
+          group.addOwnersItem(currentUserName);
+          return getGroupRepository().save(mapToGroupEntity(group));
+        })
+        .map(this::mapToGroup);
   }
 
   @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})
-  public Mono<ResponseEntity<Group>> getGroupById(@PathVariable(value = "id") String groupId) {
-    return super.getGroupById(groupId);
+  @Override
+  public Mono<Group> getGroupById(@PathVariable(value = "id") String groupId) {
+    return super.getGroupEntityById(groupId)
+        .map(this::mapToGroup);
   }
 
   @PutMapping(path = "/{id}",
       produces = {MediaType.APPLICATION_JSON_VALUE},
       consumes = {MediaType.APPLICATION_JSON_VALUE})
-  public Mono<ResponseEntity<Group>> updateGroup(
+  @Override
+  public Mono<Group> updateGroup(
       @PathVariable(value = "id") String groupId,
-      @Valid @RequestBody Group group,
-      final Authentication authentication) {
+      @Valid @RequestBody Group group) {
 
-    final String currentUserName = getCurrentUserName(authentication);
-    return groupRepository.findById(groupId)
-        .flatMap(existingGroup -> {
-          if (existingGroup.getOwners().contains(currentUserName)) {
-            existingGroup.setDescription(group.getDescription());
-            existingGroup.setMembers(group.getMembers());
-            existingGroup.setName(group.getName());
-            existingGroup.setOwners(group.getOwners());
-            existingGroup.getOwners().add(currentUserName);
-            return groupRepository.save(existingGroup);
-          } else {
-            return Mono.empty();
-          }
-        })
-        .map(ResponseEntity::ok)
-        .defaultIfEmpty(FORBIDDEN);
+    if (group.getMembers() == null) {
+      group.setMembers(Collections.emptyList());
+    }
+    if (group.getOwners() == null) {
+      group.setOwners(Collections.emptyList());
+    }
+    return Mono.zip(
+        ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName),
+        getGroupRepository().findById(groupId)
+            .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId))))
+        .flatMap(
+            userNameAndGroupEntity -> {
+              String currentUserName = userNameAndGroupEntity.getT1();
+              GroupEntity existingGroup = userNameAndGroupEntity.getT2();
+              if (existingGroup.getOwners().contains(currentUserName)) {
+                existingGroup.setDescription(group.getDescription());
+                existingGroup.setMembers(new LinkedHashSet<>(group.getMembers()));
+                existingGroup.setName(group.getName());
+                existingGroup.setOwners(new LinkedHashSet<>(group.getOwners()));
+                existingGroup.getOwners().add(currentUserName);
+                return getGroupRepository().save(existingGroup);
+              } else {
+                return Mono.empty();
+              }
+            })
+        .switchIfEmpty(Mono.error(ServiceException.forbidden("Group", groupId)))
+        .map(this::mapToGroup);
   }
 
   @DeleteMapping("/{id}")
-  public Mono<ResponseEntity<Void>> deleteGroup(
-      @PathVariable(value = "id") String groupId,
-      final Authentication authentication) {
+  @Override
+  public Mono<Void> deleteGroup(
+      @PathVariable(value = "id") String groupId) {
 
-    return groupRepository.findById(groupId)
-        .flatMap(existingGroup -> {
-          if (existingGroup.getOwners().contains(getCurrentUserName(authentication))) {
-            return groupRepository.delete(existingGroup);
-          } else {
-            return Mono.empty();
-          }
-        })
-        .map(x -> new ResponseEntity<Void>(HttpStatus.OK))
-        .defaultIfEmpty(new ResponseEntity<>(HttpStatus.FORBIDDEN));
+    return Mono.zip(
+        ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName),
+        getGroupRepository().findById(groupId)
+            .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId))))
+        .flatMap(
+            userNameAndGroupEntity -> {
+              String currentUserName = userNameAndGroupEntity.getT1();
+              GroupEntity existingGroup = userNameAndGroupEntity.getT2();
+              if (existingGroup.getOwners().contains(currentUserName)) {
+                return getGroupRepository().delete(existingGroup);
+              } else {
+                return Mono.empty();
+              }
+            })
+        .switchIfEmpty(Mono.error(ServiceException.forbidden("Group", groupId)));
   }
-
-  /*
-  private String getCurrentUserName(final Authentication authentication) {
-
-    WebClient webClient = WebClient
-        .builder()
-        .baseUrl("")
-        .filter(new ExchangeFilterFunction() {
-          @Override
-          public Mono<ClientResponse> filter(ClientRequest clientRequest,
-              ExchangeFunction exchangeFunction) {
-            clientRequest.headers().add("", "");
-            return exchangeFunction.exchange(clientRequest);
-          }
-        })
-        .build();
-
-    webClient
-        .method(HttpMethod.GET)
-        .uri("/api/groupman")
-        .accept(MediaType.APPLICATION_JSON)
-        .retrieve()
-        .bodyToFlux(Group.class);
-
-    webClient
-        .method(HttpMethod.GET)
-        .uri("/api/groupman")
-        .accept(MediaType.APPLICATION_JSON)
-        .exchange()
-        .flatMap(clientResponse -> clientResponse.bodyToMono(Group.class));
-  }
-    */
 
   @GetMapping(path = "/f", produces = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
   public Flux<Group> getGroupsByIds(
       @RequestParam(value = "id", required = false) List<String> ids) {
-    return super.getGroupsByIds(ids);
+    return super.getGroupEntitiesByIds(ids).map(this::mapToGroup);
   }
 
   @GetMapping(path = "/f/editable", produces = {MediaType.APPLICATION_JSON_VALUE})
-  public Flux<Group> getEditableGroups(final Authentication authentication) {
-    return groupRepository.findByOwnersIsContaining(getCurrentUserName(authentication), SORT);
+  @Override
+  public Flux<Group> getEditableGroups() {
+    return ReactiveSecurityContextHolder
+        .getContext()
+        .map(SecurityContext::getAuthentication)
+        .map(Authentication::getName)
+        .flatMapMany(currentUserName -> getGroupRepository()
+            .findByOwnersIsContaining(currentUserName, SORT))
+        .map(this::mapToGroup);
   }
 
-  @GetMapping(path = "/f/useable", produces = {MediaType.APPLICATION_JSON_VALUE})
-  public Flux<Group> getUseableGroups(final Authentication authentication) {
-    final String currentUserName = getCurrentUserName(authentication);
-    return groupRepository.findByOwnersIsContainingOrMembersIsContaining(
-        currentUserName, currentUserName, SORT);
+  @GetMapping(path = "/f/usable", produces = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Flux<Group> getUsableGroups() {
+    return ReactiveSecurityContextHolder
+        .getContext()
+        .map(SecurityContext::getAuthentication)
+        .map(Authentication::getName)
+        .flatMapMany(currentUserName -> getGroupRepository()
+            .findByOwnersIsContainingOrMembersIsContaining(currentUserName, currentUserName, SORT))
+        .map(this::mapToGroup);
   }
 
   @GetMapping(path = "/f/membership", produces = {MediaType.APPLICATION_JSON_VALUE})
-  public Flux<Group> getMembership(final Authentication authentication) {
-    return groupRepository.findByMembersIsContaining(getCurrentUserName(authentication), SORT);
+  @Override
+  public Flux<Group> getMembership() {
+    return ReactiveSecurityContextHolder
+        .getContext()
+        .map(SecurityContext::getAuthentication)
+        .map(Authentication::getName)
+        .flatMapMany(currentUserName -> getGroupRepository()
+            .findByMembersIsContaining(currentUserName, SORT))
+        .map(this::mapToGroup);
   }
 
   @GetMapping(path = "/f/membership-ids", produces = {MediaType.APPLICATION_JSON_VALUE})
-  public Mono<List<String>> getMembershipIds(final Authentication authentication) {
-    return groupRepository
-        .findByMembersIsContaining(getCurrentUserName(authentication))
-        .map(Group::getId).collectList();
+  @Override
+  public Mono<Set<String>> getMembershipIds() {
+    return ReactiveSecurityContextHolder
+        .getContext()
+        .map(SecurityContext::getAuthentication)
+        .map(Authentication::getName)
+        .flatMapMany(currentUserName -> getGroupRepository()
+            .findByMembersIsContaining(currentUserName, SORT))
+        .map(GroupEntity::getId).collect(Collectors.toSet());
   }
 
 }

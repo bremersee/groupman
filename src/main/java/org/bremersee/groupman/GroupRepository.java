@@ -24,16 +24,16 @@ import reactor.core.publisher.Flux;
 /**
  * @author Christian Bremer
  */
-public interface GroupRepository extends ReactiveMongoRepository<Group, String> {
+public interface GroupRepository extends ReactiveMongoRepository<GroupEntity, String> {
 
-  Flux<Group> findByOwnersIsContaining(String owner, Sort sort);
+  Flux<GroupEntity> findByOwnersIsContaining(String owner, Sort sort);
 
-  Flux<Group> findByOwnersIsContainingOrMembersIsContaining(String owner, String member, Sort sort);
+  Flux<GroupEntity> findByOwnersIsContainingOrMembersIsContaining(String owner, String member, Sort sort);
 
-  Flux<Group> findByMembersIsContaining(String member);
+  Flux<GroupEntity> findByMembersIsContaining(String member);
 
-  Flux<Group> findByMembersIsContaining(String member, Sort sort);
+  Flux<GroupEntity> findByMembersIsContaining(String member, Sort sort);
 
-  Flux<Group> findByIdIn(List<String> ids, Sort sort);
+  Flux<GroupEntity> findByIdIn(List<String> ids, Sort sort);
 
 }
