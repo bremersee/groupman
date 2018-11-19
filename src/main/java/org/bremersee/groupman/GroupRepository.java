@@ -28,9 +28,10 @@ public interface GroupRepository extends ReactiveMongoRepository<GroupEntity, St
 
   Flux<GroupEntity> findByOwnersIsContaining(String owner, Sort sort);
 
-  Flux<GroupEntity> findByOwnersIsContainingOrMembersIsContaining(String owner, String member, Sort sort);
-
-  Flux<GroupEntity> findByMembersIsContaining(String member);
+  Flux<GroupEntity> findByOwnersIsContainingOrMembersIsContaining(
+      String owner,
+      String member,
+      Sort sort);
 
   Flux<GroupEntity> findByMembersIsContaining(String member, Sort sort);
 

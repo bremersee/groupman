@@ -19,6 +19,7 @@ package org.bremersee.groupman;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,6 +76,7 @@ public class GroupController
         .flatMap(currentUserName -> {
           group.setId(null);
           group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
+          group.setModifiedAt(group.getCreatedAt());
           group.setCreatedBy(currentUserName);
           group.setSource(Source.INTERNAL);
           group.addOwnersItem(currentUserName);
@@ -115,6 +117,7 @@ public class GroupController
               String currentUserName = userNameAndGroupEntity.getT1();
               GroupEntity existingGroup = userNameAndGroupEntity.getT2();
               if (existingGroup.getOwners().contains(currentUserName)) {
+                existingGroup.setModifiedAt(new Date());
                 existingGroup.setDescription(group.getDescription());
                 existingGroup.setMembers(new LinkedHashSet<>(group.getMembers()));
                 existingGroup.setName(group.getName());

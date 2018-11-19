@@ -19,6 +19,7 @@ package org.bremersee.groupman;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import javax.validation.Valid;
@@ -79,6 +80,7 @@ public class GroupAdminController
 
     group.setId(null);
     group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
+    group.setModifiedAt(group.getCreatedAt());
     group.setSource(Source.INTERNAL);
 
     return ReactiveSecurityContextHolder
@@ -118,6 +120,7 @@ public class GroupAdminController
     return getGroupRepository().findById(groupId)
         .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId)))
         .flatMap(existingGroup -> {
+          existingGroup.setModifiedAt(new Date());
           existingGroup.setDescription(group.getDescription());
           existingGroup.setMembers(new LinkedHashSet<>(group.getMembers()));
           existingGroup.setName(group.getName());

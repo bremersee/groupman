@@ -16,7 +16,6 @@
 
 package org.bremersee.groupman;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -57,10 +56,13 @@ public class GroupEntity implements Comparable<GroupEntity> {
   @Version
   private Long version;
 
+  @Indexed
+  private String createdBy;
+
   private Date createdAt = new Date();
 
   @Indexed
-  private String createdBy;
+  private Date modifiedAt = new Date();
 
   @Indexed
   private Source source = Source.INTERNAL;
