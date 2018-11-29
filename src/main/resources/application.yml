@@ -1,10 +1,12 @@
 spring:
-  security:
-    user:
-      name: cbr
-      password: changeit
-      roles:
-        - ADMIN
+  application:
+    name: ${APPLICATION_NAME:groupman}
+  #  security:
+#    user:
+#      name: cbr
+#      password: changeit
+#      roles:
+#        - ADMIN
   data:
     mongodb:
       host: localhost
@@ -20,3 +22,33 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
     time-zone: GMT
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/certs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    ROOT: info
+    org.bremersee: debug
+    reactor: debug
+    org.springframework: info
+
+bremersee:
+  security:
+    oauth2:
+      password-flow:
+        client-id: omnia
+        client-secret: 2f586840-68df-4226-b105-397a56b2b4f2
+        token-endpoint: https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/token
+  exception-mapping:
+    api-paths:
+    - /api/**

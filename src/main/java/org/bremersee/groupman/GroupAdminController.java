@@ -18,9 +18,6 @@ package org.bremersee.groupman;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -111,25 +108,16 @@ public class GroupAdminController
       @PathVariable(value = "id") String groupId,
       @Valid @RequestBody Group group) {
 
-    if (group.getMembers() == null) {
-      group.setMembers(Collections.emptyList());
-    }
-    if (group.getOwners() == null) {
-      group.setOwners(Collections.emptyList());
-    }
     return getGroupRepository().findById(groupId)
         .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId)))
-        .flatMap(existingGroup -> {
-          existingGroup.setModifiedAt(new Date());
-          existingGroup.setDescription(group.getDescription());
-          existingGroup.setMembers(new LinkedHashSet<>(group.getMembers()));
-          existingGroup.setName(group.getName());
-          existingGroup.setOwners(new LinkedHashSet<>(group.getOwners()));
+        .map(existingGroup -> updateGroup(group, () -> existingGroup))
+        .map(existingGroup -> {
           if (StringUtils.hasText(group.getCreatedBy())) {
             existingGroup.setCreatedBy(group.getCreatedBy());
           }
-          return getGroupRepository().save(existingGroup);
+          return existingGroup;
         })
+        .flatMap(existingGroup -> getGroupRepository().save(existingGroup))
         .map(this::mapToGroup);
   }
 

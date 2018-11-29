@@ -18,9 +18,6 @@ package org.bremersee.groupman;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -100,12 +97,6 @@ public class GroupController
       @PathVariable(value = "id") String groupId,
       @Valid @RequestBody Group group) {
 
-    if (group.getMembers() == null) {
-      group.setMembers(Collections.emptyList());
-    }
-    if (group.getOwners() == null) {
-      group.setOwners(Collections.emptyList());
-    }
     return Mono.zip(
         ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -117,13 +108,7 @@ public class GroupController
               String currentUserName = userNameAndGroupEntity.getT1();
               GroupEntity existingGroup = userNameAndGroupEntity.getT2();
               if (existingGroup.getOwners().contains(currentUserName)) {
-                existingGroup.setModifiedAt(new Date());
-                existingGroup.setDescription(group.getDescription());
-                existingGroup.setMembers(new LinkedHashSet<>(group.getMembers()));
-                existingGroup.setName(group.getName());
-                existingGroup.setOwners(new LinkedHashSet<>(group.getOwners()));
-                existingGroup.getOwners().add(currentUserName);
-                return getGroupRepository().save(existingGroup);
+                return getGroupRepository().save(updateGroup(group, () -> existingGroup));
               } else {
                 return Mono.empty();
               }

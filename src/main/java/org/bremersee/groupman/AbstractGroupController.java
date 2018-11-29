@@ -21,7 +21,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.Supplier;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.bremersee.exception.ServiceException;
@@ -71,6 +73,17 @@ abstract class AbstractGroupController {
     return groupRepository.findByIdIn(ids == null ? Collections.emptyList() : ids, SORT);
   }
 
+  private Group prepareGroup(final Supplier<Group> groupSupplier) {
+    Group group = groupSupplier.get();
+    if (group.getMembers() == null) {
+      group.setMembers(Collections.emptyList());
+    }
+    if (group.getOwners() == null) {
+      group.setOwners(Collections.emptyList());
+    }
+    return group;
+  }
+
   Group mapToGroup(final GroupEntity source) {
     Group destination = new Group();
     destination.setMembers(new ArrayList<>());
@@ -80,14 +93,19 @@ abstract class AbstractGroupController {
   }
 
   GroupEntity mapToGroupEntity(final Group source) {
-    if (source.getMembers() == null) {
-      source.setMembers(Collections.emptyList());
-    }
-    if (source.getOwners() == null) {
-      source.setOwners(Collections.emptyList());
-    }
     GroupEntity destination = new GroupEntity();
-    getModelMapper().map(source, destination);
+    getModelMapper().map(prepareGroup(() -> source), destination);
+    return destination;
+  }
+
+  GroupEntity updateGroup(final Group source, final Supplier<GroupEntity> destinationSupplier) {
+    final Group src = prepareGroup(() -> source);
+    final GroupEntity destination = destinationSupplier.get();
+    destination.setModifiedAt(new Date());
+    destination.setDescription(src.getDescription());
+    destination.setMembers(new LinkedHashSet<>(src.getMembers()));
+    destination.setName(src.getName());
+    destination.setOwners(new LinkedHashSet<>(src.getOwners()));
     return destination;
   }
 
