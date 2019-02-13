@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.validation.annotation.Validated;
 
 /**
+ * The group entity.
+ *
  * @author Christian Bremer
  */
 @Validated
@@ -45,7 +47,7 @@ import org.springframework.validation.annotation.Validated;
 @TypeAlias("group")
 @CompoundIndexes({
     @CompoundIndex(name = "creator_group",
-        def = "{'createdBy': 1, 'name': 1 }",
+        def = "{'createdBy': 1, 'name': 1}",
         unique = true)
 })
 public class GroupEntity implements Comparable<GroupEntity> {

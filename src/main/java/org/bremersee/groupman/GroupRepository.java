@@ -22,19 +22,50 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;
 
 /**
+ * The group repository.
+ *
  * @author Christian Bremer
  */
 public interface GroupRepository extends ReactiveMongoRepository<GroupEntity, String> {
 
-  Flux<GroupEntity> findByOwnersIsContaining(String owner, Sort sort);
-
+  /**
+   * Find groups by owner or member.
+   *
+   * @param owner  the owner
+   * @param member the member
+   * @param sort   the sort order
+   * @return the groups
+   */
   Flux<GroupEntity> findByOwnersIsContainingOrMembersIsContaining(
       String owner,
       String member,
       Sort sort);
 
+  /**
+   * Find groups by owner.
+   *
+   * @param owner the owner
+   * @param sort  the sort order
+   * @return the groups
+   */
+  Flux<GroupEntity> findByOwnersIsContaining(String owner, Sort sort);
+
+  /**
+   * Find groups by member.
+   *
+   * @param member the member
+   * @param sort   the sort order
+   * @return the groups
+   */
   Flux<GroupEntity> findByMembersIsContaining(String member, Sort sort);
 
+  /**
+   * Find groups with the specified IDs.
+   *
+   * @param ids  the ids
+   * @param sort the sort
+   * @return the groups
+   */
   Flux<GroupEntity> findByIdIn(List<String> ids, Sort sort);
 
 }

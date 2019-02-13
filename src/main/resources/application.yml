@@ -1,19 +1,4 @@
 spring:
-  application:
-    name: ${APPLICATION_NAME:groupman}
-  #  security:
-#    user:
-#      name: cbr
-#      password: changeit
-#      roles:
-#        - ADMIN
-  data:
-    mongodb:
-      host: localhost
-      #      port: 27017
-      #      username: changeit
-      #      password: changeit
-      database: groupman
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     default-property-inclusion: non_null
@@ -22,12 +7,18 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
     time-zone: GMT
-
+  sleuth:
+    enabled: ${SLEUTH_ENABLED:false}
+    sampler:
+      probability: ${SLEUTH_PROBABILITY:1.0}
+  zipkin:
+    enabled: ${ZIPKIN_ENABLED:false}
+    base-url: ${ZIPKIN_BASE_URL:http://localhost:9411/}
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/certs
+          jwk-set-uri: ${OPENID_KEYS_URI:https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/certs}
 
 management:
   endpoints:
@@ -35,20 +26,82 @@ management:
       exposure:
         include: "*"
 
+server:
+  port: ${SERVER_PORT:8080}
+
 logging:
   level:
     ROOT: info
     org.bremersee: debug
-    reactor: debug
+    reactor: info
     org.springframework: info
 
 bremersee:
   security:
     oauth2:
       password-flow:
-        client-id: omnia
-        client-secret: 2f586840-68df-4226-b105-397a56b2b4f2
-        token-endpoint: https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/token
+        client-id: ${OPENID_CLIENT_ID:omnia}
+        client-secret: ${OPENID_CLIENT_SECRET:changeit}
+        token-endpoint: ${OPENID_TOKEN_ENDPOINT:https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/token}
   exception-mapping:
     api-paths:
-    - /api/**
+      - /api/**
+
+---
+
+spring:
+  profiles: mongodb
+
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://user:secret@192.168.1.40:27017,192.168.1.40:27018,192.168.1.40:27019/groupman}
+
+---
+
+spring:
+  profiles: ldap
+
+bremersee:
+  ldaptive:
+    ldap-url: ${LDAP_URL:ldaps://example.org:636}
+    use-ssl: ${LDAP_SSL:true}
+    use-start-tls: ${LDAP_START_TLS:false}
+    bind-dn: ${LDAP_BIND_DN:areader@example.org}
+    bind-credential: ${LDAP_BIND_PASSWORD:changeit}
+    pooled: true
+    min-pool-size: 3
+    max-pool-size: 10
+    validate-on-check-in: false
+    validate-on-check-out: false
+    validate-periodically: true
+    validate-period: 300
+    idle-time: 600
+    block-wait-time: 10000
+    search-validator:
+      search-request:
+        base-dn: ${LDAP_BASE_DN:dc=example,dc=org}
+        search-filter:
+          filter: ${LDAP_VALIDATION_FILTER:(cn=Administrator)}
+        size-limit: 1
+        search-scope: ONELEVEL
+        return-attributes:
+          - cn
+  domain-controller:
+    group-base-dn: ${LDAP_GROUP_DN:cn=Groups,dc=example,dc=org}
+    user-base-dn: ${LDAP_USER_DN:cn=Users,dc=example,dc=org}
+    ignored-ldap-groups:
+      - 'Allowed RODC Password Replication Group'
+      - 'Cert Publishers'
+      - 'Denied RODC Password Replication Group'
+      - 'DnsAdmins'
+      - 'DnsUpdateProxy'
+      - 'Domain Admins'
+      - 'Domain Computers'
+      - 'Domain Guests'
+      - 'Domain Users'
+      - 'Enterprise Admins'
+      - 'Enterprise Read-only Domain Controllers'
+      - 'Group Policy Creator Owners'
+      - 'RAS and IAS Servers'
+      - 'Read-only Domain Controllers'
+
