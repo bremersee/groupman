@@ -89,6 +89,7 @@ bremersee:
   domain-controller:
     group-base-dn: ${LDAP_GROUP_DN:cn=Groups,dc=example,dc=org}
     user-base-dn: ${LDAP_USER_DN:cn=Users,dc=example,dc=org}
+    admin-name: 'Administrator'
     ignored-ldap-groups:
       - 'Allowed RODC Password Replication Group'
       - 'Cert Publishers'

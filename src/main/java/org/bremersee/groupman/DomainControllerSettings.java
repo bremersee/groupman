@@ -43,11 +43,17 @@ public class DomainControllerSettings {
 
   private String groupBaseDn;
 
-  private String groupRdn = "cn";
+  // Must be the same as in keycloak (User Federation > Ldap > LDAP Mappers > Group mapper)
+  private String groupNameAttribute = "cn";
+
+  private String groupDescriptionAttribute = "description";
 
   private String groupMemberAttr = "member";
 
   private boolean memberDn = true;
+
+  // Must be the same as in keycloak (User Federation > Ldap > LDAP Mappers > username)
+  private String memberNameAttribute = "cn";
 
   private String groupFindAllFilter = "(objectClass=group)";
 
@@ -57,17 +63,7 @@ public class DomainControllerSettings {
 
   private SearchScope groupSearchScope = SearchScope.ONELEVEL;
 
-  private String userBaseDn;
-
-  private String userRdn = "cn";
-
-  private String userGroupAttr = "memberOf";
-
-  private boolean userGroupDn = true;
-
-  private String userFindOneFilter = "(&(objectClass=user)(sAMAccountName={0}))";
-
-  private SearchScope userFindOneSearchScope = SearchScope.ONELEVEL;
+  private String adminName = "Administrator";
 
   private List<String> ignoredLdapGroups = new ArrayList<>();
 

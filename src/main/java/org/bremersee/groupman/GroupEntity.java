@@ -43,7 +43,7 @@ import org.springframework.validation.annotation.Validated;
 @Getter
 @Setter
 @ToString
-@Document(collection = "groupman")
+@Document(collection = "groups")
 @TypeAlias("group")
 @CompoundIndexes({
     @CompoundIndex(name = "creator_group",

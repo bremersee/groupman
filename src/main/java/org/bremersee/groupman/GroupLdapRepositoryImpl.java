@@ -21,8 +21,10 @@ import static org.bremersee.groupman.LdapEntryUtils.getAttributeValue;
 import static org.bremersee.groupman.LdapEntryUtils.whenTimeToDate;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
@@ -76,33 +78,61 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
     this.connectionFactory = connectionFactory;
   }
 
-  private GroupEntity mapLdapEntryToGroupEntity(@NotNull final LdapEntry ldapEntry) {
+  private GroupEntity mapLdapEntryToGroupEntity(
+      @NotNull final LdapEntry ldapEntry,
+      @NotNull final Connection conn) {
     final GroupEntity group = new GroupEntity();
     group.setCreatedAt(
         whenTimeToDate(getAttributeValue(ldapEntry, WHEN_CREATED, null)));
-    group.setCreatedBy(null); // TODO
-    group.setDescription(null);
-    group.setId(LdapEntryUtils.getAttributeValue(ldapEntry, "sAMAccountName", null));
+    group.setCreatedBy(properties.getAdminName());
+    group.setDescription(
+        LdapEntryUtils
+            .getAttributeValue(ldapEntry, properties.getGroupDescriptionAttribute(), null));
+    group.setId(
+        LdapEntryUtils.getAttributeValue(ldapEntry, properties.getGroupNameAttribute(), null));
     group.setModifiedAt(
         whenTimeToDate(getAttributeValue(ldapEntry, WHEN_CHANGED, null)));
-    group.setName(getAttributeValue(ldapEntry, "sAMAccountName", null));
-    //group.setOwners(null);
+    group.setName(getAttributeValue(ldapEntry, properties.getGroupNameAttribute(), null));
+    group.setOwners(Collections.singleton(properties.getAdminName()));
     group.setSource(Source.LDAP);
-    //group.setVersion(1L);
+    group.setVersion(1L);
     LdapAttribute membersAttr = ldapEntry.getAttribute(properties.getGroupMemberAttr());
     if (membersAttr != null && membersAttr.getStringValues() != null) {
-      group.setMembers(membersAttr.getStringValues().stream().map(member -> {
-        if (properties.isMemberDn()) {
-          int a = member.indexOf('=');
-          int b = member.indexOf(',');
-          if (a > -1 && b > a) {
-            return member.substring(a + 1, b);
-          }
-        }
-        return member;
-      }).collect(Collectors.toSet()));
+      group.setMembers(
+          membersAttr
+              .getStringValues()
+              .stream()
+              .map(member -> getMemberName(member, conn))
+              .filter(Objects::nonNull)
+              .collect(Collectors.toSet()));
     }
     return group;
+  }
+
+  private String getMemberName(
+      final String memberValue, @NotNull final Connection conn) {
+    if (memberValue == null || !properties.isMemberDn()) {
+      return memberValue;
+    }
+    try {
+      final SearchRequest searchRequest = SearchRequest.newObjectScopeSearchRequest(
+          memberValue, new String[]{properties.getMemberNameAttribute()});
+      final SearchResult result = new SearchOperation(conn).execute(searchRequest).getResult();
+      final LdapEntry ldapEntry = result.getEntry();
+      if (ldapEntry != null) {
+        return LdapEntryUtils
+            .getAttributeValue(result.getEntry(), properties.getMemberNameAttribute(), null);
+      }
+      log.warn("msg=[Member was not found. Returning null.] member=[{}]", memberValue);
+      return null;
+
+    } catch (LdapException e) {
+      final ServiceException se = internalServerError(
+          "Getting member [" + memberValue + "] failed.",
+          e);
+      log.error("msg=[Getting member name.", se);
+      throw se;
+    }
   }
 
   private Connection getConnection() throws LdapException {
@@ -111,22 +141,6 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
       c.open();
     }
     return c;
-  }
-
-  /**
-   * Close the given context and ignore any thrown exception. This is useful for typical finally
-   * blocks in manual Ldap statements.
-   *
-   * @param connection the Ldap connection to close
-   */
-  private void closeConnection(final Connection connection) {
-    if (connection != null && connection.isOpen()) {
-      try {
-        connection.close();
-      } catch (final Exception ex) {
-        log.warn("Closing ldap connection failed.", ex);
-      }
-    }
   }
 
   private SearchResult buildWithSearchFilter(
@@ -191,11 +205,9 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
   public Mono<GroupEntity> findByName(String name) {
 
     log.info("msg=[Getting group by name] name=[{}]", name);
-    Connection conn = null;
-    try {
-      conn = getConnection();
+    try (final Connection conn = getConnection()) {
       return findGroupByName(name, conn)
-          .map(this::mapLdapEntryToGroupEntity)
+          .map(ldapEntry -> mapLdapEntryToGroupEntity(ldapEntry, conn))
           .filter(
               groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));
 
@@ -206,19 +218,15 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
       log.error("msg=[Getting group by name.]", se);
       throw se;
 
-    } finally {
-      closeConnection(conn);
     }
   }
 
   @Override
   public Flux<GroupEntity> findByNameIn(List<String> names) {
     log.info("msg=[Getting groups by names] names=[{}]", names);
-    Connection conn = null;
-    try {
-      conn = getConnection();
+    try (final Connection conn = getConnection()) {
       return findGroupsByNames(names, conn)
-          .map(this::mapLdapEntryToGroupEntity)
+          .map(ldapEntry -> mapLdapEntryToGroupEntity(ldapEntry, conn))
           .filter(
               groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));
 
@@ -228,9 +236,6 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
           e);
       log.error("msg=[Getting groups by names.]", se);
       throw se;
-
-    } finally {
-      closeConnection(conn);
     }
   }
 
@@ -238,11 +243,9 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
   public Flux<GroupEntity> findByMembersIsContaining(String name) {
 
     log.info("msg=[Getting groups by member contains name] name=[{}]", name);
-    Connection conn = null;
-    try {
-      conn = getConnection();
+    try (final Connection conn = getConnection()) {
       return findGroupsByMember(name, conn)
-          .map(this::mapLdapEntryToGroupEntity)
+          .map(ldapEntry -> mapLdapEntryToGroupEntity(ldapEntry, conn))
           .filter(
               groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));
 
@@ -252,9 +255,6 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
           e);
       log.error("msg=[Getting groups by names.]", se);
       throw se;
-
-    } finally {
-      closeConnection(conn);
     }
   }
 
