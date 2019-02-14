@@ -39,6 +39,21 @@ abstract class LdapEntryUtils {
   }
 
   /**
+   * Create dn string.
+   *
+   * @param rdn      the rdn
+   * @param rdnValue the rdn value
+   * @param baseDn   the base dn
+   * @return the string
+   */
+  static String createDn(
+      @NotNull final String rdn,
+      @NotNull final String rdnValue,
+      @NotNull final String baseDn) {
+    return rdn + "=" + rdnValue + "," + baseDn;
+  }
+
+  /**
    * Gets attribute value.
    *
    * @param ldapEntry     the ldap entry

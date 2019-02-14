@@ -54,7 +54,7 @@ spring:
 
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://user:secret@192.168.1.40:27017,192.168.1.40:27018,192.168.1.40:27019/groupman}
+      uri: ${MONGODB_URI:mongodb://user:secret@192.168.1.40:27017,192.168.1.40:27018,192.168.1.40:27019/groupman?connect=direct}
 
 ---
 
@@ -105,4 +105,3 @@ bremersee:
       - 'Group Policy Creator Owners'
       - 'RAS and IAS Servers'
       - 'Read-only Domain Controllers'
-

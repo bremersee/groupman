@@ -52,6 +52,10 @@ public class DomainControllerSettings {
 
   private boolean memberDn = true;
 
+  private String userBaseDn;
+
+  private String userRdn = "cn";
+
   // Must be the same as in keycloak (User Federation > Ldap > LDAP Mappers > username)
   private String memberNameAttribute = "cn";
 

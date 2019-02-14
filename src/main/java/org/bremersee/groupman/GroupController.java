@@ -147,10 +147,9 @@ public class GroupController
               if (existingGroup.getOwners().contains(currentUserName)) {
                 return getGroupRepository().delete(existingGroup);
               } else {
-                return Mono.empty();
+                return Mono.error(ServiceException.forbidden("Group", groupId));
               }
-            })
-        .switchIfEmpty(Mono.error(ServiceException.forbidden("Group", groupId)));
+            });
   }
 
   @GetMapping(path = "/f", produces = {MediaType.APPLICATION_JSON_VALUE})

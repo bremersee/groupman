@@ -114,6 +114,13 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
     if (memberValue == null || !properties.isMemberDn()) {
       return memberValue;
     }
+    if (properties.getMemberNameAttribute().equals(properties.getUserRdn())) {
+      int a = memberValue.indexOf('=');
+      int b = memberValue.indexOf(',');
+      if (a > -1 && a < b) {
+        return memberValue.substring(a + 1, b);
+      }
+    }
     try {
       final SearchRequest searchRequest = SearchRequest.newObjectScopeSearchRequest(
           memberValue, new String[]{properties.getMemberNameAttribute()});
@@ -186,15 +193,26 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
     return entries == null ? Flux.empty() : Flux.just(entries.toArray(new LdapEntry[0]));
   }
 
+  @SuppressWarnings("Duplicates")
   private Flux<LdapEntry> findGroupsByMember(
       final String member,
       final Connection conn) throws LdapException {
 
+    log.debug("msg=[Find groups by member.] member=[{}]", member);
     if (!StringUtils.hasText(member)) {
       return Flux.empty();
     }
+    log.debug("msg=[Find groups by member with filter and baseDn.] filter=[{}], baseDn=[{}]",
+        properties.getGroupFindByMemberContainsFilter(), properties.getGroupBaseDn());
     final SearchFilter sf = new SearchFilter(properties.getGroupFindByMemberContainsFilter());
-    sf.setParameters(new Object[]{member});
+    if (properties.isMemberDn()) {
+      final String userDn = LdapEntryUtils.createDn(
+          properties.getUserRdn(), member, properties.getUserBaseDn());
+      log.debug("msg=[Find groups by member.] userDn=[{}]", userDn);
+      sf.setParameters(new String[]{userDn});
+    } else {
+      sf.setParameters(new String[]{member});
+    }
     final SearchResult searchResult = buildWithSearchFilter(
         sf, properties.getGroupBaseDn(), properties.getGroupSearchScope(), conn);
     final Collection<LdapEntry> entries = searchResult.getEntries();
