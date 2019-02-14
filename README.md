@@ -1,2 +1,3 @@
-# groupman
-A group management service
+# Groupman
+
+A group management service.
