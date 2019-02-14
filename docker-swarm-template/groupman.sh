@@ -7,7 +7,7 @@ docker service create \
   --label com.df.notify=true \
   --label com.df.servicePath=/groupman \
   --label com.df.port=80 \
-  --label com.df.reqPathSearchReplace='/groupman/,//' \
+  --label com.df.reqPathSearchReplace='/groupman/,/' \
   --secret config-server-client-user-password \
   --restart-delay 10s \
   --restart-max-attempts 10 \
