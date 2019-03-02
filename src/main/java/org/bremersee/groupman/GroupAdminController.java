@@ -25,7 +25,7 @@ import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupAdminControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
-import org.bremersee.security.authentication.KeycloakJwtAuthenticationToken;
+import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -98,8 +98,8 @@ public class GroupAdminController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .cast(KeycloakJwtAuthenticationToken.class)
-        .map(KeycloakJwtAuthenticationToken::getPreferredName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMap(currentUserName -> {
           if (!StringUtils.hasText(group.getCreatedBy())) {
             group.setCreatedBy(currentUserName);

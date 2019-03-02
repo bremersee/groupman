@@ -27,7 +27,7 @@ import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
-import org.bremersee.security.authentication.KeycloakJwtAuthenticationToken;
+import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -77,8 +77,8 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .cast(KeycloakJwtAuthenticationToken.class)
-        .map(KeycloakJwtAuthenticationToken::getPreferredName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMap(currentUserName -> {
           group.setId(null);
           group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
@@ -110,8 +110,8 @@ public class GroupController
     return Mono.zip(
         ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
-            .cast(KeycloakJwtAuthenticationToken.class)
-            .map(KeycloakJwtAuthenticationToken::getPreferredName),
+            .cast(BremerseeAuthenticationToken.class)
+            .map(BremerseeAuthenticationToken::getPreferredName),
         getGroupRepository().findById(groupId)
             .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId))))
         .flatMap(
@@ -136,8 +136,8 @@ public class GroupController
     return Mono.zip(
         ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
-            .cast(KeycloakJwtAuthenticationToken.class)
-            .map(KeycloakJwtAuthenticationToken::getPreferredName),
+            .cast(BremerseeAuthenticationToken.class)
+            .map(BremerseeAuthenticationToken::getPreferredName),
         getGroupRepository().findById(groupId)
             .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId))))
         .flatMap(
@@ -165,8 +165,8 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .cast(KeycloakJwtAuthenticationToken.class)
-        .map(KeycloakJwtAuthenticationToken::getPreferredName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
             .findByOwnersIsContaining(currentUserName, SORT))
         .map(this::mapToGroup);
@@ -178,8 +178,8 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .cast(KeycloakJwtAuthenticationToken.class)
-        .map(KeycloakJwtAuthenticationToken::getPreferredName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
             .findByOwnersIsContainingOrMembersIsContaining(currentUserName, currentUserName, SORT)
             .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
@@ -192,8 +192,8 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .cast(KeycloakJwtAuthenticationToken.class)
-        .map(KeycloakJwtAuthenticationToken::getPreferredName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
             .findByMembersIsContaining(currentUserName, SORT)
             .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
@@ -206,8 +206,8 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .cast(KeycloakJwtAuthenticationToken.class)
-        .map(KeycloakJwtAuthenticationToken::getPreferredName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
             .findByMembersIsContaining(currentUserName, SORT)
             .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
