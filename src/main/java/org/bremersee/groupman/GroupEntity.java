@@ -39,10 +39,6 @@ import org.springframework.validation.annotation.Validated;
  *
  * @author Christian Bremer
  */
-@Validated
-@Getter
-@Setter
-@ToString
 @Document(collection = "groups")
 @TypeAlias("group")
 @CompoundIndexes({
@@ -50,6 +46,10 @@ import org.springframework.validation.annotation.Validated;
         def = "{'createdBy': 1, 'name': 1}",
         unique = true)
 })
+@Getter
+@Setter
+@ToString
+@Validated
 public class GroupEntity implements Comparable<GroupEntity> {
 
   @Id
