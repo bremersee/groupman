@@ -50,7 +50,11 @@ bremersee:
       - exception-class-name: org.springframework.dao.DuplicateKeyException
         status: 409
         message: "Group already exists."
-        code: "GRP:0409"
+        code: "GRP:1000"
+      - exception-class-name: org.springframework.dao.OptimisticLockingFailureException
+        status: 409
+        message: "Version is not up to date."
+        code: "GRP:1001"
 
 ---
 
