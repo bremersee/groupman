@@ -156,6 +156,9 @@ abstract class AbstractGroupController {
   GroupEntity updateGroup(final Group source, final Supplier<GroupEntity> destinationSupplier) {
     final Group src = prepareGroup(() -> source);
     final GroupEntity destination = destinationSupplier.get();
+    if (source.getVersion() != null) {
+      destination.setVersion(source.getVersion());
+    }
     destination.setModifiedAt(new Date());
     destination.setDescription(src.getDescription());
     destination.setMembers(new LinkedHashSet<>(src.getMembers()));
