@@ -7,7 +7,7 @@ pipeline {
     PROD_TAG='release'
     SPRING_PROFILES='default,mongodb,ldap'
     REPLICAS=1
-    CONSTRAINT='node.role == worker'
+    CONSTRAINT="'node.role == worker'"
   }
   stages {
     stage('Deploy on dev-swarm') {
