@@ -7,6 +7,49 @@ pipeline {
     PROD_TAG='release'
   }
   stages {
+    stage('Build') {
+      agent {
+        label 'maven'
+      }
+      steps {
+        sh 'mvn clean compile'
+      }
+    }
+    stage('Test') {
+      agent {
+        label 'maven'
+      }
+      steps {
+        sh 'mvn test'
+      }
+    }
+    stage('Push') {
+      agent {
+        label 'maven'
+      }
+      steps {
+        sh 'mvn -DskipTests -Ddockerfile.skip=false package dockerfile:push'
+      }
+    }
+    stage('Push latest') {
+      agent {
+        label 'maven'
+      }
+      when {
+        branch 'develop'
+      }
+      steps {
+        sh 'mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push'
+      }
+    }
+    stage('Site') {
+      agent {
+        label 'maven'
+      }
+      steps {
+        sh 'mvn site-deploy'
+      }
+    }
     stage('Deploy on dev-swarm') {
       agent {
         label 'dev-swarm'
