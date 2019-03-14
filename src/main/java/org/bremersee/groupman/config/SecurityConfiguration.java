@@ -16,6 +16,7 @@
 
 package org.bremersee.groupman.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bremersee.security.authentication.KeycloakReactiveJwtConverter;
 import org.bremersee.security.authentication.PasswordFlowReactiveAuthenticationManager;
 import org.bremersee.security.core.AuthorityConstants;
@@ -38,6 +39,7 @@ import org.springframework.security.web.server.util.matcher.NegatedServerWebExch
  */
 @Configuration
 @EnableWebFluxSecurity
+@Slf4j
 public class SecurityConfiguration {
 
   private KeycloakReactiveJwtConverter keycloakJwtConverter;
@@ -70,6 +72,7 @@ public class SecurityConfiguration {
   public SecurityWebFilterChain oauth2ResourceServerFilterChain(
       ServerHttpSecurity http) {
 
+    log.info("msg=[Creating resource server filter chain.]");
     http
         .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
         .oauth2ResourceServer()
@@ -94,6 +97,7 @@ public class SecurityConfiguration {
   public SecurityWebFilterChain actuatorFilterChain(
       ServerHttpSecurity http) {
 
+    log.info("msg=[Creating actuator filter chain.]");
     http
         .securityMatcher(EndpointRequest.toAnyEndpoint())
         .cors().disable()
