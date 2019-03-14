@@ -15,7 +15,7 @@ docker service create \
   --update-delay 10s \
   --constraint 'node.role == worker' \
   -e APPLICATION_NAME='groupman' \
-  -e ACTIVE_PROFILES='default,mongodb,ldap' \
+  -e ACTIVE_PROFILES=$2 \
   -e CONFIG_CLIENT_ENABLED='true' \
   -e CONFIG_URI='http://config-server:8888' \
   -e CONFIG_USER='configclient' \
