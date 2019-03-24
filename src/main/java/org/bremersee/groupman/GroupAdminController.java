@@ -70,7 +70,7 @@ public class GroupAdminController
 
   @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Flux<Group> getGroups() {
+  public Flux<Group> findGroups() {
     return getGroupRepository()
         .findAll(SORT)
         .map(this::mapToGroup);
@@ -80,7 +80,7 @@ public class GroupAdminController
       produces = {MediaType.APPLICATION_JSON_VALUE},
       consumes = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> createGroup(
+  public Mono<Group> addGroup(
       @Valid @RequestBody Group group) {
 
     group.setId(null);
@@ -111,7 +111,7 @@ public class GroupAdminController
 
   @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> getGroupById(@PathVariable(value = "id") String groupId) {
+  public Mono<Group> findGroupById(@PathVariable(value = "id") String groupId) {
     return super.getGroupEntityById(groupId)
         .map(this::mapToGroup);
   }
@@ -120,7 +120,7 @@ public class GroupAdminController
       produces = {MediaType.APPLICATION_JSON_VALUE},
       consumes = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> updateGroup(
+  public Mono<Group> modifyGroup(
       @PathVariable(value = "id") String groupId,
       @Valid @RequestBody Group group) {
 
@@ -144,14 +144,16 @@ public class GroupAdminController
   }
 
   @DeleteMapping("/{id}")
-  public Mono<Void> deleteGroup(
+  @Override
+  public Mono<Void> removeGroup(
       @PathVariable(value = "id") String groupId) {
 
     return getGroupRepository().deleteById(groupId);
   }
 
   @GetMapping(path = "/f", produces = {MediaType.APPLICATION_JSON_VALUE})
-  public Flux<Group> getGroupsByIds(
+  @Override
+  public Flux<Group> findGroupsByIds(
       @RequestParam(value = "id", required = false) List<String> ids) {
     return super.getGroupRepository()
         .findByIdIn(ids, SORT)
