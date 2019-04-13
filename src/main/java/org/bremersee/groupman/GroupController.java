@@ -85,7 +85,7 @@ public class GroupController
           group.setModifiedAt(group.getCreatedAt());
           group.setCreatedBy(currentUserName);
           group.setSource(Source.INTERNAL);
-          group.addOwnersItem(currentUserName);
+          group.getOwners().add(currentUserName);
           return getGroupRepository().save(mapToGroupEntity(group));
         })
         .map(this::mapToGroup)
