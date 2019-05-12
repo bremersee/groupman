@@ -75,6 +75,7 @@ public class SecurityConfiguration {
     log.info("msg=[Creating resource server filter chain.]");
     http
         .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
+        .csrf().disable()
         .oauth2ResourceServer()
         .jwt()
         .jwtAuthenticationConverter(keycloakJwtConverter);
@@ -100,7 +101,6 @@ public class SecurityConfiguration {
     log.info("msg=[Creating actuator filter chain.]");
     http
         .securityMatcher(EndpointRequest.toAnyEndpoint())
-        .cors().disable()
         .csrf().disable()
         .httpBasic()
         .authenticationManager(passwordFlowReactiveAuthenticationManager);

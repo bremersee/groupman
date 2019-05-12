@@ -25,6 +25,10 @@ management:
     web:
       exposure:
         include: "*"
+      cors:
+        allowed-headers: "*"
+        allowed-methods: "*"
+        allowed-origins: "*"
 
 server:
   port: ${SERVER_PORT:8080}
@@ -38,6 +42,8 @@ logging:
 
 bremersee:
   security:
+    cors:
+      allow-all: true
     oauth2:
       password-flow:
         client-id: ${OPENID_CLIENT_ID:omnia}
