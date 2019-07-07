@@ -4,67 +4,27 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.1.1.RELEASE</version>
+		<groupId>org.bremersee</groupId>
+		<artifactId>common-service-parent</artifactId>
+		<version>1.0.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
-	<groupId>org.bremersee</groupId>
 	<artifactId>groupman</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.1.1</version>
 	<packaging>jar</packaging>
 
 	<name>groupman</name>
 	<description>A group management service</description>
+	<url>https://github.com/bremersee/groupman</url>
 
 	<properties>
-		<github.global.server>github</github.global.server>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
-
 		<start-class>org.bremersee.groupman.Application</start-class>
-
-		<spring-cloud.version>Greenwich.M3</spring-cloud.version>
-
-		<dockerfile-maven-version>1.4.0</dockerfile-maven-version>
-		<dockerfile.skip>true</dockerfile.skip>
-		<dockerfile.tag>${project.version}</dockerfile.tag>
-
-		<plantuml.version>1.2018.11</plantuml.version>
-		<wagon-webdav-jackrabbit.version>3.0.0</wagon-webdav-jackrabbit.version>
-		<wagon-ssh-external.version>3.0.0</wagon-ssh-external.version>
-
-		<check-style-location>google_checks.xml</check-style-location>
-		<checkstyle.version>8.15</checkstyle.version>
+		<common-base.version>1.2.0</common-base.version>
+		<groupman-api-spring-reactive.version>1.1.1</groupman-api-spring-reactive.version>
+		<modelmapper.version>2.3.0</modelmapper.version>
+		<ldaptive.version>1.2.4</ldaptive.version>
 	</properties>
-
-	<developers>
-		<developer>
-			<id>cbr</id>
-			<name>Christian Bremer</name>
-			<organization>bremersee.org</organization>
-			<organizationUrl>https://bremersee.org</organizationUrl>
-			<email>bremersee@googlemail.com</email>
-			<timezone>+1</timezone>
-			<roles>
-				<role>Developer</role>
-			</roles>
-		</developer>
-	</developers>
-
-	<organization>
-		<name>bremersee.org</name>
-		<url>https://bremersee.org</url>
-	</organization>
-
-	<licenses>
-		<license>
-			<name>Apache License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
-		</license>
-	</licenses>
 
 	<scm>
 		<connection>scm:git:ssh://git@github.com:bremersee/groupman.git</connection>
@@ -88,12 +48,6 @@
 			<id>bremersee-snapshots</id>
 			<url>https://nexus.bremersee.org/repository/maven-snapshots</url>
 		</snapshotRepository>
-		<!--
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    -->
 		<site>
 			<id>bremersee-sites</id>
 			<url>
@@ -102,64 +56,47 @@
 		</site>
 	</distributionManagement>
 
-	<repositories>
-		<repository>
-			<id>bremersee-releases</id>
-			<name>Bremersee Releases</name>
-			<url>https://nexus.bremersee.org/repository/maven-releases</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>bremersee-snapshots</id>
-			<name>Bremersee Snapshots</name>
-			<url>https://nexus.bremersee.org/repository/maven-snapshots</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.bremersee</groupId>
 			<artifactId>common-base</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>${common-base.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.bremersee</groupId>
 			<artifactId>groupman-api-spring-reactive</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>${groupman-api-spring-reactive.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.modelmapper</groupId>
 			<artifactId>modelmapper</artifactId>
-			<version>2.3.0</version>
+			<version>${modelmapper.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.ldaptive</groupId>
+			<artifactId>ldaptive</artifactId>
+			<version>${ldaptive.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.ldaptive</groupId>
+			<artifactId>ldaptive-beans</artifactId>
+			<version>${ldaptive.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ldaptive</groupId>
+			<artifactId>ldaptive-unboundid</artifactId>
+			<version>${ldaptive.version}</version>
 		</dependency>
 
 		<dependency>
@@ -186,6 +123,22 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
 		</dependency>
+
+		<!-- Config client -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.retry</groupId>
+			<artifactId>spring-retry</artifactId>
+		</dependency>
+
+		<!-- Actuator and zipkin -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
@@ -194,24 +147,18 @@
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
-		<!--
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-cache</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-ldap</artifactId>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-sleuth</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-config</artifactId>
+			<artifactId>spring-cloud-sleuth-zipkin</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-zipkin</artifactId>
 		</dependency>
-		-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -249,272 +196,5 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<configuration>
-						<source>${java.version}</source>
-						<target>${java.version}</target>
-						<encoding>${project.build.sourceEncoding}</encoding>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>3.1.0</version>
-					<configuration>
-						<archive>
-							<addMavenDescriptor>true</addMavenDescriptor>
-							<index>true</index>
-							<manifest>
-								<mainClass>${start-class}</mainClass>
-								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-							</manifest>
-							<manifestEntries>
-								<Product-Name>${project.artifactId}</Product-Name>
-								<Product-Version>${project.version}</Product-Version>
-								<Product-Vendor>${project.organization.name}</Product-Vendor>
-							</manifestEntries>
-						</archive>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-checkstyle-plugin</artifactId>
-					<version>3.0.0</version>
-					<dependencies>
-						<dependency>
-							<groupId>com.puppycrawl.tools</groupId>
-							<artifactId>checkstyle</artifactId>
-							<version>${checkstyle.version}</version>
-						</dependency>
-					</dependencies>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.4</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M3</version>
-				<configuration>
-					<includes>
-						<include>**/*Test.java</include>
-						<include>**/*Tests.java</include>
-					</includes>
-					<excludes>
-						<exclude>**/Abstract*.java</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.0.1</version>
-				<configuration>
-					<show>protected</show>
-					<quiet>true</quiet>
-					<failOnError>false</failOnError>
-				</configuration>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-site-plugin</artifactId>
-				<version>3.7.1</version>
-				<configuration>
-					<generateReports>true</generateReports>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>net.sourceforge.plantuml</groupId>
-						<artifactId>plantuml</artifactId>
-						<version>${plantuml.version}</version>
-					</dependency>
-					<dependency>
-						<groupId>org.apache.maven.wagon</groupId>
-						<artifactId>wagon-ssh-external</artifactId>
-						<version>${wagon-ssh-external.version}</version>
-					</dependency>
-					<dependency>
-						<groupId>org.apache.maven.wagon</groupId>
-						<artifactId>wagon-webdav-jackrabbit</artifactId>
-						<version>${wagon-webdav-jackrabbit.version}</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<configuration>
-					<destFile>${project.build.directory}/coverage-reports/jacoco.exec</destFile>
-					<dataFile>${project.build.directory}/coverage-reports/jacoco.exec</dataFile>
-				</configuration>
-				<executions>
-					<execution>
-						<id>jacoco-initialize</id>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>jacoco-site</id>
-						<phase>package</phase>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId>
-				<version>${dockerfile-maven-version}</version>
-				<executions>
-					<execution>
-						<id>default</id>
-						<goals>
-							<goal>build</goal>
-							<goal>push</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<skip>${dockerfile.skip}</skip>
-					<useMavenSettingsForAuth>true</useMavenSettingsForAuth>
-					<repository>docker.io/bremersee/config-server</repository>
-					<tag>${dockerfile.tag}</tag>
-					<buildArgs>
-						<JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
-					</buildArgs>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-project-info-reports-plugin</artifactId>
-				<version>3.0.0</version>
-				<configuration>
-					<dependencyDetailsEnabled>false</dependencyDetailsEnabled>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<configuration>
-					<show>protected</show>
-					<quiet>true</quiet>
-					<failOnError>false</failOnError>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-report-plugin</artifactId>
-				<version>3.0.0-M3</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jxr-plugin</artifactId>
-				<version>3.0.0</version>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>jdepend-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-pmd-plugin</artifactId>
-				<version>3.10.0</version>
-				<configuration>
-					<format>xml</format>
-					<sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
-					<minimumTokens>100</minimumTokens>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<configuration>
-					<dataFile>${project.build.directory}/coverage-reports/jacoco.exec</dataFile>
-				</configuration>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>report</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<configuration>
-					<configLocation>${check-style-location}</configLocation>
-					<encoding>UTF-8</encoding>
-					<inputEncoding>UTF-8</inputEncoding>
-					<includeTestSourceDirectory>true</includeTestSourceDirectory>
-					<consoleOutput>true</consoleOutput>
-					<failOnViolation>false</failOnViolation>
-					<failsOnError>true</failsOnError>
-					<enableRulesSummary>true</enableRulesSummary>
-					<enableFilesSummary>true</enableFilesSummary>
-					<enableSeveritySummary>true</enableSeveritySummary>
-					<lineLength>100</lineLength>
-					<outputFileFormat>xml</outputFileFormat>
-				</configuration>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>checkstyle</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
-		</plugins>
-	</reporting>
-
-	<profiles>
-		<profile>
-			<id>dockerfile</id>
-			<properties>
-				<dockerfile.skip>false</dockerfile.skip>
-			</properties>
-		</profile>
-	</profiles>
 
 </project>

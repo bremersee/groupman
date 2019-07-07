@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,9 @@ import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupAdminControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.util.StringUtils;
@@ -45,6 +44,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * The group controller for administration purposes.
+ *
  * @author Christian Bremer
  */
 @RestController
@@ -55,14 +56,21 @@ public class GroupAdminController
     extends AbstractGroupController
     implements GroupAdminControllerApi {
 
-  @Autowired
-  public GroupAdminController(GroupRepository groupRepository) {
-    super(groupRepository);
+  /**
+   * Instantiates a new group admin controller.
+   *
+   * @param groupRepository     the group repository
+   * @param groupLdapRepository the group ldap repository
+   */
+  public GroupAdminController(
+      GroupRepository groupRepository,
+      GroupLdapRepository groupLdapRepository) {
+    super(groupRepository, groupLdapRepository);
   }
 
   @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Flux<Group> getGroups() {
+  public Flux<Group> findGroups() {
     return getGroupRepository()
         .findAll(SORT)
         .map(this::mapToGroup);
@@ -72,18 +80,26 @@ public class GroupAdminController
       produces = {MediaType.APPLICATION_JSON_VALUE},
       consumes = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> createGroup(
+  public Mono<Group> addGroup(
       @Valid @RequestBody Group group) {
 
     group.setId(null);
     group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
     group.setModifiedAt(group.getCreatedAt());
-    group.setSource(Source.INTERNAL);
+    if (group.getSource() == null) {
+      group.setSource(Source.INTERNAL);
+    } else if (Source.LDAP.equals(group.getSource())) {
+      UnsupportedOperationException e = new UnsupportedOperationException(
+          "Creating a group with source 'LDAP' is not supported.");
+      log.error("Creating group [" + group.getName() + "] failed.", e);
+      throw e;
+    }
 
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .map(Authentication::getName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMap(currentUserName -> {
           if (!StringUtils.hasText(group.getCreatedBy())) {
             group.setCreatedBy(currentUserName);
@@ -95,7 +111,7 @@ public class GroupAdminController
 
   @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> getGroupById(@PathVariable(value = "id") String groupId) {
+  public Mono<Group> findGroupById(@PathVariable(value = "id") String groupId) {
     return super.getGroupEntityById(groupId)
         .map(this::mapToGroup);
   }
@@ -104,10 +120,16 @@ public class GroupAdminController
       produces = {MediaType.APPLICATION_JSON_VALUE},
       consumes = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> updateGroup(
+  public Mono<Group> modifyGroup(
       @PathVariable(value = "id") String groupId,
       @Valid @RequestBody Group group) {
 
+    if (Source.LDAP.equals(group.getSource())) {
+      UnsupportedOperationException e = new UnsupportedOperationException(
+          "Updating a group with source 'LDAP' is not supported.");
+      log.error("Updating group [" + group.getName() + "] failed.", e);
+      throw e;
+    }
     return getGroupRepository().findById(groupId)
         .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId)))
         .map(existingGroup -> updateGroup(group, () -> existingGroup))
@@ -122,14 +144,16 @@ public class GroupAdminController
   }
 
   @DeleteMapping("/{id}")
-  public Mono<Void> deleteGroup(
+  @Override
+  public Mono<Void> removeGroup(
       @PathVariable(value = "id") String groupId) {
 
     return getGroupRepository().deleteById(groupId);
   }
 
   @GetMapping(path = "/f", produces = {MediaType.APPLICATION_JSON_VALUE})
-  public Flux<Group> getGroupsByIds(
+  @Override
+  public Flux<Group> findGroupsByIds(
       @RequestParam(value = "id", required = false) List<String> ids) {
     return super.getGroupRepository()
         .findByIdIn(ids, SORT)

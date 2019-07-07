@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.codec.ServerCodecConfigurer;
 
 /**
+ * The exception configuration.
+ *
  * @author Christian Bremer
  */
 @Configuration
@@ -42,6 +44,12 @@ public class ExceptionConfiguration {
 
   private final RestApiExceptionMapperProperties apiExceptionMapperProperties;
 
+  /**
+   * Instantiates a new exception configuration.
+   *
+   * @param applicationName              the application name
+   * @param apiExceptionMapperProperties the api exception mapper properties
+   */
   @Autowired
   public ExceptionConfiguration(
       @Value("${spring.application.name:groupman}") String applicationName,
@@ -50,11 +58,26 @@ public class ExceptionConfiguration {
     this.apiExceptionMapperProperties = apiExceptionMapperProperties;
   }
 
+  /**
+   * Builds the rest api exception mapper bean.
+   *
+   * @return the rest api exception mapper bean
+   */
   @Bean
   public RestApiExceptionMapper restApiExceptionMapper() {
     return new RestApiExceptionMapperImpl(apiExceptionMapperProperties, applicationName);
   }
 
+  /**
+   * Builds api exception handler bean.
+   *
+   * @param errorAttributes        the error attributes
+   * @param resourceProperties     the resource properties
+   * @param applicationContext     the application context
+   * @param serverCodecConfigurer  the server codec configurer
+   * @param restApiExceptionMapper the rest api exception mapper
+   * @return the api exception handler bean
+   */
   @Bean
   @Order(-2)
   public ApiExceptionHandler apiExceptionHandler(

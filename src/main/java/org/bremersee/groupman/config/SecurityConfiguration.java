@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 
 package org.bremersee.groupman.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bremersee.security.authentication.KeycloakReactiveJwtConverter;
 import org.bremersee.security.authentication.PasswordFlowReactiveAuthenticationManager;
 import org.bremersee.security.core.AuthorityConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -31,16 +33,26 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
 
 /**
+ * The security configuration.
+ *
  * @author Christian Bremer
  */
 @Configuration
 @EnableWebFluxSecurity
+@Slf4j
 public class SecurityConfiguration {
 
   private KeycloakReactiveJwtConverter keycloakJwtConverter;
 
   private PasswordFlowReactiveAuthenticationManager passwordFlowReactiveAuthenticationManager;
 
+  /**
+   * Instantiates a new security configuration.
+   *
+   * @param keycloakJwtConverter                      the keycloak jwt converter
+   * @param passwordFlowReactiveAuthenticationManager the password flow reactive authentication
+   *                                                  manager
+   */
   @Autowired
   public SecurityConfiguration(
       KeycloakReactiveJwtConverter keycloakJwtConverter,
@@ -49,13 +61,20 @@ public class SecurityConfiguration {
     this.passwordFlowReactiveAuthenticationManager = passwordFlowReactiveAuthenticationManager;
   }
 
+  /**
+   * Builds the OAuth2 resource server filter chain.
+   *
+   * @param http the http
+   * @return the security web filter chain
+   */
   @Bean
   @Order(51)
-  public SecurityWebFilterChain oauth2ResourceServerFilterChain(
-      ServerHttpSecurity http) {
+  public SecurityWebFilterChain oauth2ResourceServerFilterChain(ServerHttpSecurity http) {
 
+    log.info("msg=[Creating resource server filter chain.]");
     http
         .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
+        .csrf().disable()
         .oauth2ResourceServer()
         .jwt()
         .jwtAuthenticationConverter(keycloakJwtConverter);
@@ -67,14 +86,19 @@ public class SecurityConfiguration {
     return http.build();
   }
 
+  /**
+   * Builds the actuator filter chain.
+   *
+   * @param http the http security configuration object
+   * @return the security web filter chain
+   */
   @Bean
   @Order(52)
-  public SecurityWebFilterChain actuatorFilterChain(
-      ServerHttpSecurity http) {
+  public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
 
+    log.info("msg=[Creating actuator filter chain.]");
     http
         .securityMatcher(EndpointRequest.toAnyEndpoint())
-        .cors().disable()
         .csrf().disable()
         .httpBasic()
         .authenticationManager(passwordFlowReactiveAuthenticationManager);
@@ -82,6 +106,7 @@ public class SecurityConfiguration {
     http
         .authorizeExchange()
         .matchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
+        .matchers(EndpointRequest.to(InfoEndpoint.class)).permitAll()
         .anyExchange().hasAuthority(AuthorityConstants.ACTUATOR_ROLE_NAME);
 
     return http.build();

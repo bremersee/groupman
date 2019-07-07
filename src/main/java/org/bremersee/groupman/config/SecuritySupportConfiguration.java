@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,32 +26,51 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 
 /**
+ * The security support configuration.
+ *
  * @author Christian Bremer
  */
 @Configuration
 @EnableConfigurationProperties({OAuth2Properties.class})
 public class SecuritySupportConfiguration {
 
-  private OAuth2Properties oAuth2Properties;
+  private OAuth2Properties properties;
 
+  /**
+   * Instantiates a new security support configuration.
+   *
+   * @param properties the oAuth2 properties
+   */
   @Autowired
-  public SecuritySupportConfiguration(OAuth2Properties oAuth2Properties) {
-    this.oAuth2Properties = oAuth2Properties;
+  public SecuritySupportConfiguration(OAuth2Properties properties) {
+    this.properties = properties;
   }
 
+  /**
+   * Keycloak jwt converter.
+   *
+   * @return the keycloak reactive jwt converter
+   */
   @Bean
   public KeycloakReactiveJwtConverter keycloakJwtConverter() {
     return new KeycloakReactiveJwtConverter();
   }
 
+  /**
+   * Password flow reactive authentication manager.
+   *
+   * @param jwtDecoder           the jwt decoder
+   * @param keycloakJwtConverter the keycloak jwt converter
+   * @return the password flow reactive authentication manager
+   */
   @Bean
   public PasswordFlowReactiveAuthenticationManager passwordFlowReactiveAuthenticationManager(
       ReactiveJwtDecoder jwtDecoder,
       KeycloakReactiveJwtConverter keycloakJwtConverter) {
 
     final PasswordFlowReactiveAuthenticationManager manager
-        = new PasswordFlowReactiveAuthenticationManager(oAuth2Properties, jwtDecoder);
-    manager.setJwtAuthenticationConverter(keycloakJwtConverter);
+        = new PasswordFlowReactiveAuthenticationManager(properties, jwtDecoder);
+    manager.setJwtConverter(keycloakJwtConverter);
     return manager;
   }
 

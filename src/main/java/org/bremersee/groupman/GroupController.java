@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,8 @@ import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -45,6 +44,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * The group controller.
+ *
  * @author Christian Bremer
  */
 @RestController
@@ -54,9 +55,16 @@ public class GroupController
     extends AbstractGroupController
     implements GroupControllerApi {
 
-  @Autowired
-  public GroupController(GroupRepository groupRepository) {
-    super(groupRepository);
+  /**
+   * Instantiates a new group controller.
+   *
+   * @param groupRepository     the group repository
+   * @param groupLdapRepository the group ldap repository
+   */
+  public GroupController(
+      GroupRepository groupRepository,
+      GroupLdapRepository groupLdapRepository) {
+    super(groupRepository, groupLdapRepository);
   }
 
   @PostMapping(
@@ -69,17 +77,19 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .map(Authentication::getName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMap(currentUserName -> {
           group.setId(null);
           group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
           group.setModifiedAt(group.getCreatedAt());
           group.setCreatedBy(currentUserName);
           group.setSource(Source.INTERNAL);
-          group.addOwnersItem(currentUserName);
+          group.getOwners().add(currentUserName);
           return getGroupRepository().save(mapToGroupEntity(group));
         })
-        .map(this::mapToGroup);
+        .map(this::mapToGroup)
+        ;
   }
 
   @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})
@@ -100,7 +110,8 @@ public class GroupController
     return Mono.zip(
         ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName),
+            .cast(BremerseeAuthenticationToken.class)
+            .map(BremerseeAuthenticationToken::getPreferredName),
         getGroupRepository().findById(groupId)
             .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId))))
         .flatMap(
@@ -125,7 +136,8 @@ public class GroupController
     return Mono.zip(
         ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName),
+            .cast(BremerseeAuthenticationToken.class)
+            .map(BremerseeAuthenticationToken::getPreferredName),
         getGroupRepository().findById(groupId)
             .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId))))
         .flatMap(
@@ -135,10 +147,9 @@ public class GroupController
               if (existingGroup.getOwners().contains(currentUserName)) {
                 return getGroupRepository().delete(existingGroup);
               } else {
-                return Mono.empty();
+                return Mono.error(ServiceException.forbidden("Group", groupId));
               }
-            })
-        .switchIfEmpty(Mono.error(ServiceException.forbidden("Group", groupId)));
+            });
   }
 
   @GetMapping(path = "/f", produces = {MediaType.APPLICATION_JSON_VALUE})
@@ -154,7 +165,8 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .map(Authentication::getName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
             .findByOwnersIsContaining(currentUserName, SORT))
         .map(this::mapToGroup);
@@ -166,9 +178,11 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .map(Authentication::getName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
-            .findByOwnersIsContainingOrMembersIsContaining(currentUserName, currentUserName, SORT))
+            .findByOwnersIsContainingOrMembersIsContaining(currentUserName, currentUserName, SORT)
+            .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
         .map(this::mapToGroup);
   }
 
@@ -178,9 +192,11 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .map(Authentication::getName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
-            .findByMembersIsContaining(currentUserName, SORT))
+            .findByMembersIsContaining(currentUserName, SORT)
+            .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
         .map(this::mapToGroup);
   }
 
@@ -190,9 +206,11 @@ public class GroupController
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
-        .map(Authentication::getName)
+        .cast(BremerseeAuthenticationToken.class)
+        .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
-            .findByMembersIsContaining(currentUserName, SORT))
+            .findByMembersIsContaining(currentUserName, SORT)
+            .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
         .map(GroupEntity::getId).collect(Collectors.toSet());
   }
 

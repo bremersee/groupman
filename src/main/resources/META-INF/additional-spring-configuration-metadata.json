@@ -1,0 +1,31 @@
+{
+  "properties": [
+    {
+      "name": "bremersee.ldaptive.search-validator.search-request.base-dn",
+      "type": "java.lang.String",
+      "description": "The ldap base dn of the pool entry validator."
+    },
+    {
+      "name": "bremersee.ldaptive.search-validator.search-request.search-filter.filter",
+      "type": "java.lang.String",
+      "description": "The ldap filter of the pool entry validator."
+    },
+    {
+      "name": "bremersee.ldaptive.search-validator.search-request.size-limit",
+      "type": "java.lang.Integer",
+      "description": "The size of the result list.",
+      "defaultValue": 1
+    },
+    {
+      "name": "bremersee.ldaptive.search-validator.search-request.search-scope",
+      "type": "java.lang.String",
+      "description": "The search scope of the validation query.",
+      "defaultValue": "ONELEVEL"
+    },
+    {
+      "name": "bremersee.ldaptive.search-validator.search-request.return-attributes",
+      "type": "java.util.List",
+      "description": "The attributes to return."
+    }
+  ]
+}
