@@ -37,7 +37,7 @@ public class ApplicationTests {
   @Before
   public void setup() {
     // https://docs.spring.io/spring-security/site/docs/current/reference/html/test-webflux.html
-    //webTestClient.mutateWith(null)...
+    // webTestClient.mutateWith(null)...
     WebTestClient
         .bindToApplicationContext(this.context)
         // add Spring Security test Support

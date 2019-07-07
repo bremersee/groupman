@@ -69,8 +69,7 @@ public class SecurityConfiguration {
    */
   @Bean
   @Order(51)
-  public SecurityWebFilterChain oauth2ResourceServerFilterChain(
-      ServerHttpSecurity http) {
+  public SecurityWebFilterChain oauth2ResourceServerFilterChain(ServerHttpSecurity http) {
 
     log.info("msg=[Creating resource server filter chain.]");
     http
@@ -95,8 +94,7 @@ public class SecurityConfiguration {
    */
   @Bean
   @Order(52)
-  public SecurityWebFilterChain actuatorFilterChain(
-      ServerHttpSecurity http) {
+  public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
 
     log.info("msg=[Creating actuator filter chain.]");
     http

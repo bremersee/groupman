@@ -70,7 +70,7 @@ public class SecuritySupportConfiguration {
 
     final PasswordFlowReactiveAuthenticationManager manager
         = new PasswordFlowReactiveAuthenticationManager(properties, jwtDecoder);
-    manager.setJwtAuthenticationConverter(keycloakJwtConverter);
+    manager.setJwtConverter(keycloakJwtConverter);
     return manager;
   }
 
