@@ -156,7 +156,8 @@ public class GroupController
   @Override
   public Flux<Group> getGroupsByIds(
       @RequestParam(value = "id", required = false) List<String> ids) {
-    return super.getGroupEntitiesByIds(ids).map(this::mapToGroup);
+    return super.getGroupEntitiesByIds(ids)
+        .map(this::mapToGroup);
   }
 
   @GetMapping(path = "/f/editable", produces = {MediaType.APPLICATION_JSON_VALUE})
@@ -181,8 +182,9 @@ public class GroupController
         .cast(BremerseeAuthenticationToken.class)
         .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
-            .findByOwnersIsContainingOrMembersIsContaining(currentUserName, currentUserName, SORT)
+            .findByOwnersIsContainingOrMembersIsContaining(currentUserName, currentUserName)
             .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
+        .sort(COMPARATOR)
         .map(this::mapToGroup);
   }
 
@@ -195,8 +197,9 @@ public class GroupController
         .cast(BremerseeAuthenticationToken.class)
         .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
-            .findByMembersIsContaining(currentUserName, SORT)
+            .findByMembersIsContaining(currentUserName)
             .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
+        .sort(COMPARATOR)
         .map(this::mapToGroup);
   }
 
@@ -209,8 +212,9 @@ public class GroupController
         .cast(BremerseeAuthenticationToken.class)
         .map(BremerseeAuthenticationToken::getPreferredName)
         .flatMapMany(currentUserName -> getGroupRepository()
-            .findByMembersIsContaining(currentUserName, SORT)
+            .findByMembersIsContaining(currentUserName)
             .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
+        .sort(COMPARATOR)
         .map(GroupEntity::getId).collect(Collectors.toSet());
   }
 

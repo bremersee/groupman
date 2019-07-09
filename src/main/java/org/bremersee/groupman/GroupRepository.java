@@ -33,13 +33,11 @@ public interface GroupRepository extends ReactiveMongoRepository<GroupEntity, St
    *
    * @param owner  the owner
    * @param member the member
-   * @param sort   the sort order
    * @return the groups
    */
   Flux<GroupEntity> findByOwnersIsContainingOrMembersIsContaining(
       String owner,
-      String member,
-      Sort sort);
+      String member);
 
   /**
    * Find groups by owner.
@@ -54,18 +52,16 @@ public interface GroupRepository extends ReactiveMongoRepository<GroupEntity, St
    * Find groups by member.
    *
    * @param member the member
-   * @param sort   the sort order
    * @return the groups
    */
-  Flux<GroupEntity> findByMembersIsContaining(String member, Sort sort);
+  Flux<GroupEntity> findByMembersIsContaining(String member);
 
   /**
    * Find groups with the specified IDs.
    *
    * @param ids  the ids
-   * @param sort the sort
    * @return the groups
    */
-  Flux<GroupEntity> findByIdIn(List<String> ids, Sort sort);
+  Flux<GroupEntity> findByIdIn(List<String> ids);
 
 }

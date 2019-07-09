@@ -81,7 +81,10 @@ public class SecurityConfiguration {
 
     http
         .authorizeExchange()
-        .anyExchange().authenticated();
+        .pathMatchers("/api/admin/**")
+        .hasAuthority(AuthorityConstants.ADMIN_ROLE_NAME)
+        .anyExchange()
+        .authenticated();
 
     return http.build();
   }
