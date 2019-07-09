@@ -179,14 +179,17 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
   @SuppressWarnings("Duplicates")
   private Flux<LdapEntry> findGroupsByNames(
       final Collection<String> groupNames,
+      final boolean returnNoEntriesIfGroupNamesIsEmpty,
       final Connection conn) throws LdapException {
 
-    if (groupNames == null || groupNames.isEmpty()) {
+    if (returnNoEntriesIfGroupNamesIsEmpty && (groupNames == null || groupNames.isEmpty())) {
       return Flux.empty();
     }
-    final Set<String> names = new HashSet<>(groupNames);
+    final Set<String> names = groupNames != null ? new HashSet<>(groupNames) : new HashSet<>();
     final SearchFilter sf = new SearchFilter(properties.getGroupFindByNamesFilter(names.size()));
-    sf.setParameters(names.toArray(new String[0]));
+    if (!names.isEmpty()) {
+      sf.setParameters(names.toArray(new String[0]));
+    }
     final SearchResult searchResult = buildWithSearchFilter(
         sf, properties.getGroupBaseDn(), properties.getGroupSearchScope(), conn);
     final Collection<LdapEntry> entries = searchResult.getEntries();
@@ -220,6 +223,30 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
   }
 
   @Override
+  public Mono<Long> count() {
+    log.info("msg=[Counting groups]");
+    return findAll().collect(Collectors.counting());
+  }
+
+  @Override
+  public Flux<GroupEntity> findAll() {
+    log.info("msg=[Getting all groups]");
+    try (final Connection conn = getConnection()) {
+      return findGroupsByNames(null, false, conn)
+          .map(ldapEntry -> mapLdapEntryToGroupEntity(ldapEntry, conn))
+          .filter(
+              groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));
+
+    } catch (final LdapException e) {
+      final ServiceException se = internalServerError(
+          "Getting all groups failed.",
+          e);
+      log.error("msg=[Getting all groups.]", se);
+      throw se;
+    }
+  }
+
+  @Override
   public Mono<GroupEntity> findByName(String name) {
 
     log.info("msg=[Getting group by name] name=[{}]", name);
@@ -235,7 +262,6 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
           e);
       log.error("msg=[Getting group by name.]", se);
       throw se;
-
     }
   }
 
@@ -243,7 +269,7 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
   public Flux<GroupEntity> findByNameIn(List<String> names) {
     log.info("msg=[Getting groups by names] names=[{}]", names);
     try (final Connection conn = getConnection()) {
-      return findGroupsByNames(names, conn)
+      return findGroupsByNames(names, true, conn)
           .map(ldapEntry -> mapLdapEntryToGroupEntity(ldapEntry, conn))
           .filter(
               groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));

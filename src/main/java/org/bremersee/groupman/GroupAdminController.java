@@ -27,7 +27,6 @@ import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
 import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.util.StringUtils;
@@ -49,7 +48,6 @@ import reactor.core.publisher.Mono;
  * @author Christian Bremer
  */
 @RestController
-@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 @RequestMapping(path = "/api/admin/groups")
 @Slf4j
 public class GroupAdminController
@@ -72,7 +70,9 @@ public class GroupAdminController
   @Override
   public Flux<Group> findGroups() {
     return getGroupRepository()
-        .findAll(SORT)
+        .findAll()
+        .concatWith(getGroupLdapRepository().findAll())
+        .sort(COMPARATOR)
         .map(this::mapToGroup);
   }
 
@@ -155,8 +155,7 @@ public class GroupAdminController
   @Override
   public Flux<Group> findGroupsByIds(
       @RequestParam(value = "id", required = false) List<String> ids) {
-    return super.getGroupRepository()
-        .findByIdIn(ids, SORT)
+    return super.getGroupEntitiesByIds(ids)
         .map(this::mapToGroup);
   }
 

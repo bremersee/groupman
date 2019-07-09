@@ -20,12 +20,15 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Supplier;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.bremersee.comparator.ComparatorBuilder;
+import org.bremersee.comparator.spring.ComparatorSpringUtils;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.model.Group;
 import org.modelmapper.AbstractConverter;
@@ -46,6 +49,13 @@ abstract class AbstractGroupController {
    * The default sort order.
    */
   static final Sort SORT = Sort.by("name", "createdBy");
+
+  /**
+   * The default comparator.
+   */
+  static final Comparator<Object> COMPARATOR = ComparatorBuilder.builder()
+      .addAll(ComparatorSpringUtils.fromSort(SORT))
+      .build();
 
   @Getter(AccessLevel.PACKAGE)
   private final ModelMapper modelMapper = new ModelMapper();
@@ -105,8 +115,9 @@ abstract class AbstractGroupController {
    */
   Flux<GroupEntity> getGroupEntitiesByIds(final List<String> ids) {
     return groupRepository
-        .findByIdIn(ids == null ? Collections.emptyList() : ids, SORT)
-        .concatWith(groupLdapRepository.findByNameIn(ids));
+        .findByIdIn(ids == null ? Collections.emptyList() : ids)
+        .concatWith(groupLdapRepository.findByNameIn(ids))
+        .sort(COMPARATOR);
   }
 
   private Group prepareGroup(final Supplier<Group> groupSupplier) {

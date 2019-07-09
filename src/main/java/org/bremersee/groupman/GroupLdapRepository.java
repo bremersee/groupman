@@ -28,6 +28,24 @@ import reactor.core.publisher.Mono;
 public interface GroupLdapRepository {
 
   /**
+   * Count groups.
+   *
+   * @return the group size
+   */
+  default Mono<Long> count() {
+    return Mono.just(0L);
+  }
+
+  /**
+   * Find all groups.
+   *
+   * @return the flux
+   */
+  default Flux<GroupEntity> findAll() {
+    return Flux.empty();
+  }
+
+  /**
    * Find group by name.
    *
    * @param name the name
