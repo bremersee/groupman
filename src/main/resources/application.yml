@@ -61,6 +61,8 @@ bremersee:
         status: 409
         message: "Version is not up to date."
         code: "GRP:1001"
+  groupman:
+    local-role: "ROLE_LOCAL_USER"
 
 ---
 
