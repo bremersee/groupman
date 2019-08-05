@@ -102,8 +102,7 @@ public class GroupController
           group.getOwners().add(currentUserName);
           return getGroupRepository().save(mapToGroupEntity(group));
         })
-        .map(this::mapToGroup)
-        ;
+        .map(this::mapToGroup);
   }
 
   @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})

@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.bremersee</groupId>
     <artifactId>common-service-parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -21,8 +21,8 @@
 
   <properties>
     <start-class>org.bremersee.groupman.Application</start-class>
-    <common-base.version>1.2.0</common-base.version>
-    <comparator.version>2.0.2</comparator.version>
+    <common-base.version>1.2.1</common-base.version>
+    <comparator.version>2.0.3</comparator.version>
     <groupman-api-spring-reactive.version>1.1.1</groupman-api-spring-reactive.version>
     <modelmapper.version>2.3.0</modelmapper.version>
     <ldaptive.version>1.2.4</ldaptive.version>
