@@ -44,17 +44,16 @@ public class GaugeMetrics {
       GroupLdapRepository groupLdapRepository) {
 
     meterRegistry.gauge(
-        "groups.size",
+        "groups_size",
         Collections.singleton(Tag.of("storage", "mongodb")),
         groupRepository,
         this::groupsInDatabaseSize);
 
     meterRegistry.gauge(
-        "groups.size",
+        "groups_size",
         Collections.singleton(Tag.of("storage", "ldap")),
         groupLdapRepository,
         this::groupsInDirectorySize);
-
   }
 
   private double groupsInDatabaseSize(GroupRepository groupRepository) {
