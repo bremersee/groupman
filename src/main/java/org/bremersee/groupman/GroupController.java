@@ -28,9 +28,13 @@ import org.bremersee.groupman.api.GroupControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
 import org.bremersee.security.authentication.BremerseeAuthenticationToken;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 /**
  * The group controller.
@@ -55,16 +60,25 @@ public class GroupController
     extends AbstractGroupController
     implements GroupControllerApi {
 
+  private final GrantedAuthority localRole;
+
   /**
    * Instantiates a new group controller.
    *
    * @param groupRepository     the group repository
    * @param groupLdapRepository the group ldap repository
+   * @param localRole           if a role name is given, ldap will only be called, if the user has
+   *                            this role; if the role name is null or empty, ldap will always be
+   *                            called
    */
   public GroupController(
       GroupRepository groupRepository,
-      GroupLdapRepository groupLdapRepository) {
+      GroupLdapRepository groupLdapRepository,
+      @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole) {
     super(groupRepository, groupLdapRepository);
+    this.localRole = StringUtils.hasText(localRole)
+        ? new SimpleGrantedAuthority(localRole)
+        : null;
   }
 
   @PostMapping(
@@ -88,8 +102,7 @@ public class GroupController
           group.getOwners().add(currentUserName);
           return getGroupRepository().save(mapToGroupEntity(group));
         })
-        .map(this::mapToGroup)
-        ;
+        .map(this::mapToGroup);
   }
 
   @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})
@@ -180,10 +193,15 @@ public class GroupController
         .getContext()
         .map(SecurityContext::getAuthentication)
         .cast(BremerseeAuthenticationToken.class)
-        .map(BremerseeAuthenticationToken::getPreferredName)
-        .flatMapMany(currentUserName -> getGroupRepository()
-            .findByOwnersIsContainingOrMembersIsContaining(currentUserName, currentUserName)
-            .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
+        .map(authToken -> Tuples.of(
+            authToken.getPreferredName(),
+            localRole == null || authToken.getAuthorities().contains(localRole)))
+        .flatMapMany(tuple -> getGroupRepository()
+            .findByOwnersIsContainingOrMembersIsContaining(tuple.getT1(), tuple.getT1())
+            .concatWith(
+                tuple.getT2()
+                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())
+                    : Flux.empty()))
         .sort(COMPARATOR)
         .map(this::mapToGroup);
   }
@@ -195,10 +213,15 @@ public class GroupController
         .getContext()
         .map(SecurityContext::getAuthentication)
         .cast(BremerseeAuthenticationToken.class)
-        .map(BremerseeAuthenticationToken::getPreferredName)
-        .flatMapMany(currentUserName -> getGroupRepository()
-            .findByMembersIsContaining(currentUserName)
-            .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
+        .map(authToken -> Tuples.of(
+            authToken.getPreferredName(),
+            localRole == null || authToken.getAuthorities().contains(localRole)))
+        .flatMapMany(tuple -> getGroupRepository()
+            .findByMembersIsContaining(tuple.getT1())
+            .concatWith(
+                tuple.getT2()
+                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())
+                    : Flux.empty()))
         .sort(COMPARATOR)
         .map(this::mapToGroup);
   }
@@ -210,11 +233,15 @@ public class GroupController
         .getContext()
         .map(SecurityContext::getAuthentication)
         .cast(BremerseeAuthenticationToken.class)
-        .map(BremerseeAuthenticationToken::getPreferredName)
-        .flatMapMany(currentUserName -> getGroupRepository()
-            .findByMembersIsContaining(currentUserName)
-            .concatWith(getGroupLdapRepository().findByMembersIsContaining(currentUserName)))
-        .sort(COMPARATOR)
+        .map(authToken -> Tuples.of(
+            authToken.getPreferredName(),
+            localRole == null || authToken.getAuthorities().contains(localRole)))
+        .flatMapMany(tuple -> getGroupRepository()
+            .findByMembersIsContaining(tuple.getT1())
+            .concatWith(
+                tuple.getT2()
+                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())
+                    : Flux.empty()))
         .map(GroupEntity::getId).collect(Collectors.toSet());
   }
 
