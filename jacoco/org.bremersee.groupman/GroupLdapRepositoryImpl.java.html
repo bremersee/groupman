@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GroupLdapRepositoryImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman</a> &gt; <span class="el_source">GroupLdapRepositoryImpl.java</span></div><h1>GroupLdapRepositoryImpl.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman;
+
+import static org.bremersee.exception.ServiceException.internalServerError;
+import static org.bremersee.groupman.LdapEntryUtils.getAttributeValue;
+import static org.bremersee.groupman.LdapEntryUtils.whenTimeToDate;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
+import org.bremersee.exception.ServiceException;
+import org.bremersee.groupman.model.Source;
+import org.ldaptive.Connection;
+import org.ldaptive.ConnectionFactory;
+import org.ldaptive.LdapAttribute;
+import org.ldaptive.LdapEntry;
+import org.ldaptive.LdapException;
+import org.ldaptive.SearchFilter;
+import org.ldaptive.SearchOperation;
+import org.ldaptive.SearchRequest;
+import org.ldaptive.SearchResult;
+import org.ldaptive.SearchScope;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+/**
+ * The group ldap repository implementation.
+ *
+ * @author Christian Bremer
+ */
+@Profile(&quot;ldap&quot;)
+@Component
+<span class="nc" id="L57">@Slf4j</span>
+public class GroupLdapRepositoryImpl implements GroupLdapRepository {
+
+  private static final String WHEN_CREATED = &quot;whenCreated&quot;;
+
+  private static final String WHEN_CHANGED = &quot;whenChanged&quot;;
+
+  private final DomainControllerSettings properties;
+
+  private final ConnectionFactory connectionFactory;
+
+  /**
+   * Instantiates a new group ldap repository.
+   *
+   * @param properties        the properties
+   * @param connectionFactory the connection factory
+   */
+  public GroupLdapRepositoryImpl(
+      DomainControllerSettings properties,
+<span class="nc" id="L76">      ConnectionFactory connectionFactory) {</span>
+<span class="nc" id="L77">    this.properties = properties;</span>
+<span class="nc" id="L78">    this.connectionFactory = connectionFactory;</span>
+<span class="nc" id="L79">  }</span>
+
+  private GroupEntity mapLdapEntryToGroupEntity(
+      @NotNull final LdapEntry ldapEntry,
+      @NotNull final Connection conn) {
+<span class="nc" id="L84">    final GroupEntity group = new GroupEntity();</span>
+<span class="nc" id="L85">    group.setCreatedAt(</span>
+<span class="nc" id="L86">        whenTimeToDate(getAttributeValue(ldapEntry, WHEN_CREATED, null)));</span>
+<span class="nc" id="L87">    group.setCreatedBy(properties.getAdminName());</span>
+<span class="nc" id="L88">    group.setDescription(</span>
+        LdapEntryUtils
+<span class="nc" id="L90">            .getAttributeValue(ldapEntry, properties.getGroupDescriptionAttribute(), null));</span>
+<span class="nc" id="L91">    group.setId(</span>
+<span class="nc" id="L92">        LdapEntryUtils.getAttributeValue(ldapEntry, properties.getGroupNameAttribute(), null));</span>
+<span class="nc" id="L93">    group.setModifiedAt(</span>
+<span class="nc" id="L94">        whenTimeToDate(getAttributeValue(ldapEntry, WHEN_CHANGED, null)));</span>
+<span class="nc" id="L95">    group.setName(getAttributeValue(ldapEntry, properties.getGroupNameAttribute(), null));</span>
+<span class="nc" id="L96">    group.setOwners(Collections.singleton(properties.getAdminName()));</span>
+<span class="nc" id="L97">    group.setSource(Source.LDAP);</span>
+<span class="nc" id="L98">    group.setVersion(1L);</span>
+<span class="nc" id="L99">    LdapAttribute membersAttr = ldapEntry.getAttribute(properties.getGroupMemberAttr());</span>
+<span class="nc bnc" id="L100" title="All 4 branches missed.">    if (membersAttr != null &amp;&amp; membersAttr.getStringValues() != null) {</span>
+<span class="nc" id="L101">      group.setMembers(</span>
+          membersAttr
+<span class="nc" id="L103">              .getStringValues()</span>
+<span class="nc" id="L104">              .stream()</span>
+<span class="nc" id="L105">              .map(member -&gt; getMemberName(member, conn))</span>
+<span class="nc" id="L106">              .filter(Objects::nonNull)</span>
+<span class="nc" id="L107">              .collect(Collectors.toSet()));</span>
+    }
+<span class="nc" id="L109">    return group;</span>
+  }
+
+  private String getMemberName(
+      final String memberValue, @NotNull final Connection conn) {
+<span class="nc bnc" id="L114" title="All 4 branches missed.">    if (memberValue == null || !properties.isMemberDn()) {</span>
+<span class="nc" id="L115">      return memberValue;</span>
+    }
+<span class="nc bnc" id="L117" title="All 2 branches missed.">    if (properties.getMemberNameAttribute().equals(properties.getUserRdn())) {</span>
+<span class="nc" id="L118">      int a = memberValue.indexOf('=');</span>
+<span class="nc" id="L119">      int b = memberValue.indexOf(',');</span>
+<span class="nc bnc" id="L120" title="All 4 branches missed.">      if (a &gt; -1 &amp;&amp; a &lt; b) {</span>
+<span class="nc" id="L121">        return memberValue.substring(a + 1, b);</span>
+      }
+    }
+    try {
+<span class="nc" id="L125">      final SearchRequest searchRequest = SearchRequest.newObjectScopeSearchRequest(</span>
+<span class="nc" id="L126">          memberValue, new String[]{properties.getMemberNameAttribute()});</span>
+<span class="nc" id="L127">      final SearchResult result = new SearchOperation(conn).execute(searchRequest).getResult();</span>
+<span class="nc" id="L128">      final LdapEntry ldapEntry = result.getEntry();</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">      if (ldapEntry != null) {</span>
+<span class="nc" id="L130">        return LdapEntryUtils</span>
+<span class="nc" id="L131">            .getAttributeValue(result.getEntry(), properties.getMemberNameAttribute(), null);</span>
+      }
+<span class="nc" id="L133">      log.warn(&quot;msg=[Member was not found. Returning null.] member=[{}]&quot;, memberValue);</span>
+<span class="nc" id="L134">      return null;</span>
+
+<span class="nc" id="L136">    } catch (LdapException e) {</span>
+<span class="nc" id="L137">      final ServiceException se = internalServerError(</span>
+          &quot;Getting member [&quot; + memberValue + &quot;] failed.&quot;,
+          e);
+<span class="nc" id="L140">      log.error(&quot;msg=[Getting member name.&quot;, se);</span>
+<span class="nc" id="L141">      throw se;</span>
+    }
+  }
+
+  private Connection getConnection() throws LdapException {
+<span class="nc" id="L146">    final Connection c = this.connectionFactory.getConnection();</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">    if (!c.isOpen()) {</span>
+<span class="nc" id="L148">      c.open();</span>
+    }
+<span class="nc" id="L150">    return c;</span>
+  }
+
+  private SearchResult buildWithSearchFilter(
+      SearchFilter sf,
+      String baseDn,
+      SearchScope searchScope,
+      Connection conn) throws LdapException {
+<span class="nc" id="L158">    final SearchRequest sr = new SearchRequest(baseDn, sf);</span>
+<span class="nc" id="L159">    sr.setSearchScope(searchScope);</span>
+<span class="nc" id="L160">    final SearchOperation so = new SearchOperation(conn);</span>
+<span class="nc" id="L161">    return so.execute(sr).getResult();</span>
+  }
+
+  private Mono&lt;LdapEntry&gt; findGroupByName(
+      final String groupName,
+      final Connection conn) throws LdapException {
+
+<span class="nc bnc" id="L168" title="All 2 branches missed.">    if (!StringUtils.hasText(groupName)) {</span>
+<span class="nc" id="L169">      return Mono.empty();</span>
+    }
+<span class="nc" id="L171">    final SearchFilter sf = new SearchFilter(properties.getGroupFindOneFilter());</span>
+<span class="nc" id="L172">    sf.setParameters(new Object[]{groupName});</span>
+<span class="nc" id="L173">    final SearchResult searchResult = buildWithSearchFilter(</span>
+<span class="nc" id="L174">        sf, properties.getGroupBaseDn(), properties.getGroupSearchScope(), conn);</span>
+<span class="nc" id="L175">    final LdapEntry ldapEntry = searchResult.getEntry();</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">    return ldapEntry == null ? Mono.empty() : Mono.just(ldapEntry);</span>
+  }
+
+  @SuppressWarnings(&quot;Duplicates&quot;)
+  private Flux&lt;LdapEntry&gt; findGroupsByNames(
+      final Collection&lt;String&gt; groupNames,
+      final boolean returnNoEntriesIfGroupNamesIsEmpty,
+      final Connection conn) throws LdapException {
+
+<span class="nc bnc" id="L185" title="All 6 branches missed.">    if (returnNoEntriesIfGroupNamesIsEmpty &amp;&amp; (groupNames == null || groupNames.isEmpty())) {</span>
+<span class="nc" id="L186">      return Flux.empty();</span>
+    }
+<span class="nc bnc" id="L188" title="All 2 branches missed.">    final Set&lt;String&gt; names = groupNames != null ? new HashSet&lt;&gt;(groupNames) : new HashSet&lt;&gt;();</span>
+<span class="nc" id="L189">    final SearchFilter sf = new SearchFilter(properties.getGroupFindByNamesFilter(names.size()));</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">    if (!names.isEmpty()) {</span>
+<span class="nc" id="L191">      sf.setParameters(names.toArray(new String[0]));</span>
+    }
+<span class="nc" id="L193">    final SearchResult searchResult = buildWithSearchFilter(</span>
+<span class="nc" id="L194">        sf, properties.getGroupBaseDn(), properties.getGroupSearchScope(), conn);</span>
+<span class="nc" id="L195">    final Collection&lt;LdapEntry&gt; entries = searchResult.getEntries();</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">    return entries == null ? Flux.empty() : Flux.just(entries.toArray(new LdapEntry[0]));</span>
+  }
+
+  @SuppressWarnings(&quot;Duplicates&quot;)
+  private Flux&lt;LdapEntry&gt; findGroupsByMember(
+      final String member,
+      final Connection conn) throws LdapException {
+
+<span class="nc" id="L204">    log.debug(&quot;msg=[Find groups by member.] member=[{}]&quot;, member);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">    if (!StringUtils.hasText(member)) {</span>
+<span class="nc" id="L206">      return Flux.empty();</span>
+    }
+<span class="nc" id="L208">    log.debug(&quot;msg=[Find groups by member with filter and baseDn.] filter=[{}], baseDn=[{}]&quot;,</span>
+<span class="nc" id="L209">        properties.getGroupFindByMemberContainsFilter(), properties.getGroupBaseDn());</span>
+<span class="nc" id="L210">    final SearchFilter sf = new SearchFilter(properties.getGroupFindByMemberContainsFilter());</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">    if (properties.isMemberDn()) {</span>
+<span class="nc" id="L212">      final String userDn = LdapEntryUtils.createDn(</span>
+<span class="nc" id="L213">          properties.getUserRdn(), member, properties.getUserBaseDn());</span>
+<span class="nc" id="L214">      log.debug(&quot;msg=[Find groups by member.] userDn=[{}]&quot;, userDn);</span>
+<span class="nc" id="L215">      sf.setParameters(new String[]{userDn});</span>
+<span class="nc" id="L216">    } else {</span>
+<span class="nc" id="L217">      sf.setParameters(new String[]{member});</span>
+    }
+<span class="nc" id="L219">    final SearchResult searchResult = buildWithSearchFilter(</span>
+<span class="nc" id="L220">        sf, properties.getGroupBaseDn(), properties.getGroupSearchScope(), conn);</span>
+<span class="nc" id="L221">    final Collection&lt;LdapEntry&gt; entries = searchResult.getEntries();</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">    return entries == null ? Flux.empty() : Flux.just(entries.toArray(new LdapEntry[0]));</span>
+  }
+
+  @Override
+  public Mono&lt;Long&gt; count() {
+<span class="nc" id="L227">    log.info(&quot;msg=[Counting groups]&quot;);</span>
+<span class="nc" id="L228">    return findAll().collect(Collectors.counting());</span>
+  }
+
+  @Override
+  public Flux&lt;GroupEntity&gt; findAll() {
+<span class="nc" id="L233">    log.info(&quot;msg=[Getting all groups]&quot;);</span>
+<span class="nc" id="L234">    try (final Connection conn = getConnection()) {</span>
+<span class="nc" id="L235">      return findGroupsByNames(null, false, conn)</span>
+<span class="nc" id="L236">          .map(ldapEntry -&gt; mapLdapEntryToGroupEntity(ldapEntry, conn))</span>
+<span class="nc" id="L237">          .filter(</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">              groupEntity -&gt; !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));</span>
+
+<span class="nc" id="L240">    } catch (final LdapException e) {</span>
+<span class="nc" id="L241">      final ServiceException se = internalServerError(</span>
+          &quot;Getting all groups failed.&quot;,
+          e);
+<span class="nc" id="L244">      log.error(&quot;msg=[Getting all groups.]&quot;, se);</span>
+<span class="nc" id="L245">      throw se;</span>
+    }
+  }
+
+  @Override
+  public Mono&lt;GroupEntity&gt; findByName(String name) {
+
+<span class="nc" id="L252">    log.info(&quot;msg=[Getting group by name] name=[{}]&quot;, name);</span>
+<span class="nc" id="L253">    try (final Connection conn = getConnection()) {</span>
+<span class="nc" id="L254">      return findGroupByName(name, conn)</span>
+<span class="nc" id="L255">          .map(ldapEntry -&gt; mapLdapEntryToGroupEntity(ldapEntry, conn))</span>
+<span class="nc" id="L256">          .filter(</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">              groupEntity -&gt; !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));</span>
+
+<span class="nc" id="L259">    } catch (final LdapException e) {</span>
+<span class="nc" id="L260">      final ServiceException se = internalServerError(</span>
+          &quot;Getting group by name failed.&quot;,
+          e);
+<span class="nc" id="L263">      log.error(&quot;msg=[Getting group by name.]&quot;, se);</span>
+<span class="nc" id="L264">      throw se;</span>
+    }
+  }
+
+  @Override
+  public Flux&lt;GroupEntity&gt; findByNameIn(List&lt;String&gt; names) {
+<span class="nc" id="L270">    log.info(&quot;msg=[Getting groups by names] names=[{}]&quot;, names);</span>
+<span class="nc" id="L271">    try (final Connection conn = getConnection()) {</span>
+<span class="nc" id="L272">      return findGroupsByNames(names, true, conn)</span>
+<span class="nc" id="L273">          .map(ldapEntry -&gt; mapLdapEntryToGroupEntity(ldapEntry, conn))</span>
+<span class="nc" id="L274">          .filter(</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">              groupEntity -&gt; !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));</span>
+
+<span class="nc" id="L277">    } catch (final LdapException e) {</span>
+<span class="nc" id="L278">      final ServiceException se = internalServerError(</span>
+          &quot;Getting groups by names failed.&quot;,
+          e);
+<span class="nc" id="L281">      log.error(&quot;msg=[Getting groups by names.]&quot;, se);</span>
+<span class="nc" id="L282">      throw se;</span>
+    }
+  }
+
+  @Override
+  public Flux&lt;GroupEntity&gt; findByMembersIsContaining(String name) {
+
+<span class="nc" id="L289">    log.info(&quot;msg=[Getting groups by member contains name] name=[{}]&quot;, name);</span>
+<span class="nc" id="L290">    try (final Connection conn = getConnection()) {</span>
+<span class="nc" id="L291">      return findGroupsByMember(name, conn)</span>
+<span class="nc" id="L292">          .map(ldapEntry -&gt; mapLdapEntryToGroupEntity(ldapEntry, conn))</span>
+<span class="nc" id="L293">          .filter(</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">              groupEntity -&gt; !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));</span>
+
+<span class="nc" id="L296">    } catch (final LdapException e) {</span>
+<span class="nc" id="L297">      final ServiceException se = internalServerError(</span>
+          &quot;Getting groups by names failed.&quot;,
+          e);
+<span class="nc" id="L300">      log.error(&quot;msg=[Getting groups by names.]&quot;, se);</span>
+<span class="nc" id="L301">      throw se;</span>
+    }
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>

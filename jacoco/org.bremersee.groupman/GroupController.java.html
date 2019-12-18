@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GroupController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman</a> &gt; <span class="el_source">GroupController.java</span></div><h1>GroupController.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.bremersee.exception.ServiceException;
+import org.bremersee.groupman.api.GroupControllerApi;
+import org.bremersee.groupman.model.Group;
+import org.bremersee.groupman.model.Source;
+import org.bremersee.security.authentication.BremerseeAuthenticationToken;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
+
+/**
+ * The group controller.
+ *
+ * @author Christian Bremer
+ */
+@RestController
+@RequestMapping(path = &quot;/api/groups&quot;)
+<span class="fc" id="L58">@Slf4j</span>
+public class GroupController
+    extends AbstractGroupController
+    implements GroupControllerApi {
+
+  private final GrantedAuthority localRole;
+
+  /**
+   * Instantiates a new group controller.
+   *
+   * @param groupRepository     the group repository
+   * @param groupLdapRepository the group ldap repository
+   * @param localRole           if a role name is given, ldap will only be called, if the user has
+   *                            this role; if the role name is null or empty, ldap will always be
+   *                            called
+   */
+  public GroupController(
+      GroupRepository groupRepository,
+      GroupLdapRepository groupLdapRepository,
+      @Value(&quot;${bremersee.groupman.local-role:ROLE_LOCAL_USER}&quot;) String localRole) {
+<span class="fc" id="L78">    super(groupRepository, groupLdapRepository);</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">    this.localRole = StringUtils.hasText(localRole)</span>
+        ? new SimpleGrantedAuthority(localRole)
+        : null;
+<span class="fc" id="L82">  }</span>
+
+  @PostMapping(
+      produces = {MediaType.APPLICATION_JSON_VALUE},
+      consumes = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Mono&lt;Group&gt; createGroup(
+      @Valid @RequestBody Group group) {
+
+<span class="nc" id="L91">    return ReactiveSecurityContextHolder</span>
+<span class="nc" id="L92">        .getContext()</span>
+<span class="nc" id="L93">        .map(SecurityContext::getAuthentication)</span>
+<span class="nc" id="L94">        .cast(BremerseeAuthenticationToken.class)</span>
+<span class="nc" id="L95">        .map(BremerseeAuthenticationToken::getPreferredName)</span>
+<span class="nc" id="L96">        .flatMap(currentUserName -&gt; {</span>
+<span class="nc" id="L97">          group.setId(null);</span>
+<span class="nc" id="L98">          group.setCreatedAt(OffsetDateTime.now(ZoneId.of(&quot;UTC&quot;)));</span>
+<span class="nc" id="L99">          group.setModifiedAt(group.getCreatedAt());</span>
+<span class="nc" id="L100">          group.setCreatedBy(currentUserName);</span>
+<span class="nc" id="L101">          group.setSource(Source.INTERNAL);</span>
+<span class="nc" id="L102">          group.getOwners().add(currentUserName);</span>
+<span class="nc" id="L103">          return getGroupRepository().save(mapToGroupEntity(group));</span>
+        })
+<span class="nc" id="L105">        .map(this::mapToGroup);</span>
+  }
+
+  @GetMapping(path = &quot;/{id}&quot;, produces = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Mono&lt;Group&gt; getGroupById(@PathVariable(value = &quot;id&quot;) String groupId) {
+<span class="nc" id="L111">    return super.getGroupEntityById(groupId)</span>
+<span class="nc" id="L112">        .map(this::mapToGroup);</span>
+  }
+
+  @PutMapping(path = &quot;/{id}&quot;,
+      produces = {MediaType.APPLICATION_JSON_VALUE},
+      consumes = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Mono&lt;Group&gt; updateGroup(
+      @PathVariable(value = &quot;id&quot;) String groupId,
+      @Valid @RequestBody Group group) {
+
+<span class="nc" id="L123">    return Mono.zip(</span>
+<span class="nc" id="L124">        ReactiveSecurityContextHolder.getContext()</span>
+<span class="nc" id="L125">            .map(SecurityContext::getAuthentication)</span>
+<span class="nc" id="L126">            .cast(BremerseeAuthenticationToken.class)</span>
+<span class="nc" id="L127">            .map(BremerseeAuthenticationToken::getPreferredName),</span>
+<span class="nc" id="L128">        getGroupRepository().findById(groupId)</span>
+<span class="nc" id="L129">            .switchIfEmpty(Mono.error(ServiceException.notFound(&quot;Group&quot;, groupId))))</span>
+<span class="nc" id="L130">        .flatMap(</span>
+            userNameAndGroupEntity -&gt; {
+<span class="nc" id="L132">              String currentUserName = userNameAndGroupEntity.getT1();</span>
+<span class="nc" id="L133">              GroupEntity existingGroup = userNameAndGroupEntity.getT2();</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">              if (existingGroup.getOwners().contains(currentUserName)) {</span>
+<span class="nc" id="L135">                return getGroupRepository().save(updateGroup(group, () -&gt; existingGroup));</span>
+              } else {
+<span class="nc" id="L137">                return Mono.empty();</span>
+              }
+            })
+<span class="nc" id="L140">        .switchIfEmpty(Mono.error(ServiceException.forbidden(&quot;Group&quot;, groupId)))</span>
+<span class="nc" id="L141">        .map(this::mapToGroup);</span>
+  }
+
+  @DeleteMapping(&quot;/{id}&quot;)
+  @Override
+  public Mono&lt;Void&gt; deleteGroup(
+      @PathVariable(value = &quot;id&quot;) String groupId) {
+
+<span class="nc" id="L149">    return Mono.zip(</span>
+<span class="nc" id="L150">        ReactiveSecurityContextHolder.getContext()</span>
+<span class="nc" id="L151">            .map(SecurityContext::getAuthentication)</span>
+<span class="nc" id="L152">            .cast(BremerseeAuthenticationToken.class)</span>
+<span class="nc" id="L153">            .map(BremerseeAuthenticationToken::getPreferredName),</span>
+<span class="nc" id="L154">        getGroupRepository().findById(groupId)</span>
+<span class="nc" id="L155">            .switchIfEmpty(Mono.error(ServiceException.notFound(&quot;Group&quot;, groupId))))</span>
+<span class="nc" id="L156">        .flatMap(</span>
+            userNameAndGroupEntity -&gt; {
+<span class="nc" id="L158">              String currentUserName = userNameAndGroupEntity.getT1();</span>
+<span class="nc" id="L159">              GroupEntity existingGroup = userNameAndGroupEntity.getT2();</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">              if (existingGroup.getOwners().contains(currentUserName)) {</span>
+<span class="nc" id="L161">                return getGroupRepository().delete(existingGroup);</span>
+              } else {
+<span class="nc" id="L163">                return Mono.error(ServiceException.forbidden(&quot;Group&quot;, groupId));</span>
+              }
+            });
+  }
+
+  @GetMapping(path = &quot;/f&quot;, produces = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Flux&lt;Group&gt; getGroupsByIds(
+      @RequestParam(value = &quot;id&quot;, required = false) List&lt;String&gt; ids) {
+<span class="nc" id="L172">    return super.getGroupEntitiesByIds(ids)</span>
+<span class="nc" id="L173">        .map(this::mapToGroup);</span>
+  }
+
+  @GetMapping(path = &quot;/f/editable&quot;, produces = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Flux&lt;Group&gt; getEditableGroups() {
+<span class="nc" id="L179">    return ReactiveSecurityContextHolder</span>
+<span class="nc" id="L180">        .getContext()</span>
+<span class="nc" id="L181">        .map(SecurityContext::getAuthentication)</span>
+<span class="nc" id="L182">        .cast(BremerseeAuthenticationToken.class)</span>
+<span class="nc" id="L183">        .map(BremerseeAuthenticationToken::getPreferredName)</span>
+<span class="nc" id="L184">        .flatMapMany(currentUserName -&gt; getGroupRepository()</span>
+<span class="nc" id="L185">            .findByOwnersIsContaining(currentUserName, SORT))</span>
+<span class="nc" id="L186">        .map(this::mapToGroup);</span>
+  }
+
+  @GetMapping(path = &quot;/f/usable&quot;, produces = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Flux&lt;Group&gt; getUsableGroups() {
+<span class="nc" id="L192">    return ReactiveSecurityContextHolder</span>
+<span class="nc" id="L193">        .getContext()</span>
+<span class="nc" id="L194">        .map(SecurityContext::getAuthentication)</span>
+<span class="nc" id="L195">        .cast(BremerseeAuthenticationToken.class)</span>
+<span class="nc" id="L196">        .map(authToken -&gt; Tuples.of(</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">            authToken.getPreferredName(),</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">            localRole == null || authToken.getAuthorities().contains(localRole)))</span>
+<span class="nc" id="L199">        .flatMapMany(tuple -&gt; getGroupRepository()</span>
+<span class="nc" id="L200">            .findByOwnersIsContainingOrMembersIsContaining(tuple.getT1(), tuple.getT1())</span>
+<span class="nc" id="L201">            .concatWith(</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">                tuple.getT2()</span>
+<span class="nc" id="L203">                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())</span>
+<span class="nc" id="L204">                    : Flux.empty()))</span>
+<span class="nc" id="L205">        .sort(COMPARATOR)</span>
+<span class="nc" id="L206">        .map(this::mapToGroup);</span>
+  }
+
+  @GetMapping(path = &quot;/f/membership&quot;, produces = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Flux&lt;Group&gt; getMembership() {
+<span class="nc" id="L212">    return ReactiveSecurityContextHolder</span>
+<span class="nc" id="L213">        .getContext()</span>
+<span class="nc" id="L214">        .map(SecurityContext::getAuthentication)</span>
+<span class="nc" id="L215">        .cast(BremerseeAuthenticationToken.class)</span>
+<span class="nc" id="L216">        .map(authToken -&gt; Tuples.of(</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">            authToken.getPreferredName(),</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">            localRole == null || authToken.getAuthorities().contains(localRole)))</span>
+<span class="nc" id="L219">        .flatMapMany(tuple -&gt; getGroupRepository()</span>
+<span class="nc" id="L220">            .findByMembersIsContaining(tuple.getT1())</span>
+<span class="nc" id="L221">            .concatWith(</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">                tuple.getT2()</span>
+<span class="nc" id="L223">                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())</span>
+<span class="nc" id="L224">                    : Flux.empty()))</span>
+<span class="nc" id="L225">        .sort(COMPARATOR)</span>
+<span class="nc" id="L226">        .map(this::mapToGroup);</span>
+  }
+
+  @GetMapping(path = &quot;/f/membership-ids&quot;, produces = {MediaType.APPLICATION_JSON_VALUE})
+  @Override
+  public Mono&lt;Set&lt;String&gt;&gt; getMembershipIds() {
+<span class="nc" id="L232">    return ReactiveSecurityContextHolder</span>
+<span class="nc" id="L233">        .getContext()</span>
+<span class="nc" id="L234">        .map(SecurityContext::getAuthentication)</span>
+<span class="nc" id="L235">        .cast(BremerseeAuthenticationToken.class)</span>
+<span class="nc" id="L236">        .map(authToken -&gt; Tuples.of(</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">            authToken.getPreferredName(),</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">            localRole == null || authToken.getAuthorities().contains(localRole)))</span>
+<span class="nc" id="L239">        .flatMapMany(tuple -&gt; getGroupRepository()</span>
+<span class="nc" id="L240">            .findByMembersIsContaining(tuple.getT1())</span>
+<span class="nc" id="L241">            .concatWith(</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">                tuple.getT2()</span>
+<span class="nc" id="L243">                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())</span>
+<span class="nc" id="L244">                    : Flux.empty()))</span>
+<span class="nc" id="L245">        .map(GroupEntity::getId).collect(Collectors.toSet());</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LdaptiveConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman.config</a> &gt; <span class="el_source">LdaptiveConfiguration.java</span></div><h1>LdaptiveConfiguration.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman.config;
+
+import java.time.Duration;
+import lombok.extern.slf4j.Slf4j;
+import org.ldaptive.BindConnectionInitializer;
+import org.ldaptive.ConnectionConfig;
+import org.ldaptive.ConnectionFactory;
+import org.ldaptive.ConnectionInitializer;
+import org.ldaptive.Credential;
+import org.ldaptive.DefaultConnectionFactory;
+import org.ldaptive.pool.BlockingConnectionPool;
+import org.ldaptive.pool.ConnectionPool;
+import org.ldaptive.pool.IdlePruneStrategy;
+import org.ldaptive.pool.PoolConfig;
+import org.ldaptive.pool.PooledConnectionFactory;
+import org.ldaptive.pool.PruneStrategy;
+import org.ldaptive.pool.SearchValidator;
+import org.ldaptive.ssl.CredentialConfig;
+import org.ldaptive.ssl.SslConfig;
+import org.ldaptive.ssl.X509CredentialConfig;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.util.StringUtils;
+
+/**
+ * The ldaptive configuration.
+ *
+ * @author Christian Bremer
+ */
+@Profile(&quot;ldap&quot;)
+@Configuration
+@EnableConfigurationProperties(LdaptiveProperties.class)
+<span class="nc" id="L51">@Slf4j</span>
+public class LdaptiveConfiguration {
+
+  private final LdaptiveProperties properties;
+
+  /**
+   * Instantiates a new ldaptive configuration.
+   *
+   * @param ldaptiveProperties the ldaptive properties
+   */
+<span class="nc" id="L61">  public LdaptiveConfiguration(LdaptiveProperties ldaptiveProperties) {</span>
+<span class="nc" id="L62">    this.properties = ldaptiveProperties;</span>
+<span class="nc" id="L63">  }</span>
+
+  /**
+   * Builds connection factory bean.
+   *
+   * @return the connection factory bean
+   */
+  @Bean
+  public ConnectionFactory connectionFactory() {
+
+<span class="nc bnc" id="L73" title="All 2 branches missed.">    if (properties.isPooled()) {</span>
+<span class="nc" id="L74">      return pooledConnectionFactory();</span>
+    }
+<span class="nc" id="L76">    return defaultConnectionFactory();</span>
+  }
+
+  private DefaultConnectionFactory defaultConnectionFactory() {
+<span class="nc" id="L80">    DefaultConnectionFactory factory = new DefaultConnectionFactory();</span>
+<span class="nc" id="L81">    factory.setConnectionConfig(connectionConfig());</span>
+<span class="nc" id="L82">    return factory;</span>
+  }
+
+  private ConnectionConfig connectionConfig() {
+
+<span class="nc" id="L87">    ConnectionConfig cc = new ConnectionConfig();</span>
+<span class="nc" id="L88">    cc.setLdapUrl(properties.getLdapUrl());</span>
+
+<span class="nc bnc" id="L90" title="All 2 branches missed.">    if (properties.getConnectTimeout() &gt; 0L) {</span>
+<span class="nc" id="L91">      cc.setConnectTimeout(Duration.ofMillis(properties.getConnectTimeout()));</span>
+    }
+<span class="nc bnc" id="L93" title="All 2 branches missed.">    if (properties.getResponseTimeout() &gt; 0L) {</span>
+<span class="nc" id="L94">      cc.setResponseTimeout(Duration.ofMillis(properties.getResponseTimeout()));</span>
+    }
+
+<span class="nc" id="L97">    cc.setUseSSL(properties.isUseSsl());</span>
+<span class="nc" id="L98">    cc.setUseStartTLS(properties.isUseStartTls());</span>
+
+<span class="nc bnc" id="L100" title="All 6 branches missed.">    if ((properties.isUseSsl() || properties.isUseStartTls()) &amp;&amp; hasSslConfig()) {</span>
+<span class="nc" id="L101">      cc.setSslConfig(sslConfig());</span>
+    }
+
+    // binds all operations to a dn
+<span class="nc bnc" id="L105" title="All 2 branches missed.">    if (StringUtils.hasText(properties.getBindDn())) {</span>
+<span class="nc" id="L106">      cc.setConnectionInitializer(connectionInitializer());</span>
+    }
+
+<span class="nc" id="L109">    return cc;</span>
+  }
+
+  private SslConfig sslConfig() {
+<span class="nc" id="L113">    SslConfig sc = new SslConfig();</span>
+<span class="nc" id="L114">    sc.setCredentialConfig(sslCredentialConfig());</span>
+<span class="nc" id="L115">    return sc;</span>
+  }
+
+  private CredentialConfig sslCredentialConfig() {
+<span class="nc" id="L119">    X509CredentialConfig x509 = new X509CredentialConfig();</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">    if (StringUtils.hasText(properties.getAuthenticationCertificate())) {</span>
+<span class="nc" id="L121">      x509.setAuthenticationCertificate(properties.getAuthenticationCertificate());</span>
+    }
+<span class="nc bnc" id="L123" title="All 2 branches missed.">    if (StringUtils.hasText(properties.getAuthenticationKey())) {</span>
+<span class="nc" id="L124">      x509.setAuthenticationKey(properties.getAuthenticationKey());</span>
+    }
+<span class="nc bnc" id="L126" title="All 2 branches missed.">    if (StringUtils.hasText(properties.getTrustCertificates())) {</span>
+<span class="nc" id="L127">      x509.setTrustCertificates(properties.getTrustCertificates());</span>
+    }
+<span class="nc" id="L129">    return x509;</span>
+  }
+
+  private boolean hasSslConfig() {
+<span class="nc bnc" id="L133" title="All 2 branches missed.">    return StringUtils.hasText(properties.getTrustCertificates())</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        || StringUtils.hasText(properties.getAuthenticationCertificate())</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        || StringUtils.hasText(properties.getAuthenticationKey());</span>
+  }
+
+  private ConnectionInitializer connectionInitializer() {
+    // sasl is not supported at the moment
+<span class="nc" id="L140">    BindConnectionInitializer bci = new BindConnectionInitializer();</span>
+<span class="nc" id="L141">    bci.setBindDn(properties.getBindDn());</span>
+<span class="nc" id="L142">    bci.setBindCredential(new Credential(properties.getBindCredential()));</span>
+<span class="nc" id="L143">    return bci;</span>
+  }
+
+  private PooledConnectionFactory pooledConnectionFactory() {
+<span class="nc" id="L147">    PooledConnectionFactory factory = new PooledConnectionFactory();</span>
+<span class="nc" id="L148">    factory.setConnectionPool(connectionPool());</span>
+<span class="nc" id="L149">    return factory;</span>
+  }
+
+  private ConnectionPool connectionPool() {
+<span class="nc" id="L153">    BlockingConnectionPool pool = new BlockingConnectionPool();</span>
+<span class="nc" id="L154">    pool.setConnectionFactory(defaultConnectionFactory());</span>
+<span class="nc" id="L155">    pool.setPoolConfig(poolConfig());</span>
+<span class="nc" id="L156">    pool.setPruneStrategy(pruneStrategy());</span>
+<span class="nc" id="L157">    pool.setValidator(searchValidator());</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">    if (properties.getBlockWaitTime() &gt; 0L) {</span>
+<span class="nc" id="L159">      pool.setBlockWaitTime(Duration.ofMillis(properties.getBlockWaitTime()));</span>
+    }
+<span class="nc" id="L161">    pool.initialize();</span>
+<span class="nc" id="L162">    return pool;</span>
+  }
+
+  private PoolConfig poolConfig() {
+<span class="nc" id="L166">    PoolConfig pc = new PoolConfig();</span>
+<span class="nc" id="L167">    pc.setMaxPoolSize(properties.getMaxPoolSize());</span>
+<span class="nc" id="L168">    pc.setMinPoolSize(properties.getMinPoolSize());</span>
+<span class="nc" id="L169">    pc.setValidateOnCheckIn(properties.isValidateOnCheckIn());</span>
+<span class="nc" id="L170">    pc.setValidateOnCheckOut(properties.isValidateOnCheckOut());</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">    if (properties.getValidatePeriod() &gt; 0L) {</span>
+<span class="nc" id="L172">      pc.setValidatePeriod(Duration.ofSeconds(properties.getValidatePeriod()));</span>
+    }
+<span class="nc" id="L174">    pc.setValidatePeriodically(properties.isValidatePeriodically());</span>
+<span class="nc" id="L175">    return pc;</span>
+  }
+
+  private PruneStrategy pruneStrategy() {
+    // there may be other ways
+<span class="nc" id="L180">    IdlePruneStrategy ips = new IdlePruneStrategy();</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">    if (properties.getIdleTime() &gt; 0L) {</span>
+<span class="nc" id="L182">      ips.setIdleTime(Duration.ofSeconds(properties.getIdleTime()));</span>
+    }
+<span class="nc bnc" id="L184" title="All 2 branches missed.">    if (properties.getPrunePeriod() &gt; 0L) {</span>
+<span class="nc" id="L185">      ips.setPrunePeriod(Duration.ofSeconds(properties.getPrunePeriod()));</span>
+    }
+<span class="nc" id="L187">    return ips;</span>
+  }
+
+  private SearchValidator searchValidator() {
+<span class="nc" id="L191">    return properties.getSearchValidator();</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>

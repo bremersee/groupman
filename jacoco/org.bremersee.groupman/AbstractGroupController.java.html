@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractGroupController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman</a> &gt; <span class="el_source">AbstractGroupController.java</span></div><h1>AbstractGroupController.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.function.Supplier;
+import lombok.AccessLevel;
+import lombok.Getter;
+import org.bremersee.comparator.ComparatorBuilder;
+import org.bremersee.comparator.spring.ComparatorSpringUtils;
+import org.bremersee.exception.ServiceException;
+import org.bremersee.groupman.model.Group;
+import org.modelmapper.AbstractConverter;
+import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Sort;
+import org.springframework.util.Assert;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+/**
+ * The abstract group controller.
+ *
+ * @author Christian Bremer
+ */
+abstract class AbstractGroupController {
+
+  /**
+   * The default sort order.
+   */
+<span class="fc" id="L51">  static final Sort SORT = Sort.by(&quot;name&quot;, &quot;createdBy&quot;);</span>
+
+  /**
+   * The default comparator.
+   */
+<span class="fc" id="L56">  static final Comparator&lt;Object&gt; COMPARATOR = ComparatorBuilder.builder()</span>
+<span class="fc" id="L57">      .addAll(ComparatorSpringUtils.fromSort(SORT))</span>
+<span class="fc" id="L58">      .build();</span>
+
+<span class="pc" id="L60">  @Getter(AccessLevel.PACKAGE)</span>
+  private final ModelMapper modelMapper = new ModelMapper();
+
+<span class="nc" id="L63">  @Getter(AccessLevel.PACKAGE)</span>
+  private GroupRepository groupRepository;
+
+<span class="nc" id="L66">  @Getter(AccessLevel.PACKAGE)</span>
+  private GroupLdapRepository groupLdapRepository;
+
+  /**
+   * Instantiates a new abstract group controller.
+   *
+   * @param groupRepository     the group repository
+   * @param groupLdapRepository the group ldap repository
+   */
+  public AbstractGroupController(
+      final GroupRepository groupRepository,
+<span class="fc" id="L77">      final GroupLdapRepository groupLdapRepository) {</span>
+
+<span class="fc" id="L79">    Assert.notNull(groupRepository, &quot;Group repository must not be null.&quot;);</span>
+<span class="fc" id="L80">    Assert.notNull(groupLdapRepository, &quot;Group ldap repository must not be null.&quot;);</span>
+<span class="fc" id="L81">    this.groupRepository = groupRepository;</span>
+<span class="fc" id="L82">    this.groupLdapRepository = groupLdapRepository;</span>
+<span class="fc" id="L83">    modelMapper.addConverter(new AbstractConverter&lt;Date, OffsetDateTime&gt;() {</span>
+      @Override
+      protected OffsetDateTime convert(Date date) {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        return date == null ? null : OffsetDateTime.ofInstant(date.toInstant(), ZoneId.of(&quot;UTC&quot;));</span>
+      }
+    });
+<span class="fc" id="L89">    modelMapper.addConverter(new AbstractConverter&lt;OffsetDateTime, Date&gt;() {</span>
+      @Override
+      protected Date convert(OffsetDateTime offsetDateTime) {
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        return offsetDateTime == null ? null : Date.from(offsetDateTime.toInstant());</span>
+      }
+    });
+<span class="fc" id="L95">  }</span>
+
+  /**
+   * Gets group entity by id.
+   *
+   * @param groupId the group id
+   * @return the group entity
+   */
+  Mono&lt;GroupEntity&gt; getGroupEntityById(final String groupId) {
+<span class="nc" id="L104">    return groupRepository</span>
+<span class="nc" id="L105">        .findById(groupId)</span>
+<span class="nc" id="L106">        .switchIfEmpty(groupLdapRepository.findByName(groupId))</span>
+<span class="nc" id="L107">        .switchIfEmpty(Mono.error(ServiceException.notFound(&quot;Group&quot;, groupId)));</span>
+  }
+
+  /**
+   * Gets group entities by ids.
+   *
+   * @param ids the ids
+   * @return the group entities by ids
+   */
+  Flux&lt;GroupEntity&gt; getGroupEntitiesByIds(final List&lt;String&gt; ids) {
+<span class="nc bnc" id="L117" title="All 2 branches missed.">    return groupRepository</span>
+<span class="nc" id="L118">        .findByIdIn(ids == null ? Collections.emptyList() : ids)</span>
+<span class="nc" id="L119">        .concatWith(groupLdapRepository.findByNameIn(ids))</span>
+<span class="nc" id="L120">        .sort(COMPARATOR);</span>
+  }
+
+  private Group prepareGroup(final Supplier&lt;Group&gt; groupSupplier) {
+<span class="nc" id="L124">    Group group = groupSupplier.get();</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">    if (group.getMembers() == null) {</span>
+<span class="nc" id="L126">      group.setMembers(Collections.emptyList());</span>
+    }
+<span class="nc bnc" id="L128" title="All 2 branches missed.">    if (group.getOwners() == null) {</span>
+<span class="nc" id="L129">      group.setOwners(Collections.emptyList());</span>
+    }
+<span class="nc" id="L131">    return group;</span>
+  }
+
+  /**
+   * Map group entity to group representation.
+   *
+   * @param source the group entity
+   * @return the group representation
+   */
+  Group mapToGroup(final GroupEntity source) {
+<span class="nc" id="L141">    Group destination = new Group();</span>
+<span class="nc" id="L142">    destination.setMembers(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L143">    destination.setOwners(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L144">    getModelMapper().map(source, destination);</span>
+<span class="nc" id="L145">    return destination;</span>
+  }
+
+  /**
+   * Map to group representation to group entity.
+   *
+   * @param source the group representation
+   * @return the group entity
+   */
+  GroupEntity mapToGroupEntity(final Group source) {
+<span class="nc" id="L155">    GroupEntity destination = new GroupEntity();</span>
+<span class="nc" id="L156">    getModelMapper().map(prepareGroup(() -&gt; source), destination);</span>
+<span class="nc" id="L157">    return destination;</span>
+  }
+
+  /**
+   * Update group entity with group representation.
+   *
+   * @param source              the group representation
+   * @param destinationSupplier the group entity supplier
+   * @return the group entity
+   */
+  GroupEntity updateGroup(final Group source, final Supplier&lt;GroupEntity&gt; destinationSupplier) {
+<span class="nc" id="L168">    final Group src = prepareGroup(() -&gt; source);</span>
+<span class="nc" id="L169">    final GroupEntity destination = destinationSupplier.get();</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">    if (source.getVersion() != null) {</span>
+<span class="nc" id="L171">      destination.setVersion(source.getVersion());</span>
+    }
+<span class="nc" id="L173">    destination.setModifiedAt(new Date());</span>
+<span class="nc" id="L174">    destination.setDescription(src.getDescription());</span>
+<span class="nc" id="L175">    destination.setMembers(new LinkedHashSet&lt;&gt;(src.getMembers()));</span>
+<span class="nc" id="L176">    destination.setName(src.getName());</span>
+<span class="nc" id="L177">    destination.setOwners(new LinkedHashSet&lt;&gt;(src.getOwners()));</span>
+<span class="nc" id="L178">    return destination;</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>
