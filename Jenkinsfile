@@ -23,20 +23,6 @@ pipeline {
         sh 'mvn test'
       }
     }
-    stage('Push') {
-      agent {
-        label 'maven'
-      }
-      when {
-        anyOf {
-          branch 'develop'
-          branch 'master'
-        }
-      }
-      steps {
-        sh 'mvn -DskipTests -Ddockerfile.skip=false package dockerfile:push'
-      }
-    }
     stage('Push latest') {
       agent {
         label 'maven'
@@ -45,7 +31,11 @@ pipeline {
         branch 'develop'
       }
       steps {
-        sh 'mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push'
+        sh '''
+          mvn -DskipTests -Ddockerfile.skip=false package dockerfile:push
+          mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push
+          docker system prune -a -f
+        '''
       }
     }
     stage('Push release') {
@@ -56,21 +46,34 @@ pipeline {
         branch 'master'
       }
       steps {
-        sh 'mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=release package dockerfile:push'
+        sh '''
+          mvn -DskipTests -Ddockerfile.skip=false package dockerfile:push
+          mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push
+          mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=release package dockerfile:push
+          docker system prune -a -f
+        '''
       }
     }
-    stage('Site') {
+    stage('Deploy snapshot site') {
       agent {
         label 'maven'
       }
       when {
-        anyOf {
-          branch 'develop'
-          branch 'master'
-        }
+        branch 'develop'
       }
       steps {
         sh 'mvn site-deploy'
+      }
+    }
+    stage('Deploy release site') {
+      agent {
+        label 'maven'
+      }
+      when {
+        branch 'master'
+      }
+      steps {
+        sh 'mvn -P gh-pages-site site site:stage scm-publish:publish-scm'
       }
     }
     stage('Deploy on dev-swarm') {
