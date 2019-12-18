@@ -20,7 +20,7 @@
   <url>https://github.com/bremersee/groupman</url>
 
   <properties>
-    <github.repo>dc-con-app</github.repo>
+    <github.repo>groupman</github.repo>
     <gh-pages-staging-dir>${project.build.directory}/staging</gh-pages-staging-dir>
 
     <start-class>org.bremersee.groupman.Application</start-class>
