@@ -16,29 +16,31 @@
 
 package org.bremersee.groupman.config;
 
+import org.bremersee.converter.BaseCommonConverters;
 import org.bremersee.security.CorsProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.reactive.config.CorsRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 
 /**
- * The global CORS configuration.
+ * The web configuration.
  *
  * @author Christian Bremer
  */
 @EnableConfigurationProperties(CorsProperties.class)
 @Configuration
-public class CorsGlobalConfiguration implements WebFluxConfigurer {
+public class WebConfiguration implements WebFluxConfigurer {
 
   private CorsProperties corsProperties;
 
   /**
-   * Instantiates a new global CORS configuration.
+   * Instantiates a new web configuration.
    *
    * @param corsProperties the cors properties
    */
-  public CorsGlobalConfiguration(CorsProperties corsProperties) {
+  public WebConfiguration(CorsProperties corsProperties) {
     this.corsProperties = corsProperties;
   }
 
@@ -53,4 +55,10 @@ public class CorsGlobalConfiguration implements WebFluxConfigurer {
           .allowCredentials(config.isAllowCredentials());
     }
   }
+
+  @Override
+  public void addFormatters(FormatterRegistry registry) {
+    BaseCommonConverters.registerAll(registry);
+  }
+
 }

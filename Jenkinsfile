@@ -59,18 +59,26 @@ pipeline {
         sh 'mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=release package dockerfile:push'
       }
     }
-    stage('Site') {
+    stage('Deploy snapshot site') {
       agent {
         label 'maven'
       }
       when {
-        anyOf {
-          branch 'develop'
-          branch 'master'
-        }
+        branch 'develop'
       }
       steps {
         sh 'mvn site-deploy'
+      }
+    }
+    stage('Deploy release site') {
+      agent {
+        label 'maven'
+      }
+      when {
+        branch 'master'
+      }
+      steps {
+        sh 'mvn -P gh-pages-site site site:stage scm-publish:publish-scm'
       }
     }
     stage('Deploy on dev-swarm') {

@@ -34,7 +34,6 @@ import org.ldaptive.pool.SearchValidator;
 import org.ldaptive.ssl.CredentialConfig;
 import org.ldaptive.ssl.SslConfig;
 import org.ldaptive.ssl.X509CredentialConfig;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,7 +58,6 @@ public class LdaptiveConfiguration {
    *
    * @param ldaptiveProperties the ldaptive properties
    */
-  @Autowired
   public LdaptiveConfiguration(LdaptiveProperties ldaptiveProperties) {
     this.properties = ldaptiveProperties;
   }
