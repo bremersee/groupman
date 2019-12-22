@@ -131,7 +131,7 @@ public class GroupAdminController
       throw e;
     }
     return getGroupRepository().findById(groupId)
-        .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId)))
+        .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
         .map(existingGroup -> updateGroup(group, () -> existingGroup))
         .map(existingGroup -> {
           if (StringUtils.hasText(group.getCreatedBy())) {

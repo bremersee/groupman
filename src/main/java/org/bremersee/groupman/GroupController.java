@@ -126,7 +126,7 @@ public class GroupController
             .cast(BremerseeAuthenticationToken.class)
             .map(BremerseeAuthenticationToken::getPreferredName),
         getGroupRepository().findById(groupId)
-            .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId))))
+            .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId))))
         .flatMap(
             userNameAndGroupEntity -> {
               String currentUserName = userNameAndGroupEntity.getT1();
@@ -137,7 +137,7 @@ public class GroupController
                 return Mono.empty();
               }
             })
-        .switchIfEmpty(Mono.error(ServiceException.forbidden("Group", groupId)))
+        .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
         .map(this::mapToGroup);
   }
 
@@ -152,7 +152,7 @@ public class GroupController
             .cast(BremerseeAuthenticationToken.class)
             .map(BremerseeAuthenticationToken::getPreferredName),
         getGroupRepository().findById(groupId)
-            .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId))))
+            .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId))))
         .flatMap(
             userNameAndGroupEntity -> {
               String currentUserName = userNameAndGroupEntity.getT1();
@@ -160,7 +160,7 @@ public class GroupController
               if (existingGroup.getOwners().contains(currentUserName)) {
                 return getGroupRepository().delete(existingGroup);
               } else {
-                return Mono.error(ServiceException.forbidden("Group", groupId));
+                return Mono.error(() -> ServiceException.forbidden("Group", groupId));
               }
             });
   }
