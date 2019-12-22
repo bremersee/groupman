@@ -12,7 +12,7 @@ pipeline {
         label 'maven'
       }
       steps {
-        sh 'mvn clean compile'
+        sh 'mvn -B clean compile'
       }
     }
     stage('Test') {
@@ -20,7 +20,7 @@ pipeline {
         label 'maven'
       }
       steps {
-        sh 'mvn test'
+        sh 'mvn -B test'
       }
     }
     stage('Push latest') {
@@ -62,7 +62,7 @@ pipeline {
         branch 'develop'
       }
       steps {
-        sh 'mvn site-deploy'
+        sh 'mvn -B site-deploy'
       }
     }
     stage('Deploy release site') {
@@ -73,7 +73,7 @@ pipeline {
         branch 'master'
       }
       steps {
-        sh 'mvn -P gh-pages-site site site:stage scm-publish:publish-scm'
+        sh 'mvn -B -P gh-pages-site site site:stage scm-publish:publish-scm'
       }
     }
     stage('Deploy on dev-swarm') {
