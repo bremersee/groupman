@@ -6,4 +6,4 @@ A group management service.
 
 - [Release](https://bremersee.github.io/groupman/index.html)
 
-- [Snapshot](https://nexus.bremersee.org/repository/maven-sites/groupman/1.2.1-SNAPSHOT/index.html)
+- [Snapshot](https://nexus.bremersee.org/repository/maven-sites/groupman/1.3.0-SNAPSHOT/index.html)

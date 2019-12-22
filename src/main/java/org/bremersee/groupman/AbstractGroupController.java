@@ -104,7 +104,7 @@ abstract class AbstractGroupController {
     return groupRepository
         .findById(groupId)
         .switchIfEmpty(groupLdapRepository.findByName(groupId))
-        .switchIfEmpty(Mono.error(ServiceException.notFound("Group", groupId)));
+        .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)));
   }
 
   /**
