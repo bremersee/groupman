@@ -32,8 +32,8 @@ pipeline {
       }
       steps {
         sh '''
-          mvn -DskipTests -Ddockerfile.skip=false package dockerfile:push
-          mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push
           docker system prune -a -f
         '''
       }
@@ -47,9 +47,9 @@ pipeline {
       }
       steps {
         sh '''
-          mvn -DskipTests -Ddockerfile.skip=false package dockerfile:push
-          mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push
-          mvn -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=release package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=release package dockerfile:push
           docker system prune -a -f
         '''
       }
