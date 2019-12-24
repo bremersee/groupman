@@ -29,7 +29,6 @@
     <common-base.version>2.0.0-SNAPSHOT</common-base.version>
     <comparator.version>2.1.0-SNAPSHOT</comparator.version>
     <modelmapper.version>2.3.0</modelmapper.version>
-    <ldaptive.version>1.2.4</ldaptive.version>
   </properties>
 
   <scm>
@@ -78,13 +77,11 @@
       <artifactId>common-base-reactive</artifactId>
       <version>${common-base.version}</version>
     </dependency>
-    <!--
     <dependency>
       <groupId>org.bremersee</groupId>
       <artifactId>common-base-ldaptive</artifactId>
       <version>${common-base.version}</version>
     </dependency>
-    -->
     <dependency>
       <groupId>org.bremersee</groupId>
       <artifactId>comparator</artifactId>
@@ -102,24 +99,7 @@
 
     <dependency>
       <groupId>org.ldaptive</groupId>
-      <artifactId>ldaptive</artifactId>
-      <version>${ldaptive.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.ldaptive</groupId>
-      <artifactId>ldaptive-beans</artifactId>
-      <version>${ldaptive.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.ldaptive</groupId>
       <artifactId>ldaptive-unboundid</artifactId>
-      <version>${ldaptive.version}</version>
     </dependency>
 
     <dependency>

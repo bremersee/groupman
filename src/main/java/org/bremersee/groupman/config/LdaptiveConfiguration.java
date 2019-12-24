@@ -18,6 +18,8 @@ package org.bremersee.groupman.config;
 
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
+import org.bremersee.data.ldaptive.LdaptiveProperties;
+import org.bremersee.data.ldaptive.LdaptiveTemplate;
 import org.ldaptive.BindConnectionInitializer;
 import org.ldaptive.ConnectionConfig;
 import org.ldaptive.ConnectionFactory;
@@ -31,6 +33,7 @@ import org.ldaptive.pool.PoolConfig;
 import org.ldaptive.pool.PooledConnectionFactory;
 import org.ldaptive.pool.PruneStrategy;
 import org.ldaptive.pool.SearchValidator;
+import org.ldaptive.provider.unboundid.UnboundIDProvider;
 import org.ldaptive.ssl.CredentialConfig;
 import org.ldaptive.ssl.SslConfig;
 import org.ldaptive.ssl.X509CredentialConfig;
@@ -63,6 +66,17 @@ public class LdaptiveConfiguration {
   }
 
   /**
+   * Builds ldaptive template.
+   *
+   * @param connectionFactory the connection factory
+   * @return the ldaptive template
+   */
+  @Bean
+  public LdaptiveTemplate ldaptiveTemplate(ConnectionFactory connectionFactory) {
+    return new LdaptiveTemplate(connectionFactory);
+  }
+
+  /**
    * Builds connection factory bean.
    *
    * @return the connection factory bean
@@ -79,6 +93,9 @@ public class LdaptiveConfiguration {
   private DefaultConnectionFactory defaultConnectionFactory() {
     DefaultConnectionFactory factory = new DefaultConnectionFactory();
     factory.setConnectionConfig(connectionConfig());
+    if (properties.isUseUnboundIdProvider()) {
+      factory.setProvider(new UnboundIDProvider());
+    }
     return factory;
   }
 

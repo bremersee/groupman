@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.metrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
+import org.bremersee.groupman.repository.GroupRepository;
+import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
 import org.springframework.stereotype.Component;
 
 /**

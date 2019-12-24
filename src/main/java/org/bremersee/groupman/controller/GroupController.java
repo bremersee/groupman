@@ -14,39 +14,31 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.controller;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
+import org.bremersee.groupman.repository.GroupEntity;
+import org.bremersee.groupman.repository.GroupRepository;
+import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
 import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuples;
 
 /**
  * The group controller.
@@ -54,7 +46,6 @@ import reactor.util.function.Tuples;
  * @author Christian Bremer
  */
 @RestController
-@RequestMapping(path = "/api/groups")
 @Slf4j
 public class GroupController
     extends AbstractGroupController
@@ -81,12 +72,14 @@ public class GroupController
         : null;
   }
 
-  @PostMapping(
-      produces = {MediaType.APPLICATION_JSON_VALUE},
-      consumes = {MediaType.APPLICATION_JSON_VALUE})
+  private boolean isLocalUser(BremerseeAuthenticationToken token) {
+    return localRole != null && token.getAuthorities().stream()
+        .map(GrantedAuthority::getAuthority)
+        .anyMatch(roleName -> roleName.equalsIgnoreCase(localRole.getAuthority()));
+  }
+
   @Override
-  public Mono<Group> createGroup(
-      @Valid @RequestBody Group group) {
+  public Mono<Group> createGroup(Group group) {
 
     return ReactiveSecurityContextHolder
         .getContext()
@@ -105,20 +98,14 @@ public class GroupController
         .map(this::mapToGroup);
   }
 
-  @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> getGroupById(@PathVariable(value = "id") String groupId) {
+  public Mono<Group> getGroupById(String groupId) {
     return super.getGroupEntityById(groupId)
         .map(this::mapToGroup);
   }
 
-  @PutMapping(path = "/{id}",
-      produces = {MediaType.APPLICATION_JSON_VALUE},
-      consumes = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> updateGroup(
-      @PathVariable(value = "id") String groupId,
-      @Valid @RequestBody Group group) {
+  public Mono<Group> updateGroup(String groupId, Group group) {
 
     return Mono.zip(
         ReactiveSecurityContextHolder.getContext()
@@ -141,10 +128,8 @@ public class GroupController
         .map(this::mapToGroup);
   }
 
-  @DeleteMapping("/{id}")
   @Override
-  public Mono<Void> deleteGroup(
-      @PathVariable(value = "id") String groupId) {
+  public Mono<Void> deleteGroup(String groupId) {
 
     return Mono.zip(
         ReactiveSecurityContextHolder.getContext()
@@ -165,15 +150,12 @@ public class GroupController
             });
   }
 
-  @GetMapping(path = "/f", produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Flux<Group> getGroupsByIds(
-      @RequestParam(value = "id", required = false) List<String> ids) {
+  public Flux<Group> getGroupsByIds(List<String> ids) {
     return super.getGroupEntitiesByIds(ids)
         .map(this::mapToGroup);
   }
 
-  @GetMapping(path = "/f/editable", produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
   public Flux<Group> getEditableGroups() {
     return ReactiveSecurityContextHolder
@@ -186,62 +168,53 @@ public class GroupController
         .map(this::mapToGroup);
   }
 
-  @GetMapping(path = "/f/usable", produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
   public Flux<Group> getUsableGroups() {
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
         .cast(BremerseeAuthenticationToken.class)
-        .map(authToken -> Tuples.of(
-            authToken.getPreferredName(),
-            localRole == null || authToken.getAuthorities().contains(localRole)))
-        .flatMapMany(tuple -> getGroupRepository()
-            .findByOwnersIsContainingOrMembersIsContaining(tuple.getT1(), tuple.getT1())
-            .concatWith(
-                tuple.getT2()
-                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())
-                    : Flux.empty()))
+        .flatMapMany(this::getUsableGroups)
         .sort(COMPARATOR)
         .map(this::mapToGroup);
   }
 
-  @GetMapping(path = "/f/membership", produces = {MediaType.APPLICATION_JSON_VALUE})
+  private Flux<GroupEntity> getUsableGroups(BremerseeAuthenticationToken token) {
+    if (isLocalUser(token)) {
+      return getGroupRepository().findByOwnersIsContainingOrMembersIsContaining(
+          token.getPreferredName(), token.getPreferredName())
+          .concatWith(getGroupLdapRepository().findByMembersIsContaining(token.getPreferredName()));
+    }
+    return getGroupRepository().findByOwnersIsContainingOrMembersIsContaining(
+        token.getPreferredName(), token.getPreferredName());
+  }
+
   @Override
   public Flux<Group> getMembership() {
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
         .cast(BremerseeAuthenticationToken.class)
-        .map(authToken -> Tuples.of(
-            authToken.getPreferredName(),
-            localRole == null || authToken.getAuthorities().contains(localRole)))
-        .flatMapMany(tuple -> getGroupRepository()
-            .findByMembersIsContaining(tuple.getT1())
-            .concatWith(
-                tuple.getT2()
-                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())
-                    : Flux.empty()))
+        .flatMapMany(this::getMembership)
         .sort(COMPARATOR)
         .map(this::mapToGroup);
   }
 
-  @GetMapping(path = "/f/membership-ids", produces = {MediaType.APPLICATION_JSON_VALUE})
+  private Flux<GroupEntity> getMembership(BremerseeAuthenticationToken token) {
+    if (isLocalUser(token)) {
+      return getGroupRepository().findByMembersIsContaining(token.getPreferredName())
+          .concatWith(getGroupLdapRepository().findByMembersIsContaining(token.getPreferredName()));
+    }
+    return getGroupRepository().findByMembersIsContaining(token.getPreferredName());
+  }
+
   @Override
   public Mono<Set<String>> getMembershipIds() {
     return ReactiveSecurityContextHolder
         .getContext()
         .map(SecurityContext::getAuthentication)
         .cast(BremerseeAuthenticationToken.class)
-        .map(authToken -> Tuples.of(
-            authToken.getPreferredName(),
-            localRole == null || authToken.getAuthorities().contains(localRole)))
-        .flatMapMany(tuple -> getGroupRepository()
-            .findByMembersIsContaining(tuple.getT1())
-            .concatWith(
-                tuple.getT2()
-                    ? getGroupLdapRepository().findByMembersIsContaining(tuple.getT1())
-                    : Flux.empty()))
+        .flatMapMany(this::getMembership)
         .map(GroupEntity::getId).collect(Collectors.toSet());
   }
 

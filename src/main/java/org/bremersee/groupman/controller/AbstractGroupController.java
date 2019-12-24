@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.controller;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -31,6 +31,9 @@ import org.bremersee.comparator.ComparatorBuilder;
 import org.bremersee.comparator.spring.ComparatorSpringUtils;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.model.Group;
+import org.bremersee.groupman.repository.GroupEntity;
+import org.bremersee.groupman.repository.GroupRepository;
+import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Sort;

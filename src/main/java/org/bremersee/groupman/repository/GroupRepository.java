@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.repository;
 
 import java.util.List;
 import org.springframework.data.domain.Sort;
@@ -26,7 +26,8 @@ import reactor.core.publisher.Flux;
  *
  * @author Christian Bremer
  */
-public interface GroupRepository extends ReactiveMongoRepository<GroupEntity, String> {
+public interface GroupRepository
+    extends ReactiveMongoRepository<GroupEntity, String>, GroupRepositoryCustom {
 
   /**
    * Find groups by owner or member.

@@ -14,30 +14,22 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.controller;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupAdminControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
+import org.bremersee.groupman.repository.GroupRepository;
+import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
 import org.bremersee.security.authentication.BremerseeAuthenticationToken;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -48,7 +40,6 @@ import reactor.core.publisher.Mono;
  * @author Christian Bremer
  */
 @RestController
-@RequestMapping(path = "/api/admin/groups")
 @Slf4j
 public class GroupAdminController
     extends AbstractGroupController
@@ -66,7 +57,6 @@ public class GroupAdminController
     super(groupRepository, groupLdapRepository);
   }
 
-  @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
   public Flux<Group> findGroups() {
     return getGroupRepository()
@@ -76,12 +66,8 @@ public class GroupAdminController
         .map(this::mapToGroup);
   }
 
-  @PostMapping(
-      produces = {MediaType.APPLICATION_JSON_VALUE},
-      consumes = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> addGroup(
-      @Valid @RequestBody Group group) {
+  public Mono<Group> addGroup(Group group) {
 
     group.setId(null);
     group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
@@ -109,20 +95,14 @@ public class GroupAdminController
         .map(this::mapToGroup);
   }
 
-  @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> findGroupById(@PathVariable(value = "id") String groupId) {
+  public Mono<Group> findGroupById(String groupId) {
     return super.getGroupEntityById(groupId)
         .map(this::mapToGroup);
   }
 
-  @PutMapping(path = "/{id}",
-      produces = {MediaType.APPLICATION_JSON_VALUE},
-      consumes = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Mono<Group> modifyGroup(
-      @PathVariable(value = "id") String groupId,
-      @Valid @RequestBody Group group) {
+  public Mono<Group> modifyGroup(String groupId, Group group) {
 
     if (Source.LDAP.equals(group.getSource())) {
       UnsupportedOperationException e = new UnsupportedOperationException(
@@ -143,18 +123,14 @@ public class GroupAdminController
         .map(this::mapToGroup);
   }
 
-  @DeleteMapping("/{id}")
   @Override
-  public Mono<Void> removeGroup(
-      @PathVariable(value = "id") String groupId) {
+  public Mono<Void> removeGroup(String groupId) {
 
     return getGroupRepository().deleteById(groupId);
   }
 
-  @GetMapping(path = "/f", produces = {MediaType.APPLICATION_JSON_VALUE})
   @Override
-  public Flux<Group> findGroupsByIds(
-      @RequestParam(value = "id", required = false) List<String> ids) {
+  public Flux<Group> findGroupsByIds(List<String> ids) {
     return super.getGroupEntitiesByIds(ids)
         .map(this::mapToGroup);
   }

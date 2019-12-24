@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.repository;
 
 import java.util.Date;
 import java.util.LinkedHashSet;

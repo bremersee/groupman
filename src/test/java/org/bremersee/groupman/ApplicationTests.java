@@ -55,7 +55,7 @@ public class ApplicationTests {
     webTestClient
         .get()
         .uri("/api/groups")
-        .accept(MediaType.APPLICATION_JSON_UTF8)
+        .accept(MediaType.APPLICATION_JSON)
         .exchange()
         .expectStatus().isUnauthorized();
   }

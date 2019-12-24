@@ -80,6 +80,7 @@ spring:
 
 bremersee:
   ldaptive:
+    use-unbound-id-provider: true
     ldap-url: ${LDAP_URL:ldaps://example.org:636}
     use-ssl: ${LDAP_SSL:true}
     use-start-tls: ${LDAP_START_TLS:false}

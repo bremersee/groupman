@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.repository.ldap;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
