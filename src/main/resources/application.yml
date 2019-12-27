@@ -61,6 +61,8 @@ bremersee:
         status: 409
         message: "Version is not up to date."
         code: "GRP:1001"
+  ldaptive:
+    enabled: false
   groupman:
     local-role: "ROLE_LOCAL_USER"
 
@@ -80,6 +82,7 @@ spring:
 
 bremersee:
   ldaptive:
+    enabled: true
     use-unbound-id-provider: true
     ldap-url: ${LDAP_URL:ldaps://example.org:636}
     use-ssl: ${LDAP_SSL:true}

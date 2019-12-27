@@ -79,7 +79,7 @@
     </dependency>
     <dependency>
       <groupId>org.bremersee</groupId>
-      <artifactId>common-base-ldaptive</artifactId>
+      <artifactId>common-base-ldaptive-starter</artifactId>
       <version>${common-base.version}</version>
     </dependency>
     <dependency>
