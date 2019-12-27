@@ -44,7 +44,7 @@ bremersee:
   security:
     cors:
       allow-all: true
-    oauth2:
+    authentication:
       password-flow:
         client-id: ${OPENID_CLIENT_ID:omnia}
         client-secret: ${OPENID_CLIENT_SECRET:changeit}

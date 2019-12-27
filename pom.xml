@@ -67,14 +67,15 @@
       <artifactId>groupman-api-spring-reactive</artifactId>
       <version>${groupman-api-spring-reactive.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.bremersee</groupId>
-      <artifactId>common-base</artifactId>
+      <artifactId>common-base-webflux-starter</artifactId>
       <version>${common-base.version}</version>
     </dependency>
     <dependency>
       <groupId>org.bremersee</groupId>
-      <artifactId>common-base-reactive</artifactId>
+      <artifactId>common-base-security-starter</artifactId>
       <version>${common-base.version}</version>
     </dependency>
     <dependency>
@@ -82,6 +83,7 @@
       <artifactId>common-base-ldaptive-starter</artifactId>
       <version>${common-base.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.bremersee</groupId>
       <artifactId>comparator</artifactId>
@@ -92,24 +94,8 @@
       <artifactId>modelmapper</artifactId>
       <version>${modelmapper.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.jayway.jsonpath</groupId>
-      <artifactId>json-path</artifactId>
-    </dependency>
 
-    <dependency>
-      <groupId>org.ldaptive</groupId>
-      <artifactId>ldaptive-unboundid</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-webflux</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-config</artifactId>
-    </dependency>
+    <!--
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-oauth2-client</artifactId>
@@ -122,9 +108,19 @@
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-oauth2-resource-server</artifactId>
     </dependency>
+    -->
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-config</artifactId>
     </dependency>
 
     <!-- Config client -->
