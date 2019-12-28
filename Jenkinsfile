@@ -7,14 +7,6 @@ pipeline {
     PROD_TAG='release'
   }
   stages {
-    stage('Build') {
-      agent {
-        label 'maven'
-      }
-      steps {
-        sh 'mvn -B clean compile'
-      }
-    }
     stage('Test') {
       agent {
         label 'maven'
@@ -54,6 +46,26 @@ pipeline {
         '''
       }
     }
+    stage('Deploy on dev-swarm') {
+      agent {
+        label 'dev-swarm'
+      }
+      when {
+        branch 'develop'
+      }
+      steps {
+        sh '''
+          if docker service ls | grep -q ${SERVICE_NAME}; then
+            echo "Updating service ${SERVICE_NAME} with docker image ${DOCKER_IMAGE}:${DEV_TAG}."
+            docker service update --image ${DOCKER_IMAGE}:${DEV_TAG} ${SERVICE_NAME}
+          else
+            echo "Creating service ${SERVICE_NAME} with docker image ${DOCKER_IMAGE}:${DEV_TAG}."
+            chmod 755 docker-swarm/service.sh
+            docker-swarm/service.sh "${DOCKER_IMAGE}:${DEV_TAG}" "default,ldap,dev"
+          fi
+        '''
+      }
+    }
     stage('Deploy snapshot site') {
       agent {
         label 'maven'
@@ -74,26 +86,6 @@ pipeline {
       }
       steps {
         sh 'mvn -B -P gh-pages-site site site:stage scm-publish:publish-scm'
-      }
-    }
-    stage('Deploy on dev-swarm') {
-      agent {
-        label 'dev-swarm'
-      }
-      when {
-        branch 'develop'
-      }
-      steps {
-        sh '''
-          if docker service ls | grep -q ${SERVICE_NAME}; then
-            echo "Updating service ${SERVICE_NAME} with docker image ${DOCKER_IMAGE}:${DEV_TAG}."
-            docker service update --image ${DOCKER_IMAGE}:${DEV_TAG} ${SERVICE_NAME}
-          else
-            echo "Creating service ${SERVICE_NAME} with docker image ${DOCKER_IMAGE}:${DEV_TAG}."
-            chmod 755 docker-swarm/service.sh
-            docker-swarm/service.sh "${DOCKER_IMAGE}:${DEV_TAG}" "default,ldap,dev"
-          fi
-        '''
       }
     }
   }
