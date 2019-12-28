@@ -11,8 +11,14 @@ pipeline {
       agent {
         label 'maven'
       }
+      tools {
+        jdk 'jdk8'
+        maven 'm3'
+      }
       steps {
-        sh 'mvn -B test'
+        sh 'java -version'
+        sh 'mvn -B --version'
+        sh 'mvn -B clean test'
       }
     }
     stage('Push latest') {
@@ -21,6 +27,10 @@ pipeline {
       }
       when {
         branch 'develop'
+      }
+      tools {
+        jdk 'jdk8'
+        maven 'm3'
       }
       steps {
         sh '''
@@ -36,6 +46,10 @@ pipeline {
       }
       when {
         branch 'master'
+      }
+      tools {
+        jdk 'jdk8'
+        maven 'm3'
       }
       steps {
         sh '''
@@ -73,6 +87,10 @@ pipeline {
       when {
         branch 'develop'
       }
+      tools {
+        jdk 'jdk8'
+        maven 'm3'
+      }
       steps {
         sh 'mvn -B site-deploy'
       }
@@ -83,6 +101,10 @@ pipeline {
       }
       when {
         branch 'master'
+      }
+      tools {
+        jdk 'jdk8'
+        maven 'm3'
       }
       steps {
         sh 'mvn -B -P gh-pages-site site site:stage scm-publish:publish-scm'
