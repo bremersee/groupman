@@ -114,8 +114,8 @@ abstract class AbstractGroupController {
    * @return the group entities by ids
    */
   Flux&lt;GroupEntity&gt; getGroupEntitiesByIds(final List&lt;String&gt; ids) {
-<span class="nc bnc" id="L117" title="All 2 branches missed.">    return groupRepository</span>
-<span class="nc" id="L118">        .findByIdIn(ids == null ? Collections.emptyList() : ids)</span>
+<span class="nc" id="L117">    return groupRepository</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        .findByIdIn(ids == null ? Collections.emptyList() : ids)</span>
 <span class="nc" id="L119">        .concatWith(groupLdapRepository.findByNameIn(ids))</span>
 <span class="nc" id="L120">        .sort(COMPARATOR);</span>
   }

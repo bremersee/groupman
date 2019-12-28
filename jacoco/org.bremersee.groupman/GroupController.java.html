@@ -77,8 +77,8 @@ public class GroupController
       @Value(&quot;${bremersee.groupman.local-role:ROLE_LOCAL_USER}&quot;) String localRole) {
 <span class="fc" id="L78">    super(groupRepository, groupLdapRepository);</span>
 <span class="pc bpc" id="L79" title="1 of 2 branches missed.">    this.localRole = StringUtils.hasText(localRole)</span>
-        ? new SimpleGrantedAuthority(localRole)
-        : null;
+<span class="fc" id="L80">        ? new SimpleGrantedAuthority(localRole)</span>
+<span class="pc" id="L81">        : null;</span>
 <span class="fc" id="L82">  }</span>
 
   @PostMapping(
