@@ -29,13 +29,7 @@ import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
-import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -51,8 +45,6 @@ public class GroupController
     extends AbstractGroupController
     implements GroupControllerApi {
 
-  private final GrantedAuthority localRole;
-
   /**
    * Instantiates a new group controller.
    *
@@ -66,36 +58,22 @@ public class GroupController
       GroupRepository groupRepository,
       GroupLdapRepository groupLdapRepository,
       @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole) {
-    super(groupRepository, groupLdapRepository);
-    this.localRole = StringUtils.hasText(localRole)
-        ? new SimpleGrantedAuthority(localRole)
-        : null;
-  }
-
-  private boolean isLocalUser(BremerseeAuthenticationToken token) {
-    return localRole != null && token.getAuthorities().stream()
-        .map(GrantedAuthority::getAuthority)
-        .anyMatch(roleName -> roleName.equalsIgnoreCase(localRole.getAuthority()));
+    super(groupRepository, groupLdapRepository, localRole);
   }
 
   @Override
   public Mono<Group> createGroup(Group group) {
+    return oneWithCurrentUser(currentUser -> createGroup(group, currentUser).map(this::mapToGroup));
+  }
 
-    return ReactiveSecurityContextHolder
-        .getContext()
-        .map(SecurityContext::getAuthentication)
-        .cast(BremerseeAuthenticationToken.class)
-        .map(BremerseeAuthenticationToken::getPreferredName)
-        .flatMap(currentUserName -> {
-          group.setId(null);
-          group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
-          group.setModifiedAt(group.getCreatedAt());
-          group.setCreatedBy(currentUserName);
-          group.setSource(Source.INTERNAL);
-          group.getOwners().add(currentUserName);
-          return getGroupRepository().save(mapToGroupEntity(group));
-        })
-        .map(this::mapToGroup);
+  private Mono<GroupEntity> createGroup(Group group, CurrentUser currentUser) {
+    group.setId(null);
+    group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
+    group.setModifiedAt(group.getCreatedAt());
+    group.setCreatedBy(currentUser.getName());
+    group.setSource(Source.INTERNAL);
+    group.getOwners().add(currentUser.getName());
+    return getGroupRepository().save(mapToGroupEntity(group));
   }
 
   @Override
@@ -106,48 +84,29 @@ public class GroupController
 
   @Override
   public Mono<Group> updateGroup(String groupId, Group group) {
+    return oneWithCurrentUser(currentUser -> updateGroup(groupId, group, currentUser)
+        .map(this::mapToGroup));
+  }
 
-    return Mono.zip(
-        ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .cast(BremerseeAuthenticationToken.class)
-            .map(BremerseeAuthenticationToken::getPreferredName),
-        getGroupRepository().findById(groupId)
-            .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId))))
-        .flatMap(
-            userNameAndGroupEntity -> {
-              String currentUserName = userNameAndGroupEntity.getT1();
-              GroupEntity existingGroup = userNameAndGroupEntity.getT2();
-              if (existingGroup.getOwners().contains(currentUserName)) {
-                return getGroupRepository().save(updateGroup(group, () -> existingGroup));
-              } else {
-                return Mono.empty();
-              }
-            })
+  private Mono<GroupEntity> updateGroup(String groupId, Group group, CurrentUser currentUser) {
+    return getGroupEntityById(groupId)
+        .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
+        .filter(groupEntity -> groupEntity.getOwners().contains(currentUser.getName()))
         .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
-        .map(this::mapToGroup);
+        .flatMap(groupEntity -> getGroupRepository().save(updateGroup(group, () -> groupEntity)));
   }
 
   @Override
   public Mono<Void> deleteGroup(String groupId) {
+    return oneWithCurrentUser(currentUser -> deleteGroup(groupId, currentUser));
+  }
 
-    return Mono.zip(
-        ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .cast(BremerseeAuthenticationToken.class)
-            .map(BremerseeAuthenticationToken::getPreferredName),
-        getGroupRepository().findById(groupId)
-            .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId))))
-        .flatMap(
-            userNameAndGroupEntity -> {
-              String currentUserName = userNameAndGroupEntity.getT1();
-              GroupEntity existingGroup = userNameAndGroupEntity.getT2();
-              if (existingGroup.getOwners().contains(currentUserName)) {
-                return getGroupRepository().delete(existingGroup);
-              } else {
-                return Mono.error(() -> ServiceException.forbidden("Group", groupId));
-              }
-            });
+  private Mono<Void> deleteGroup(String groupId, CurrentUser currentUser) {
+    return getGroupRepository().findById(groupId)
+        .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
+        .filter(groupEntity -> groupEntity.getOwners().contains(currentUser.getName()))
+        .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
+        .flatMap(groupEntity -> getGroupRepository().delete(groupEntity));
   }
 
   @Override
@@ -158,64 +117,44 @@ public class GroupController
 
   @Override
   public Flux<Group> getEditableGroups() {
-    return ReactiveSecurityContextHolder
-        .getContext()
-        .map(SecurityContext::getAuthentication)
-        .cast(BremerseeAuthenticationToken.class)
-        .map(BremerseeAuthenticationToken::getPreferredName)
-        .flatMapMany(currentUserName -> getGroupRepository()
-            .findByOwnersIsContaining(currentUserName, SORT))
-        .map(this::mapToGroup);
+    return manyWithCurrentUser(currentUser -> getEditableGroups(currentUser).map(this::mapToGroup));
+  }
+
+  private Flux<GroupEntity> getEditableGroups(CurrentUser currentUser) {
+    return getGroupRepository().findByOwnersIsContaining(currentUser.getName(), SORT);
   }
 
   @Override
   public Flux<Group> getUsableGroups() {
-    return ReactiveSecurityContextHolder
-        .getContext()
-        .map(SecurityContext::getAuthentication)
-        .cast(BremerseeAuthenticationToken.class)
-        .flatMapMany(this::getUsableGroups)
-        .sort(COMPARATOR)
-        .map(this::mapToGroup);
+    return manyWithCurrentUser(currentUser -> getUsableGroups(currentUser).map(this::mapToGroup));
   }
 
-  private Flux<GroupEntity> getUsableGroups(BremerseeAuthenticationToken token) {
-    if (isLocalUser(token)) {
-      return getGroupRepository().findByOwnersIsContainingOrMembersIsContaining(
-          token.getPreferredName(), token.getPreferredName())
-          .concatWith(getGroupLdapRepository().findByMembersIsContaining(token.getPreferredName()));
-    }
-    return getGroupRepository().findByOwnersIsContainingOrMembersIsContaining(
-        token.getPreferredName(), token.getPreferredName());
+  private Flux<GroupEntity> getUsableGroups(CurrentUser currentUser) {
+    final String name = currentUser.getName();
+    return getGroupRepository().findByOwnersIsContainingOrMembersIsContaining(name, name)
+        .concatWith(getGroupLdapRepository().findByMembersIsContaining(name))
+        .sort(COMPARATOR);
   }
 
   @Override
   public Flux<Group> getMembership() {
-    return ReactiveSecurityContextHolder
-        .getContext()
-        .map(SecurityContext::getAuthentication)
-        .cast(BremerseeAuthenticationToken.class)
-        .flatMapMany(this::getMembership)
-        .sort(COMPARATOR)
-        .map(this::mapToGroup);
+    return manyWithCurrentUser(currentUser -> getMembership(currentUser).map(this::mapToGroup));
   }
 
-  private Flux<GroupEntity> getMembership(BremerseeAuthenticationToken token) {
-    if (isLocalUser(token)) {
-      return getGroupRepository().findByMembersIsContaining(token.getPreferredName())
-          .concatWith(getGroupLdapRepository().findByMembersIsContaining(token.getPreferredName()));
+  private Flux<GroupEntity> getMembership(CurrentUser currentUser) {
+    final String name = currentUser.getName();
+    if (currentUser.isLocalUser()) {
+      return getGroupRepository().findByMembersIsContaining(name)
+          .concatWith(getGroupLdapRepository().findByMembersIsContaining(name))
+          .sort(COMPARATOR);
     }
-    return getGroupRepository().findByMembersIsContaining(token.getPreferredName());
+    return getGroupRepository().findByMembersIsContaining(name).sort(COMPARATOR);
   }
 
   @Override
   public Mono<Set<String>> getMembershipIds() {
-    return ReactiveSecurityContextHolder
-        .getContext()
-        .map(SecurityContext::getAuthentication)
-        .cast(BremerseeAuthenticationToken.class)
-        .flatMapMany(this::getMembership)
-        .map(GroupEntity::getId).collect(Collectors.toSet());
+    return oneWithCurrentUser(currentUser -> getMembership(currentUser)
+        .map(GroupEntity::getId).collect(Collectors.toSet()));
   }
 
 }

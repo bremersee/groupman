@@ -2,7 +2,7 @@ spring:
   application:
     name: ${APPLICATION_NAME:groupman}
   profiles:
-    active: ${ACTIVE_PROFILES:default}
+    active: ${ACTIVE_PROFILES:basic-auth}
   cloud:
     config:
       enabled: ${CONFIG_CLIENT_ENABLED:false}

@@ -16,7 +16,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles({"default"})
+@ActiveProfiles({"basic-auth"})
 public class ApplicationTests {
 
   /**

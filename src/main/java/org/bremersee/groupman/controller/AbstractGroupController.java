@@ -24,9 +24,14 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.bremersee.comparator.ComparatorBuilder;
 import org.bremersee.comparator.spring.ComparatorSpringUtils;
 import org.bremersee.exception.ServiceException;
@@ -34,9 +39,15 @@ import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
+import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.ModelMapper;
+import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -69,20 +80,25 @@ abstract class AbstractGroupController {
   @Getter(AccessLevel.PACKAGE)
   private GroupLdapRepository groupLdapRepository;
 
+  private String localUserRole;
+
   /**
    * Instantiates a new abstract group controller.
    *
    * @param groupRepository     the group repository
    * @param groupLdapRepository the group ldap repository
+   * @param localUserRole       the local user role
    */
   public AbstractGroupController(
       final GroupRepository groupRepository,
-      final GroupLdapRepository groupLdapRepository) {
+      final GroupLdapRepository groupLdapRepository,
+      final String localUserRole) {
 
     Assert.notNull(groupRepository, "Group repository must not be null.");
     Assert.notNull(groupLdapRepository, "Group ldap repository must not be null.");
     this.groupRepository = groupRepository;
     this.groupLdapRepository = groupLdapRepository;
+    this.localUserRole = localUserRole;
     modelMapper.addConverter(new AbstractConverter<Date, OffsetDateTime>() {
       @Override
       protected OffsetDateTime convert(Date date) {
@@ -95,6 +111,36 @@ abstract class AbstractGroupController {
         return offsetDateTime == null ? null : Date.from(offsetDateTime.toInstant());
       }
     });
+  }
+
+  /**
+   * One with current user mono.
+   *
+   * @param <R>      the type parameter
+   * @param function the function
+   * @return the mono
+   */
+  <R> Mono<R> oneWithCurrentUser(Function<CurrentUser, ? extends Mono<R>> function) {
+    return ReactiveSecurityContextHolder.getContext()
+        .map(SecurityContext::getAuthentication)
+        .switchIfEmpty(Mono.error(ServiceException::forbidden))
+        .map(authentication -> new CurrentUser(authentication, localUserRole))
+        .flatMap(function);
+  }
+
+  /**
+   * Many with current user flux.
+   *
+   * @param <R>      the type parameter
+   * @param function the function
+   * @return the flux
+   */
+  <R> Flux<R> manyWithCurrentUser(Function<CurrentUser, ? extends Publisher<R>> function) {
+    return ReactiveSecurityContextHolder.getContext()
+        .map(SecurityContext::getAuthentication)
+        .switchIfEmpty(Mono.error(ServiceException::forbidden))
+        .map(authentication -> new CurrentUser(authentication, localUserRole))
+        .flatMapMany(function);
   }
 
   /**
@@ -179,6 +225,45 @@ abstract class AbstractGroupController {
     destination.setName(src.getName());
     destination.setOwners(new LinkedHashSet<>(src.getOwners()));
     return destination;
+  }
+
+  /**
+   * The type Current user.
+   */
+  @Getter
+  @ToString
+  @EqualsAndHashCode(of = "uuid")
+  public static class CurrentUser {
+
+    private String uuid;
+
+    private String name;
+
+    private Set<String> roles;
+
+    private boolean localUser;
+
+    /**
+     * Instantiates a new Current user.
+     *
+     * @param authentication the authentication
+     * @param localUserRole  the local user role
+     */
+    public CurrentUser(Authentication authentication, String localUserRole) {
+      uuid = authentication.getName();
+      name = authentication.getName();
+      if (authentication.getAuthorities() != null) {
+        roles = authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toSet());
+      } else {
+        roles = Collections.emptySet();
+      }
+      if (authentication instanceof BremerseeAuthenticationToken) {
+        name = ((BremerseeAuthenticationToken) authentication).getPreferredName();
+      }
+      localUser = localUserRole != null && roles.contains(localUserRole);
+    }
   }
 
 }

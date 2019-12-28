@@ -17,18 +17,21 @@
 package org.bremersee.groupman.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.bremersee.security.authentication.AuthenticationProperties;
 import org.bremersee.security.authentication.KeycloakReactiveJwtConverter;
 import org.bremersee.security.authentication.PasswordFlowReactiveAuthenticationManager;
 import org.bremersee.security.core.AuthorityConstants;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.info.InfoEndpoint;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
 
@@ -42,77 +45,155 @@ import org.springframework.security.web.server.util.matcher.NegatedServerWebExch
 @Slf4j
 public class SecurityConfiguration {
 
-  private KeycloakReactiveJwtConverter keycloakJwtConverter;
+  @ConditionalOnProperty(
+      prefix = "bremersee.security.authentication",
+      name = "enable-keycloak-support",
+      havingValue = "true")
+  @Configuration
+  static class KeycloakLogin {
 
-  private PasswordFlowReactiveAuthenticationManager passwordFlowReactiveAuthenticationManager;
+    private KeycloakReactiveJwtConverter keycloakJwtConverter;
 
-  /**
-   * Instantiates a new security configuration.
-   *
-   * @param keycloakJwtConverter                      the keycloak jwt converter
-   * @param passwordFlowReactiveAuthenticationManager the password flow reactive authentication
-   *                                                  manager
-   */
-  @Autowired
-  public SecurityConfiguration(
-      KeycloakReactiveJwtConverter keycloakJwtConverter,
-      PasswordFlowReactiveAuthenticationManager passwordFlowReactiveAuthenticationManager) {
-    this.keycloakJwtConverter = keycloakJwtConverter;
-    this.passwordFlowReactiveAuthenticationManager = passwordFlowReactiveAuthenticationManager;
+    private PasswordFlowReactiveAuthenticationManager passwordFlowReactiveAuthenticationManager;
+
+    /**
+     * Instantiates a new keycloak login.
+     *
+     * @param keycloakJwtConverter                      the keycloak jwt converter
+     * @param passwordFlowReactiveAuthenticationManager the password flow reactive authentication
+     *                                                  manager
+     */
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    public KeycloakLogin(
+        KeycloakReactiveJwtConverter keycloakJwtConverter,
+        PasswordFlowReactiveAuthenticationManager passwordFlowReactiveAuthenticationManager) {
+      this.keycloakJwtConverter = keycloakJwtConverter;
+      this.passwordFlowReactiveAuthenticationManager = passwordFlowReactiveAuthenticationManager;
+    }
+
+    /**
+     * Builds the OAuth2 resource server filter chain.
+     *
+     * @param http the http
+     * @return the security web filter chain
+     */
+    @Bean
+    @Order(51)
+    public SecurityWebFilterChain oauth2ResourceServerFilterChain(ServerHttpSecurity http) {
+
+      log.info("msg=[Creating resource server filter chain.]");
+      http
+          .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
+          .csrf().disable()
+          .oauth2ResourceServer()
+          .jwt()
+          .jwtAuthenticationConverter(keycloakJwtConverter);
+
+      http
+          .authorizeExchange()
+          .pathMatchers("/api/admin/**")
+          .hasAuthority(AuthorityConstants.ADMIN_ROLE_NAME)
+          .anyExchange()
+          .authenticated();
+
+      return http.build();
+    }
+
+    /**
+     * Builds the actuator filter chain.
+     *
+     * @param http the http security configuration object
+     * @return the security web filter chain
+     */
+    @Bean
+    @Order(52)
+    public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
+
+      log.info("msg=[Creating actuator filter chain.]");
+      http
+          .securityMatcher(EndpointRequest.toAnyEndpoint())
+          .csrf().disable()
+          .httpBasic()
+          .authenticationManager(passwordFlowReactiveAuthenticationManager);
+
+      http
+          .authorizeExchange()
+          .matchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
+          .matchers(EndpointRequest.to(InfoEndpoint.class)).permitAll()
+          .anyExchange().hasAuthority(AuthorityConstants.ACTUATOR_ROLE_NAME);
+
+      return http.build();
+    }
   }
 
-  /**
-   * Builds the OAuth2 resource server filter chain.
-   *
-   * @param http the http
-   * @return the security web filter chain
-   */
-  @Bean
-  @Order(51)
-  public SecurityWebFilterChain oauth2ResourceServerFilterChain(ServerHttpSecurity http) {
+  @ConditionalOnProperty(
+      prefix = "bremersee.security.authentication",
+      name = "enable-keycloak-support",
+      havingValue = "false", matchIfMissing = true)
+  @Configuration
+  @EnableConfigurationProperties(AuthenticationProperties.class)
+  static class BasicAuthLogin {
 
-    log.info("msg=[Creating resource server filter chain.]");
-    http
-        .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
-        .csrf().disable()
-        .oauth2ResourceServer()
-        .jwt()
-        .jwtAuthenticationConverter(keycloakJwtConverter);
+    private AuthenticationProperties properties;
 
-    http
-        .authorizeExchange()
-        .pathMatchers("/api/admin/**")
-        .hasAuthority(AuthorityConstants.ADMIN_ROLE_NAME)
-        .anyExchange()
-        .authenticated();
+    public BasicAuthLogin(AuthenticationProperties properties) {
+      this.properties = properties;
+    }
 
-    return http.build();
+    @Bean
+    public MapReactiveUserDetailsService userDetailsService() {
+      return new MapReactiveUserDetailsService(properties.buildBasicAuthUserDetails());
+    }
+
+    /**
+     * Builds the OAuth2 resource server filter chain.
+     *
+     * @param http the http
+     * @return the security web filter chain
+     */
+    @Bean
+    @Order(51)
+    public SecurityWebFilterChain oauth2ResourceServerFilterChain(ServerHttpSecurity http) {
+
+      log.info("msg=[Creating resource server filter chain.]");
+      return http
+          .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
+          .csrf().disable()
+          .authorizeExchange()
+          .pathMatchers("/api/admin/**")
+          .hasAuthority(AuthorityConstants.ADMIN_ROLE_NAME)
+          .anyExchange()
+          .authenticated()
+          .and()
+          .httpBasic()
+          .and()
+          .formLogin().disable()
+          .build();
+    }
+
+    /**
+     * Builds the actuator filter chain.
+     *
+     * @param http the http security configuration object
+     * @return the security web filter chain
+     */
+    @Bean
+    @Order(52)
+    public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
+
+      log.info("msg=[Creating actuator filter chain.]");
+      return http
+          .securityMatcher(EndpointRequest.toAnyEndpoint())
+          .csrf().disable()
+          .authorizeExchange()
+          .matchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
+          .matchers(EndpointRequest.to(InfoEndpoint.class)).permitAll()
+          .anyExchange().hasAuthority(AuthorityConstants.ACTUATOR_ROLE_NAME)
+          .and()
+          .httpBasic()
+          .and()
+          .formLogin().disable()
+          .build();
+    }
   }
-
-  /**
-   * Builds the actuator filter chain.
-   *
-   * @param http the http security configuration object
-   * @return the security web filter chain
-   */
-  @Bean
-  @Order(52)
-  public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
-
-    log.info("msg=[Creating actuator filter chain.]");
-    http
-        .securityMatcher(EndpointRequest.toAnyEndpoint())
-        .csrf().disable()
-        .httpBasic()
-        .authenticationManager(passwordFlowReactiveAuthenticationManager);
-
-    http
-        .authorizeExchange()
-        .matchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
-        .matchers(EndpointRequest.to(InfoEndpoint.class)).permitAll()
-        .anyExchange().hasAuthority(AuthorityConstants.ACTUATOR_ROLE_NAME);
-
-    return http.build();
-  }
-
 }

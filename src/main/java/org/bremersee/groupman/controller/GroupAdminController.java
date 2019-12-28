@@ -24,11 +24,10 @@ import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupAdminControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
+import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
-import org.bremersee.security.authentication.BremerseeAuthenticationToken;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
@@ -50,11 +49,13 @@ public class GroupAdminController
    *
    * @param groupRepository     the group repository
    * @param groupLdapRepository the group ldap repository
+   * @param localRole           the local role
    */
   public GroupAdminController(
       GroupRepository groupRepository,
-      GroupLdapRepository groupLdapRepository) {
-    super(groupRepository, groupLdapRepository);
+      GroupLdapRepository groupLdapRepository,
+      @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole) {
+    super(groupRepository, groupLdapRepository, localRole);
   }
 
   @Override
@@ -80,19 +81,14 @@ public class GroupAdminController
       log.error("Creating group [" + group.getName() + "] failed.", e);
       throw e;
     }
+    return oneWithCurrentUser(currentUser -> addGroup(group, currentUser).map(this::mapToGroup));
+  }
 
-    return ReactiveSecurityContextHolder
-        .getContext()
-        .map(SecurityContext::getAuthentication)
-        .cast(BremerseeAuthenticationToken.class)
-        .map(BremerseeAuthenticationToken::getPreferredName)
-        .flatMap(currentUserName -> {
-          if (!StringUtils.hasText(group.getCreatedBy())) {
-            group.setCreatedBy(currentUserName);
-          }
-          return getGroupRepository().save(mapToGroupEntity(group));
-        })
-        .map(this::mapToGroup);
+  private Mono<GroupEntity> addGroup(Group group, CurrentUser currentUser) {
+    if (!StringUtils.hasText(group.getCreatedBy())) {
+      group.setCreatedBy(currentUser.getName());
+    }
+    return getGroupRepository().save(mapToGroupEntity(group));
   }
 
   @Override
