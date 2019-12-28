@@ -91,6 +91,8 @@ public class SecurityConfiguration {
 
       http
           .authorizeExchange()
+          .pathMatchers("/v2/**")
+          .permitAll()
           .pathMatchers("/api/admin/**")
           .hasAuthority(AuthorityConstants.ADMIN_ROLE_NAME)
           .anyExchange()
@@ -160,6 +162,8 @@ public class SecurityConfiguration {
           .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
           .csrf().disable()
           .authorizeExchange()
+          .pathMatchers("/v2/**")
+          .permitAll()
           .pathMatchers("/api/admin/**")
           .hasAuthority(AuthorityConstants.ADMIN_ROLE_NAME)
           .anyExchange()
