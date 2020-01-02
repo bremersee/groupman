@@ -29,6 +29,9 @@ bremersee:
         status: 409
         message: "Version is not up to date."
         code: "GRP:1001"
+      - exception-class-name: java.lang.UnsupportedOperationException
+        status: 400
+        code: "GRP:1002"
   groupman:
     local-role: "ROLE_LOCAL_USER"
 

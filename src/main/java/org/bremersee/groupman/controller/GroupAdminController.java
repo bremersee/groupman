@@ -21,7 +21,7 @@ import java.time.ZoneId;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
-import org.bremersee.groupman.api.GroupAdminControllerApi;
+import org.bremersee.groupman.api.GroupAdminWebfluxControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;
@@ -42,7 +42,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class GroupAdminController
     extends AbstractGroupController
-    implements GroupAdminControllerApi {
+    implements GroupAdminWebfluxControllerApi {
 
   /**
    * Instantiates a new group admin controller.

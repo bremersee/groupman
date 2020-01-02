@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
-import org.bremersee.groupman.api.GroupControllerApi;
+import org.bremersee.groupman.api.GroupWebfluxControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;
@@ -43,7 +43,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class GroupController
     extends AbstractGroupController
-    implements GroupControllerApi {
+    implements GroupWebfluxControllerApi {
 
   /**
    * Instantiates a new group controller.
