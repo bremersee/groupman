@@ -39,7 +39,6 @@ import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
-import org.bremersee.security.authentication.BremerseeAuthenticationToken;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.ModelMapper;
 import org.reactivestreams.Publisher;
@@ -48,6 +47,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -259,8 +259,8 @@ abstract class AbstractGroupController {
       } else {
         roles = Collections.emptySet();
       }
-      if (authentication instanceof BremerseeAuthenticationToken) {
-        name = ((BremerseeAuthenticationToken) authentication).getPreferredName();
+      if (authentication instanceof JwtAuthenticationToken) {
+        uuid = ((JwtAuthenticationToken) authentication).getToken().getSubject();
       }
       localUser = localUserRole != null && roles.contains(localUserRole);
     }

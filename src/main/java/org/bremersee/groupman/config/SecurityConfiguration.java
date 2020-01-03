@@ -18,7 +18,7 @@ package org.bremersee.groupman.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.security.authentication.AuthenticationProperties;
-import org.bremersee.security.authentication.KeycloakReactiveJwtConverter;
+import org.bremersee.security.authentication.JsonPathReactiveJwtConverter;
 import org.bremersee.security.authentication.PasswordFlowReactiveAuthenticationManager;
 import org.bremersee.security.core.AuthorityConstants;
 import org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest;
@@ -45,30 +45,32 @@ import org.springframework.security.web.server.util.matcher.NegatedServerWebExch
 @Slf4j
 public class SecurityConfiguration {
 
+  /**
+   * The jwt login.
+   */
   @ConditionalOnProperty(
       prefix = "bremersee.security.authentication",
-      name = "enable-keycloak-support",
+      name = "enable-jwt-support",
       havingValue = "true")
   @Configuration
-  static class KeycloakLogin {
+  static class JwtLogin {
 
-    private KeycloakReactiveJwtConverter keycloakJwtConverter;
+    private JsonPathReactiveJwtConverter jwtConverter;
 
-    private PasswordFlowReactiveAuthenticationManager passwordFlowReactiveAuthenticationManager;
+    private PasswordFlowReactiveAuthenticationManager passwordFlowAuthenticationManager;
 
     /**
-     * Instantiates a new keycloak login.
+     * Instantiates a new jwt login.
      *
-     * @param keycloakJwtConverter                      the keycloak jwt converter
-     * @param passwordFlowReactiveAuthenticationManager the password flow reactive authentication
-     *                                                  manager
+     * @param jwtConverter                      the jwt converter
+     * @param passwordFlowAuthenticationManager the password flow authentication manager
      */
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    public KeycloakLogin(
-        KeycloakReactiveJwtConverter keycloakJwtConverter,
-        PasswordFlowReactiveAuthenticationManager passwordFlowReactiveAuthenticationManager) {
-      this.keycloakJwtConverter = keycloakJwtConverter;
-      this.passwordFlowReactiveAuthenticationManager = passwordFlowReactiveAuthenticationManager;
+    public JwtLogin(
+        JsonPathReactiveJwtConverter jwtConverter,
+        PasswordFlowReactiveAuthenticationManager passwordFlowAuthenticationManager) {
+      this.jwtConverter = jwtConverter;
+      this.passwordFlowAuthenticationManager = passwordFlowAuthenticationManager;
     }
 
     /**
@@ -87,7 +89,7 @@ public class SecurityConfiguration {
           .csrf().disable()
           .oauth2ResourceServer()
           .jwt()
-          .jwtAuthenticationConverter(keycloakJwtConverter);
+          .jwtAuthenticationConverter(jwtConverter);
 
       http
           .authorizeExchange()
@@ -116,7 +118,7 @@ public class SecurityConfiguration {
           .securityMatcher(EndpointRequest.toAnyEndpoint())
           .csrf().disable()
           .httpBasic()
-          .authenticationManager(passwordFlowReactiveAuthenticationManager);
+          .authenticationManager(passwordFlowAuthenticationManager);
 
       http
           .authorizeExchange()
@@ -128,9 +130,12 @@ public class SecurityConfiguration {
     }
   }
 
+  /**
+   * The type Basic auth login.
+   */
   @ConditionalOnProperty(
       prefix = "bremersee.security.authentication",
-      name = "enable-keycloak-support",
+      name = "enable-jwt-support",
       havingValue = "false", matchIfMissing = true)
   @Configuration
   @EnableConfigurationProperties(AuthenticationProperties.class)
@@ -138,10 +143,20 @@ public class SecurityConfiguration {
 
     private AuthenticationProperties properties;
 
+    /**
+     * Instantiates a new Basic auth login.
+     *
+     * @param properties the properties
+     */
     public BasicAuthLogin(AuthenticationProperties properties) {
       this.properties = properties;
     }
 
+    /**
+     * User details service map reactive user details service.
+     *
+     * @return the map reactive user details service
+     */
     @Bean
     public MapReactiveUserDetailsService userDetailsService() {
       return new MapReactiveUserDetailsService(properties.buildBasicAuthUserDetails());

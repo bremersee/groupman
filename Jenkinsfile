@@ -75,7 +75,7 @@ pipeline {
           else
             echo "Creating service ${SERVICE_NAME} with docker image ${DOCKER_IMAGE}:${DEV_TAG}."
             chmod 755 docker-swarm/service.sh
-            docker-swarm/service.sh "${DOCKER_IMAGE}:${DEV_TAG}" "default,ldap,dev"
+            docker-swarm/service.sh "${DOCKER_IMAGE}:${DEV_TAG}" "default,ldap,mongodb,dev"
           fi
         '''
       }

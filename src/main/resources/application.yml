@@ -5,7 +5,7 @@ bremersee:
     cors:
       allow-all: true
     authentication:
-      enable-keycloak-support: ${KEYCLOAK_SUPPORT:false}
+      enable-jwt-support: ${JWT_SUPPORT:false}
       password-flow:
         client-id: ${OPENID_CLIENT_ID:omnia}
         client-secret: ${OPENID_CLIENT_SECRET:changeit}
@@ -88,7 +88,7 @@ spring:
 bremersee:
   security:
     authentication:
-      enable-keycloak-support: false
+      enable-jwt-support: false
       basic-auth-users:
         - name: "admin"
           password: "admin"
@@ -103,6 +103,14 @@ bremersee:
           password: "user"
           authorities:
             - "ROLE_USER"
+
+---
+
+spring:
+  profiles: mongodb
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration
 
 ---
 
