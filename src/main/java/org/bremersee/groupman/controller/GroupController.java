@@ -56,6 +56,7 @@ public class GroupController
    * @param localRole           if a role name is given, ldap will only be called, if the user has
    *                            this role; if the role name is null or empty, ldap will always be
    *                            called
+   * @param maxOwnedGroups      the max owned groups
    */
   public GroupController(
       GroupRepository groupRepository,
