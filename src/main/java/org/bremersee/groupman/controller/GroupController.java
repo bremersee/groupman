@@ -82,7 +82,7 @@ public class GroupController
       return getGroupRepository().save(mapToGroupEntity(group));
     }
     return getGroupRepository().countOwnedGroups(currentUser.getName())
-        .flatMap(size -> size > maxOwnedGroups
+        .flatMap(size -> size >= maxOwnedGroups
             ? Mono.error(() -> ServiceException.badRequest(
             "The maximum number of groups has been reached.",
             "GRP:MAX_OWNED_GROUPS"))

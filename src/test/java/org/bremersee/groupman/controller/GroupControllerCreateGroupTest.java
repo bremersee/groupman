@@ -49,7 +49,7 @@ import org.springframework.web.reactive.function.BodyInserters;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "bremersee.security.authentication.enable-jwt-support=true",
-    "bremersee.groupman.max-owned-groups=2"
+    "bremersee.groupman.max-owned-groups=3"
 })
 @ActiveProfiles({"default"})
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
