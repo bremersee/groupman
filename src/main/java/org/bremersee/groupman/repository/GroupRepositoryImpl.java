@@ -47,4 +47,10 @@ public class GroupRepositoryImpl implements GroupRepositoryCustom {
         .count(Query.query(Criteria.where("owners").is(userName)), GroupEntity.class);
   }
 
+  @Override
+  public Mono<Long> countMembership(String userName) {
+    return mongoTemplate
+        .count(Query.query(Criteria.where("members").is(userName)), GroupEntity.class);
+  }
+
 }

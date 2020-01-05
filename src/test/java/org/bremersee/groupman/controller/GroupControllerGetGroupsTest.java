@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
+import org.bremersee.groupman.model.Status;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.test.security.authentication.WithJwtAuthenticationToken;
@@ -76,7 +77,8 @@ import reactor.test.StepVerifier;
     "bremersee.domain-controller.user-base-dn=ou=people,dc=bremersee,dc=org",
     "bremersee.domain-controller.user-rdn=uid",
     "bremersee.domain-controller.group-find-all-filter=(objectClass=groupOfUniqueNames)",
-    "bremersee.domain-controller.group-find-one-filter=(&(objectClass=groupOfUniqueNames)(cn={0}))"
+    "bremersee.domain-controller.group-find-one-filter=(&(objectClass=groupOfUniqueNames)(cn={0}))",
+    "bremersee.groupman.max-owned-groups=100"
 })
 @ActiveProfiles({"default", "ldap"})
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
@@ -323,6 +325,50 @@ class GroupControllerGetGroupsTest {
           assertTrue(ids.stream().anyMatch(id -> id.equals(group2.getId())));
           // from embedded ldap
           assertTrue(ids.stream().anyMatch(id -> id.equals("managers")));
+        });
+  }
+
+  /**
+   * Gets status with ldap.
+   */
+  @WithJwtAuthenticationToken(
+      preferredUsername = "leopold",
+      roles = {USER_ROLE_NAME, LOCAL_USER_ROLE_NAME}) // required for ldap
+  @Test
+  void getStatusWithLdap() {
+    webTestClient
+        .get()
+        .uri("/api/groups/f/status")
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(Status.class)
+        .value(status -> {
+          assertEquals(100L, status.getMaxOwnedGroups());
+          assertEquals(1L, status.getOwnedGroupSize());
+          assertEquals(3L, status.getMembershipSize());
+        });
+  }
+
+  /**
+   * Gets status.
+   */
+  @WithJwtAuthenticationToken(
+      preferredUsername = "leopold",
+      roles = {USER_ROLE_NAME})
+  @Test
+  void getStatusWithoutLdap() {
+    webTestClient
+        .get()
+        .uri("/api/groups/f/status")
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(Status.class)
+        .value(status -> {
+          assertEquals(100L, status.getMaxOwnedGroups());
+          assertEquals(1L, status.getOwnedGroupSize());
+          assertEquals(2L, status.getMembershipSize());
         });
   }
 

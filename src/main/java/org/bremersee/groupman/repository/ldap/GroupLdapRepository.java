@@ -76,4 +76,14 @@ public interface GroupLdapRepository {
     return Flux.empty();
   }
 
+  /**
+   * Count ldap membership.
+   *
+   * @param name the user name
+   * @return the size of membership
+   */
+  default Mono<Long> countMembership(String name) {
+    return findByMembersIsContaining(name).count();
+  }
+
 }

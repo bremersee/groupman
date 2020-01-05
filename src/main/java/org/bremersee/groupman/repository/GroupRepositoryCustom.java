@@ -26,11 +26,19 @@ import reactor.core.publisher.Mono;
 public interface GroupRepositoryCustom {
 
   /**
-   * Count owned groups mono.
+   * Count owned groups.
    *
    * @param userName the user name
-   * @return the mono
+   * @return the size of owned groups
    */
   Mono<Long> countOwnedGroups(String userName);
+
+  /**
+   * Count membership.
+   *
+   * @param userName the user name
+   * @return the size of membership
+   */
+  Mono<Long> countMembership(String userName);
 
 }

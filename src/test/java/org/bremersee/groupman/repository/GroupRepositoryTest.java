@@ -33,7 +33,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.ActiveProfiles;
 import reactor.test.StepVerifier;
 
 /**
@@ -111,4 +110,17 @@ class GroupRepositoryTest {
         .expectComplete()
         .verify();
   }
+
+  /**
+   * Count membership.
+   */
+  @Test
+  void countMembership() {
+    StepVerifier
+        .create(groupRepository.countMembership("gustav"))
+        .assertNext(size -> assertEquals(2L, size))
+        .expectComplete()
+        .verify();
+  }
+
 }

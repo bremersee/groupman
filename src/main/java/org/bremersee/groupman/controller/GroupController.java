@@ -16,24 +16,21 @@
 
 package org.bremersee.groupman.controller;
 
-import io.swagger.annotations.ApiParam;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupWebfluxControllerApi;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
+import org.bremersee.groupman.model.Status;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -49,6 +46,8 @@ public class GroupController
     extends AbstractGroupController
     implements GroupWebfluxControllerApi {
 
+  private Long maxOwnedGroups;
+
   /**
    * Instantiates a new group controller.
    *
@@ -61,8 +60,10 @@ public class GroupController
   public GroupController(
       GroupRepository groupRepository,
       GroupLdapRepository groupLdapRepository,
-      @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole) {
+      @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole,
+      @Value("${bremersee.groupman.max-owned-groups:-1}") Long maxOwnedGroups) {
     super(groupRepository, groupLdapRepository, localRole);
+    this.maxOwnedGroups = maxOwnedGroups != null ? maxOwnedGroups : -1L;
   }
 
   @Override
@@ -174,6 +175,30 @@ public class GroupController
   public Mono<Set<String>> getMembershipIds() {
     return oneWithCurrentUser(currentUser -> getMembership(currentUser)
         .map(GroupEntity::getId).collect(Collectors.toSet()));
+  }
+
+  @Override
+  public Mono<Status> getStatus() {
+    return oneWithCurrentUser(this::getStatus);
+  }
+
+  private Mono<Status> getStatus(CurrentUser currentUser) {
+    return getGroupRepository().countOwnedGroups(currentUser.getName())
+        .zipWith(getMembershipSum(currentUser))
+        .map(sizes -> Status.builder()
+            .ownedGroupSize(sizes.getT1())
+            .membershipSize(sizes.getT2())
+            .maxOwnedGroups(maxOwnedGroups)
+            .build());
+  }
+
+  private Mono<Long> getMembershipSum(CurrentUser currentUser) {
+    if (currentUser.isLocalUser()) {
+      return getGroupRepository().countMembership(currentUser.getName())
+          .zipWith(getGroupLdapRepository().countMembership(currentUser.getName()))
+          .map(sizes -> sizes.getT1() + sizes.getT2());
+    }
+    return getGroupRepository().countMembership(currentUser.getName());
   }
 
 }
