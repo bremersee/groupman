@@ -23,10 +23,7 @@ import reactor.test.StepVerifier;
 /**
  * The group repository test.
  */
-@SpringBootTest(webEnvironment = WebEnvironment.NONE, properties = {
-    "bremersee.security.authentication.enable-jwt-support=false",
-})
-@ActiveProfiles({"basic-auth"})
+@SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GroupRepositoryTest {

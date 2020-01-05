@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +46,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2WebFlux;
  *
  * @author Christian Bremer
  */
+@ConditionalOnWebApplication
 @Configuration
 @EnableConfigurationProperties(SwaggerProperties.class)
 @EnableSwagger2WebFlux
