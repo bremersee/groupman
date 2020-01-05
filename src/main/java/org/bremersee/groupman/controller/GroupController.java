@@ -78,7 +78,16 @@ public class GroupController
     group.setCreatedBy(currentUser.getName());
     group.setSource(Source.INTERNAL);
     group.getOwners().add(currentUser.getName());
-    return getGroupRepository().save(mapToGroupEntity(group));
+    if (maxOwnedGroups < 0) {
+      return getGroupRepository().save(mapToGroupEntity(group));
+    }
+    return getGroupRepository().countOwnedGroups(currentUser.getName())
+        .flatMap(size -> size > maxOwnedGroups
+            ? Mono.error(() -> ServiceException.badRequest(
+            "The maximum number of groups has been reached.",
+            "GRP:MAX_OWNED_GROUPS"))
+            : Mono.just(group))
+        .flatMap(newGroup -> getGroupRepository().save(mapToGroupEntity(newGroup)));
   }
 
   @Override
@@ -94,26 +103,14 @@ public class GroupController
   }
 
   private Mono<GroupEntity> updateGroup(String groupId, Group group, CurrentUser currentUser) {
+    if (group.getOwners().isEmpty()) {
+      group.getOwners().add(currentUser.getName());
+    }
     return getGroupEntityById(groupId)
         .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
         .filter(groupEntity -> groupEntity.getOwners().contains(currentUser.getName()))
         .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
         .flatMap(groupEntity -> getGroupRepository().save(updateGroup(group, () -> groupEntity)));
-  }
-
-  @Override
-  public Mono<Group> patchGroup(String id, Group group) {
-    return oneWithCurrentUser(currentUser -> patchGroup(id, group, currentUser)
-        .map(this::mapToGroup));
-  }
-
-  private Mono<GroupEntity> patchGroup(String groupId, Group group, CurrentUser currentUser) {
-    return getGroupEntityById(groupId)
-        .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
-        .filter(groupEntity -> groupEntity.getOwners().contains(currentUser.getName()))
-        .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
-        .flatMap(groupEntity -> getGroupRepository()
-            .save(patchGroup(group, () -> groupEntity, currentUser)));
   }
 
   @Override

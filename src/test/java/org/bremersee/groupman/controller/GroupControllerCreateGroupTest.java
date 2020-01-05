@@ -48,7 +48,8 @@ import org.springframework.web.reactive.function.BodyInserters;
  * @author Christian Bremer
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "bremersee.security.authentication.enable-jwt-support=true"
+    "bremersee.security.authentication.enable-jwt-support=true",
+    "bremersee.groupman.max-owned-groups=2"
 })
 @ActiveProfiles({"default"})
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
@@ -173,7 +174,7 @@ class GroupControllerCreateGroupTest {
    * Create group and expect already exists.
    */
   @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
+      preferredUsername = "leopold",
       roles = {USER_ROLE_NAME})
   @Test
   void createGroupAndExpectAlreadyExists() {
@@ -203,6 +204,64 @@ class GroupControllerCreateGroupTest {
         .expectBody(RestApiException.class)
         .value((Consumer<RestApiException>) restApiException -> {
           assertEquals("GRP:1000", restApiException.getErrorCode()); // see application.yml
+        });
+  }
+
+  /**
+   * Create groups and expect max number of owned groups is reached.
+   */
+  @WithJwtAuthenticationToken(
+      preferredUsername = "anna-livia",
+      roles = {USER_ROLE_NAME})
+  @Test
+  void createGroupsAndExpectMaxNumberOfOwnedGroupsIsReached() {
+    webTestClient
+        .post()
+        .uri("/api/groups")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name("Group1")
+            .build()))
+        .exchange()
+        .expectStatus().isOk();
+
+    webTestClient
+        .post()
+        .uri("/api/groups")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name("Group2")
+            .build()))
+        .exchange()
+        .expectStatus().isOk();
+
+    webTestClient
+        .post()
+        .uri("/api/groups")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name("Group3")
+            .build()))
+        .exchange()
+        .expectStatus().isOk();
+
+    webTestClient
+        .post()
+        .uri("/api/groups")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name("Group4")
+            .build()))
+        .exchange()
+        .expectStatus().isBadRequest()
+        .expectBody(RestApiException.class)
+        .value((Consumer<RestApiException>) restApiException -> {
+          assertEquals("GRP:MAX_OWNED_GROUPS", restApiException.getErrorCode());
+          assertEquals("/api/groups", restApiException.getPath());
         });
   }
 
