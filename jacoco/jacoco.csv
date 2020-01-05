@@ -1,20 +1,25 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-groupman,org.bremersee.groupman,GroupAdminController,178,9,10,0,42,3,16,2,11,2
-groupman,org.bremersee.groupman,LdapEntryUtils,69,0,8,0,14,0,8,0,4,0
-groupman,org.bremersee.groupman,DisabledGroupLdapRepository,0,3,0,0,0,1,0,1,0,1
+groupman,org.bremersee.groupman.controller,AbstractGroupController.new AbstractConverter() {...},2,12,1,1,0,2,1,2,0,2
+groupman,org.bremersee.groupman.controller,GroupAdminController,0,159,3,7,0,35,3,17,0,15
+groupman,org.bremersee.groupman.controller,AbstractGroupController.new AbstractConverter() {...},0,16,0,2,0,2,0,3,0,2
+groupman,org.bremersee.groupman.controller,AbstractGroupController.CurrentUser,97,53,17,5,5,13,16,4,6,3
+groupman,org.bremersee.groupman.controller,GroupController,8,268,0,2,0,44,2,32,2,31
+groupman,org.bremersee.groupman.controller,AbstractGroupController,12,227,4,4,3,55,4,18,0,18
+groupman,org.bremersee.groupman.repository.ldap,GroupLdapMapper,26,109,0,2,5,26,3,5,3,4
+groupman,org.bremersee.groupman.repository.ldap,GroupLdapRepository,10,2,0,0,4,1,4,1,4,1
+groupman,org.bremersee.groupman.repository.ldap,DisabledGroupLdapRepository,0,3,0,0,0,1,0,1,0,1
+groupman,org.bremersee.groupman.repository.ldap,GroupLdapRepositoryImpl,19,241,9,9,3,41,9,11,0,11
+groupman,org.bremersee.groupman.metrics,GaugeMetrics,2,53,2,2,0,11,2,4,0,4
 groupman,org.bremersee.groupman,Application,5,3,0,0,2,1,1,1,1,1
-groupman,org.bremersee.groupman,GroupController,348,19,23,1,98,6,32,2,20,2
-groupman,org.bremersee.groupman,DomainControllerSettings,679,41,120,0,16,13,94,1,34,1
-groupman,org.bremersee.groupman,GroupLdapRepositoryImpl,622,0,48,0,133,0,47,0,23,0
-groupman,org.bremersee.groupman,GaugeMetrics,26,29,4,0,4,7,4,2,2,2
-groupman,org.bremersee.groupman,GroupEntity,201,0,14,0,25,0,30,0,23,0
-groupman,org.bremersee.groupman,GroupLdapRepository,12,0,0,0,5,0,5,0,5,0
-groupman,org.bremersee.groupman,AbstractGroupController.new AbstractConverter() {...},8,6,2,0,1,1,2,1,1,1
-groupman,org.bremersee.groupman,AbstractGroupController,142,53,8,0,34,13,15,2,11,2
-groupman,org.bremersee.groupman,AbstractGroupController.new AbstractConverter() {...},10,6,2,0,1,1,2,1,1,1
-groupman,org.bremersee.groupman.config,SecurityConfiguration,0,100,0,0,0,31,0,4,0,4
-groupman,org.bremersee.groupman.config,ExceptionConfiguration,0,26,0,0,0,6,0,3,0,3
-groupman,org.bremersee.groupman.config,WebConfiguration,0,55,0,2,0,14,0,4,0,3
-groupman,org.bremersee.groupman.config,LdaptiveConfiguration,306,0,34,0,69,0,31,0,14,0
-groupman,org.bremersee.groupman.config,LdaptiveProperties,786,0,94,0,25,0,94,0,47,0
-groupman,org.bremersee.groupman.config,SecuritySupportConfiguration,0,22,0,0,0,7,0,3,0,3
+groupman,org.bremersee.groupman.config,SwaggerConfiguration.RecursiveAlternateTypeRule,5,60,2,2,1,10,2,6,0,6
+groupman,org.bremersee.groupman.config,SecurityConfiguration,0,7,0,0,0,2,0,2,0,2
+groupman,org.bremersee.groupman.config,SwaggerProperties,311,180,76,10,2,12,56,12,13,12
+groupman,org.bremersee.groupman.config,SecurityConfiguration.JwtLogin,0,105,0,0,0,32,0,3,0,3
+groupman,org.bremersee.groupman.config,DomainControllerProperties,368,371,98,22,1,30,62,33,7,28
+groupman,org.bremersee.groupman.config,SecurityConfiguration.BasicAuthLogin,0,102,0,0,0,33,0,4,0,4
+groupman,org.bremersee.groupman.config,SwaggerConfiguration,14,181,3,3,4,39,3,3,0,3
+groupman,org.bremersee.groupman.repository.ldap.transcoder,GroupMemberValueTranscoder,2,39,1,5,1,9,1,7,0,5
+groupman,org.bremersee.groupman.repository.ldap.transcoder,GeneralizedTimeToDateValueTranscoder,0,47,0,0,0,13,0,6,0,6
+groupman,org.bremersee.groupman.repository,GroupRepositoryImpl,0,37,0,0,0,10,0,3,0,3
+groupman,org.bremersee.groupman.repository,GroupEntity.GroupEntityBuilder,62,72,0,0,0,1,2,11,2,11
+groupman,org.bremersee.groupman.repository,GroupEntity,105,156,14,0,9,29,9,23,2,23

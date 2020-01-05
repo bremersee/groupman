@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GroupAdminController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman.controller</a> &gt; <span class="el_source">GroupAdminController.java</span></div><h1>GroupAdminController.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman.controller;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.bremersee.exception.ServiceException;
+import org.bremersee.groupman.api.GroupAdminWebfluxControllerApi;
+import org.bremersee.groupman.model.Group;
+import org.bremersee.groupman.model.Source;
+import org.bremersee.groupman.repository.GroupEntity;
+import org.bremersee.groupman.repository.GroupRepository;
+import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+/**
+ * The group controller for administration purposes.
+ *
+ * @author Christian Bremer
+ */
+@RestController
+<span class="fc" id="L42">@Slf4j</span>
+public class GroupAdminController
+    extends AbstractGroupController
+    implements GroupAdminWebfluxControllerApi {
+
+  /**
+   * Instantiates a new group admin controller.
+   *
+   * @param groupRepository     the group repository
+   * @param groupLdapRepository the group ldap repository
+   * @param localRole           the local role
+   */
+  public GroupAdminController(
+      GroupRepository groupRepository,
+      GroupLdapRepository groupLdapRepository,
+      @Value(&quot;${bremersee.groupman.local-role:ROLE_LOCAL_USER}&quot;) String localRole) {
+<span class="fc" id="L58">    super(groupRepository, groupLdapRepository, localRole);</span>
+<span class="fc" id="L59">  }</span>
+
+  @Override
+  public Flux&lt;Group&gt; findGroups() {
+<span class="fc" id="L63">    return getGroupRepository()</span>
+<span class="fc" id="L64">        .findAll()</span>
+<span class="fc" id="L65">        .concatWith(getGroupLdapRepository().findAll())</span>
+<span class="fc" id="L66">        .sort(COMPARATOR)</span>
+<span class="fc" id="L67">        .map(this::mapToGroup);</span>
+  }
+
+  @Override
+  public Mono&lt;Group&gt; addGroup(Group group) {
+
+<span class="fc" id="L73">    group.setId(null);</span>
+<span class="fc" id="L74">    group.setCreatedAt(OffsetDateTime.now(ZoneId.of(&quot;UTC&quot;)));</span>
+<span class="fc" id="L75">    group.setModifiedAt(group.getCreatedAt());</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">    if (group.getSource() == null) {</span>
+<span class="fc" id="L77">      group.setSource(Source.INTERNAL);</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">    } else if (Source.LDAP.equals(group.getSource())) {</span>
+<span class="fc" id="L79">      throw new UnsupportedOperationException(</span>
+          &quot;Creating a group with source 'LDAP' is not supported.&quot;);
+    }
+<span class="fc" id="L82">    return oneWithCurrentUser(currentUser -&gt; addGroup(group, currentUser).map(this::mapToGroup));</span>
+  }
+
+  private Mono&lt;GroupEntity&gt; addGroup(Group group, CurrentUser currentUser) {
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">    if (!StringUtils.hasText(group.getCreatedBy())) {</span>
+<span class="fc" id="L87">      group.setCreatedBy(currentUser.getName());</span>
+    }
+<span class="fc" id="L89">    return getGroupRepository().save(mapToGroupEntity(group));</span>
+  }
+
+  @Override
+  public Mono&lt;Group&gt; findGroupById(String groupId) {
+<span class="fc" id="L94">    return super.getGroupEntityById(groupId)</span>
+<span class="fc" id="L95">        .map(this::mapToGroup);</span>
+  }
+
+  @Override
+  public Mono&lt;Group&gt; modifyGroup(String groupId, Group group) {
+
+<span class="fc bfc" id="L101" title="All 2 branches covered.">    if (Source.LDAP.equals(group.getSource())) {</span>
+<span class="fc" id="L102">      throw new UnsupportedOperationException(</span>
+          &quot;Updating a group with source 'LDAP' is not supported.&quot;);
+    }
+<span class="fc" id="L105">    return getGroupRepository().findById(groupId)</span>
+<span class="fc" id="L106">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.notFound(&quot;Group&quot;, groupId)))</span>
+<span class="fc" id="L107">        .map(existingGroup -&gt; updateGroup(group, () -&gt; existingGroup))</span>
+<span class="fc" id="L108">        .map(existingGroup -&gt; {</span>
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">          if (StringUtils.hasText(group.getCreatedBy())) {</span>
+<span class="fc" id="L110">            existingGroup.setCreatedBy(group.getCreatedBy());</span>
+          }
+<span class="fc" id="L112">          return existingGroup;</span>
+        })
+<span class="fc" id="L114">        .flatMap(existingGroup -&gt; getGroupRepository().save(existingGroup))</span>
+<span class="fc" id="L115">        .map(this::mapToGroup);</span>
+  }
+
+  @Override
+  public Mono&lt;Void&gt; removeGroup(String groupId) {
+
+<span class="fc" id="L121">    return getGroupRepository().deleteById(groupId);</span>
+  }
+
+  @Override
+  public Flux&lt;Group&gt; findGroupsByIds(List&lt;String&gt; ids) {
+<span class="fc" id="L126">    return super.getGroupEntitiesByIds(ids)</span>
+<span class="fc" id="L127">        .map(this::mapToGroup);</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>

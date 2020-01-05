@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GroupEntity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman.repository</a> &gt; <span class="el_source">GroupEntity.java</span></div><h1>GroupEntity.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman.repository;
+
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.bremersee.groupman.model.Source;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.TypeAlias;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.validation.annotation.Validated;
+
+/**
+ * The group entity.
+ *
+ * @author Christian Bremer
+ */
+@Document(collection = &quot;groups&quot;)
+@TypeAlias(&quot;group&quot;)
+@CompoundIndexes({
+    @CompoundIndex(name = &quot;creator_group&quot;,
+        def = &quot;{'createdBy': 1, 'name': 1}&quot;,
+        unique = true)
+})
+@Getter
+<span class="fc" id="L52">@Setter</span>
+<span class="nc" id="L53">@ToString</span>
+<span class="fc" id="L54">@NoArgsConstructor</span>
+@Validated
+public class GroupEntity implements Comparable&lt;GroupEntity&gt; {
+
+  @Id
+<span class="fc" id="L59">  private String id;</span>
+
+  @Version
+<span class="fc" id="L62">  private Long version;</span>
+
+  @Indexed
+<span class="fc" id="L65">  private String createdBy;</span>
+
+<span class="fc" id="L67">  private Date createdAt = new Date();</span>
+
+<span class="fc" id="L69">  @Indexed</span>
+<span class="fc" id="L70">  private Date modifiedAt = new Date();</span>
+
+<span class="fc" id="L72">  @Indexed</span>
+<span class="fc" id="L73">  private Source source = Source.INTERNAL;</span>
+
+  @NotBlank
+  @Size(min = 3, max = 75)
+  @Indexed
+<span class="fc" id="L78">  private String name;</span>
+
+  @Size(max = 255)
+<span class="fc" id="L81">  private String description;</span>
+
+<span class="fc" id="L83">  @Indexed</span>
+<span class="fc" id="L84">  private Set&lt;String&gt; members = new LinkedHashSet&lt;&gt;();</span>
+
+<span class="fc" id="L86">  @Indexed</span>
+<span class="fc" id="L87">  private Set&lt;String&gt; owners = new LinkedHashSet&lt;&gt;();</span>
+
+  /**
+   * Instantiates a new Group entity.
+   *
+   * @param id          the id
+   * @param version     the version
+   * @param createdBy   the created by
+   * @param createdAt   the created at
+   * @param modifiedAt  the modified at
+   * @param source      the source
+   * @param name        the name
+   * @param description the description
+   * @param members     the members
+   * @param owners      the owners
+   */
+<span class="pc" id="L103">  @Builder</span>
+  public GroupEntity(
+      String id,
+      Long version,
+      String createdBy,
+      Date createdAt,
+      Date modifiedAt,
+      Source source,
+      @NotBlank @Size(min = 3, max = 75) String name,
+      @Size(max = 255) String description,
+      Set&lt;String&gt; members,
+<span class="fc" id="L114">      Set&lt;String&gt; owners) {</span>
+<span class="fc" id="L115">    this.id = id;</span>
+<span class="fc" id="L116">    this.version = version;</span>
+<span class="fc" id="L117">    this.createdBy = createdBy;</span>
+<span class="fc" id="L118">    this.createdAt = createdAt;</span>
+<span class="fc" id="L119">    this.modifiedAt = modifiedAt;</span>
+<span class="fc" id="L120">    this.source = source;</span>
+<span class="fc" id="L121">    this.name = name;</span>
+<span class="fc" id="L122">    this.description = description;</span>
+<span class="fc" id="L123">    this.members = members;</span>
+<span class="fc" id="L124">    this.owners = owners;</span>
+<span class="fc" id="L125">  }</span>
+
+  @Override
+  public int compareTo(GroupEntity o) {
+<span class="nc bnc" id="L129" title="All 2 branches missed.">    String s1 = getName() == null ? &quot;&quot; : getName();</span>
+<span class="nc bnc" id="L130" title="All 4 branches missed.">    String s2 = o == null || o.getName() == null ? &quot;&quot; : o.getName();</span>
+<span class="nc" id="L131">    int c = s1.compareToIgnoreCase(s2);</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">    if (c != 0) {</span>
+<span class="nc" id="L133">      return c;</span>
+    }
+<span class="nc bnc" id="L135" title="All 2 branches missed.">    s1 = getCreatedBy() == null ? &quot;&quot; : getCreatedBy();</span>
+<span class="nc bnc" id="L136" title="All 4 branches missed.">    s2 = o == null || o.getCreatedBy() == null ? &quot;&quot; : o.getCreatedBy();</span>
+<span class="nc" id="L137">    return s1.compareToIgnoreCase(s2);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>
