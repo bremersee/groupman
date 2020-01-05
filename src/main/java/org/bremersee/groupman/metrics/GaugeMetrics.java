@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 public class GaugeMetrics {
 
   /**
-   * Instantiates a new gauge metrics.
+   * Instantiates new gauge metrics.
    *
    * @param meterRegistry       the meter registry
    * @param groupRepository     the group repository

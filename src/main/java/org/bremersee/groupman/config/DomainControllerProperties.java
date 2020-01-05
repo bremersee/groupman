@@ -58,9 +58,6 @@ public class DomainControllerProperties {
 
   private String userRdn = "cn";
 
-  // Must be the same as in keycloak (User Federation > Ldap > LDAP Mappers > username)
-  private String memberNameAttribute = "cn";
-
   private String groupFindAllFilter = "(objectClass=group)";
 
   private SearchScope groupFindAllSearchScope = SearchScope.ONELEVEL;

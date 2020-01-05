@@ -5,7 +5,7 @@ bremersee:
     cors:
       allow-all: true
     authentication:
-      enable-jwt-support: ${JWT_SUPPORT:false}
+      enable-jwt-support: ${JWT_SUPPORT:true}
       password-flow:
         client-id: ${OPENID_CLIENT_ID:omnia}
         client-secret: ${OPENID_CLIENT_SECRET:changeit}

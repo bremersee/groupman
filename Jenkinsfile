@@ -3,8 +3,8 @@ pipeline {
   environment {
     SERVICE_NAME='groupman'
     DOCKER_IMAGE='bremersee/groupman'
-    DEV_TAG='latest'
-    PROD_TAG='release'
+    DEV_TAG='snapshot'
+    PROD_TAG='latest'
   }
   stages {
     stage('Test') {
@@ -21,7 +21,7 @@ pipeline {
         sh 'mvn -B clean test'
       }
     }
-    stage('Push latest') {
+    stage('Push snapshot') {
       agent {
         label 'maven'
       }
@@ -34,8 +34,8 @@ pipeline {
       }
       steps {
         sh '''
-          mvn -B -DskipTests -Ddockerfile.skip=false package dockerfile:push
-          mvn -B -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false clean package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=snapshot clean package dockerfile:push
           docker system prune -a -f
         '''
       }
@@ -53,9 +53,8 @@ pipeline {
       }
       steps {
         sh '''
-          mvn -B -DskipTests -Ddockerfile.skip=false package dockerfile:push
-          mvn -B -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest package dockerfile:push
-          mvn -B -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=release package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false clean package dockerfile:push
+          mvn -B -DskipTests -Ddockerfile.skip=false -Ddockerfile.tag=latest clean package dockerfile:push
           docker system prune -a -f
         '''
       }
@@ -92,7 +91,7 @@ pipeline {
         maven 'm3'
       }
       steps {
-        sh 'mvn -B site-deploy'
+        sh 'mvn -B clean site-deploy'
       }
     }
     stage('Deploy release site') {
@@ -107,7 +106,7 @@ pipeline {
         maven 'm3'
       }
       steps {
-        sh 'mvn -B -P gh-pages-site site site:stage scm-publish:publish-scm'
+        sh 'mvn -B -P gh-pages-site clean site site:stage scm-publish:publish-scm'
       }
     }
   }

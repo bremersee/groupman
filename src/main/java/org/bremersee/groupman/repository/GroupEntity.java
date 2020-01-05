@@ -21,7 +21,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.bremersee.groupman.model.Source;
@@ -49,6 +51,7 @@ import org.springframework.validation.annotation.Validated;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 @Validated
 public class GroupEntity implements Comparable<GroupEntity> {
 
@@ -82,6 +85,44 @@ public class GroupEntity implements Comparable<GroupEntity> {
 
   @Indexed
   private Set<String> owners = new LinkedHashSet<>();
+
+  /**
+   * Instantiates a new Group entity.
+   *
+   * @param id          the id
+   * @param version     the version
+   * @param createdBy   the created by
+   * @param createdAt   the created at
+   * @param modifiedAt  the modified at
+   * @param source      the source
+   * @param name        the name
+   * @param description the description
+   * @param members     the members
+   * @param owners      the owners
+   */
+  @Builder
+  public GroupEntity(
+      String id,
+      Long version,
+      String createdBy,
+      Date createdAt,
+      Date modifiedAt,
+      Source source,
+      @NotBlank @Size(min = 3, max = 75) String name,
+      @Size(max = 255) String description,
+      Set<String> members,
+      Set<String> owners) {
+    this.id = id;
+    this.version = version;
+    this.createdBy = createdBy;
+    this.createdAt = createdAt;
+    this.modifiedAt = modifiedAt;
+    this.source = source;
+    this.name = name;
+    this.description = description;
+    this.members = members;
+    this.owners = owners;
+  }
 
   @Override
   public int compareTo(GroupEntity o) {

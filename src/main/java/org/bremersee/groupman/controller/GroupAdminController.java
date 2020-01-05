@@ -76,10 +76,8 @@ public class GroupAdminController
     if (group.getSource() == null) {
       group.setSource(Source.INTERNAL);
     } else if (Source.LDAP.equals(group.getSource())) {
-      UnsupportedOperationException e = new UnsupportedOperationException(
+      throw new UnsupportedOperationException(
           "Creating a group with source 'LDAP' is not supported.");
-      log.error("Creating group [" + group.getName() + "] failed.", e);
-      throw e;
     }
     return oneWithCurrentUser(currentUser -> addGroup(group, currentUser).map(this::mapToGroup));
   }
@@ -101,10 +99,8 @@ public class GroupAdminController
   public Mono<Group> modifyGroup(String groupId, Group group) {
 
     if (Source.LDAP.equals(group.getSource())) {
-      UnsupportedOperationException e = new UnsupportedOperationException(
+      throw new UnsupportedOperationException(
           "Updating a group with source 'LDAP' is not supported.");
-      log.error("Updating group [" + group.getName() + "] failed.", e);
-      throw e;
     }
     return getGroupRepository().findById(groupId)
         .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
