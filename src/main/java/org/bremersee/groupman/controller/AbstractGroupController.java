@@ -49,6 +49,7 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -224,6 +225,36 @@ abstract class AbstractGroupController {
     destination.setMembers(new LinkedHashSet<>(src.getMembers()));
     destination.setName(src.getName());
     destination.setOwners(new LinkedHashSet<>(src.getOwners()));
+    return destination;
+  }
+
+  GroupEntity patchGroup(
+      final Group source,
+      final Supplier<GroupEntity> destinationSupplier,
+      final CurrentUser currentUser) {
+
+    final GroupEntity destination = destinationSupplier.get();
+    destination.setModifiedAt(new Date());
+    if (StringUtils.hasText(source.getName())) {
+      destination.setName(source.getName());
+    }
+    if (source.getDescription() != null) {
+      if (source.getDescription().trim().length() == 0) {
+        destination.setDescription(null);
+      } else {
+        destination.setDescription(source.getDescription());
+      }
+    }
+    if (source.getVersion() != null) {
+      destination.setVersion(source.getVersion());
+    }
+    if (source.getMembers() != null) {
+      destination.setMembers(new LinkedHashSet<>(source.getMembers()));
+    }
+    if (source.getOwners() != null) {
+      destination.setOwners(new LinkedHashSet<>(source.getOwners()));
+      destination.getOwners().add(currentUser.getName());
+    }
     return destination;
   }
 

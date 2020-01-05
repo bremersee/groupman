@@ -3,6 +3,7 @@ package org.bremersee.groupman.controller;
 import static org.bremersee.security.core.AuthorityConstants.USER_ROLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -204,6 +205,37 @@ class GroupControllerUpdateGroupTest {
           assertNotNull(restApiException.getMessage());
           assertEquals("/api/groups/GCUGT0", restApiException.getPath());
           // System.out.println("RestApiException of Validation: " + restApiException);
+        });
+  }
+
+  /**
+   * Patch group.
+   */
+  @WithJwtAuthenticationToken(
+      preferredUsername = "molly",
+      roles = {USER_ROLE_NAME})
+  @Test
+  @Order(90)
+  void patchGroup() {
+    webTestClient
+        .patch()
+        .uri("/api/groups/{id}", "GCUGT0")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name(group0.getName())
+            .description("")
+            .owners(Arrays.asList("anna", "stephen"))
+            .members(Arrays.asList("anna", "leopold", "molly"))
+            .build()))
+        .exchange()
+        .expectBody(Group.class)
+        .value((Consumer<Group>) group -> {
+          assertNotNull(group);
+          assertEquals(group0.getName(), group.getName());
+          assertNull(group.getDescription());
+          assertTrue(group.getOwners().containsAll(Arrays.asList("anna", "stephen", "molly")));
+          assertTrue(group.getMembers().containsAll(Arrays.asList("anna", "leopold", "molly")));
         });
   }
 
