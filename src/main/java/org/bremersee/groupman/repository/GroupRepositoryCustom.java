@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
-
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+package org.bremersee.groupman.repository;
 
 /**
- * The disabled group ldap repository can be used, if there is no LDAP with additional groups or in
- * unit tests.
+ * The interface Group repository custom.
  *
  * @author Christian Bremer
  */
-@Profile("!ldap")
-@Component
-public class DisabledGroupLdapRepository implements GroupLdapRepository {
+public interface GroupRepositoryCustom {
 
 }

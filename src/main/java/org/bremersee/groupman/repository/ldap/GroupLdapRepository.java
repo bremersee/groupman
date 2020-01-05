@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.repository.ldap;
 
 import java.util.List;
+import org.bremersee.groupman.repository.GroupEntity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

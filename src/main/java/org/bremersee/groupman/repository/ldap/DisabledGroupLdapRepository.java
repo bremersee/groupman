@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.repository.ldap;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 
 /**
- * The main application.
+ * The disabled group ldap repository can be used, if there is no LDAP with additional groups or in
+ * unit tests.
  *
  * @author Christian Bremer
  */
-@SpringBootApplication
-@EnableReactiveMongoRepositories
-public class Application {
+@Profile("!ldap")
+@Component
+public class DisabledGroupLdapRepository implements GroupLdapRepository {
 
-  /**
-   * The entry point of application.
-   *
-   * @param args the input arguments
-   */
-  public static void main(String[] args) {
-    SpringApplication.run(Application.class, args);
-  }
 }

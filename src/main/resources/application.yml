@@ -1,4 +1,49 @@
+bremersee:
+  ldaptive:
+    enabled: false
+  security:
+    cors:
+      allow-all: true
+    authentication:
+      enable-jwt-support: ${JWT_SUPPORT:true}
+      password-flow:
+        client-id: ${OPENID_CLIENT_ID:omnia}
+        client-secret: ${OPENID_CLIENT_SECRET:changeit}
+        token-endpoint: ${OPENID_TOKEN_ENDPOINT:https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/token}
+  exception-mapping:
+    api-paths:
+      - /api/**
+    default-exception-mapping-config:
+      include-stack-trace: true
+      include-cause: true
+      include-application-name: true
+      include-exception-class-name: true
+      include-handler: true
+      include-path: true
+    exception-mappings:
+      - exception-class-name: org.springframework.dao.DuplicateKeyException
+        status: 409
+        message: "Group already exists."
+        code: "GRP:1000"
+      - exception-class-name: org.springframework.dao.OptimisticLockingFailureException
+        status: 409
+        message: "Version is not up to date."
+        code: "GRP:1001"
+      - exception-class-name: java.lang.UnsupportedOperationException
+        status: 400
+        code: "GRP:1002"
+  groupman:
+    local-role: "ROLE_LOCAL_USER"
+
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OPENID_KEYS_URI:https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/certs}
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/test}
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     default-property-inclusion: non_null
@@ -14,11 +59,6 @@ spring:
   zipkin:
     enabled: ${ZIPKIN_ENABLED:false}
     base-url: ${ZIPKIN_BASE_URL:http://localhost:9411/}
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${OPENID_KEYS_URI:https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/certs}
 
 management:
   endpoints:
@@ -40,38 +80,37 @@ logging:
     reactor: info
     org.springframework: info
 
+---
+
+spring:
+  profiles: basic-auth
+
 bremersee:
   security:
-    cors:
-      allow-all: true
-    oauth2:
-      password-flow:
-        client-id: ${OPENID_CLIENT_ID:omnia}
-        client-secret: ${OPENID_CLIENT_SECRET:changeit}
-        token-endpoint: ${OPENID_TOKEN_ENDPOINT:https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/token}
-  exception-mapping:
-    api-paths:
-      - /api/**
-    exception-mappings:
-      - exception-class-name: org.springframework.dao.DuplicateKeyException
-        status: 409
-        message: "Group already exists."
-        code: "GRP:1000"
-      - exception-class-name: org.springframework.dao.OptimisticLockingFailureException
-        status: 409
-        message: "Version is not up to date."
-        code: "GRP:1001"
-  groupman:
-    local-role: "ROLE_LOCAL_USER"
+    authentication:
+      enable-jwt-support: false
+      basic-auth-users:
+        - name: "admin"
+          password: "admin"
+          authorities:
+            - "ROLE_USER"
+            - "ROLE_ADMIN"
+        - name: "actuator"
+          password: "actuator"
+          authorities:
+            - "ROLE_ACTUATOR"
+        - name: "user"
+          password: "user"
+          authorities:
+            - "ROLE_USER"
 
 ---
 
 spring:
   profiles: mongodb
-
-  data:
-    mongodb:
-      uri: ${MONGODB_URI:mongodb://user:secret@192.168.1.40:27017,192.168.1.40:27018,192.168.1.40:27019/groupman?connect=direct}
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration
 
 ---
 
@@ -80,6 +119,8 @@ spring:
 
 bremersee:
   ldaptive:
+    enabled: true
+    use-unbound-id-provider: false
     ldap-url: ${LDAP_URL:ldaps://example.org:636}
     use-ssl: ${LDAP_SSL:true}
     use-start-tls: ${LDAP_START_TLS:false}

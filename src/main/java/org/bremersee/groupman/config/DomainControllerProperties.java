@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman;
+package org.bremersee.groupman.config;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,16 +39,18 @@ import org.springframework.stereotype.Component;
 @ToString
 @EqualsAndHashCode
 @NoArgsConstructor
-public class DomainControllerSettings {
+public class DomainControllerProperties {
 
   private String groupBaseDn;
+
+  private String groupRdn = "cn";
 
   // Must be the same as in keycloak (User Federation > Ldap > LDAP Mappers > Group mapper)
   private String groupNameAttribute = "cn";
 
   private String groupDescriptionAttribute = "description";
 
-  private String groupMemberAttr = "member";
+  private String groupMemberAttribute = "member";
 
   private boolean memberDn = true;
 
@@ -56,14 +58,11 @@ public class DomainControllerSettings {
 
   private String userRdn = "cn";
 
-  // Must be the same as in keycloak (User Federation > Ldap > LDAP Mappers > username)
-  private String memberNameAttribute = "cn";
-
   private String groupFindAllFilter = "(objectClass=group)";
 
   private SearchScope groupFindAllSearchScope = SearchScope.ONELEVEL;
 
-  private String groupFindOneFilter = "(&(objectClass=group)(sAMAccountName={0}))";
+  private String groupFindOneFilter = "(&(objectClass=group)(cn={0}))";
 
   private SearchScope groupSearchScope = SearchScope.ONELEVEL;
 
@@ -85,9 +84,11 @@ public class DomainControllerSettings {
       return groupFindOneFilter;
     }
     StringBuilder sb = new StringBuilder();
-    sb.append("(&(objectClass=group)(|");
+    sb.append("(&");
+    sb.append(groupFindAllFilter);
+    sb.append("(|");
     for (int i = 0; i < size; i++) {
-      sb.append("(sAMAccountName={").append(i).append("})");
+      sb.append("(").append(groupNameAttribute).append("={").append(i).append("})");
     }
     sb.append("))");
     return sb.toString();
@@ -99,6 +100,6 @@ public class DomainControllerSettings {
    * @return the group find by member contains filter
    */
   public String getGroupFindByMemberContainsFilter() {
-    return "(&(objectClass=group)(" + groupMemberAttr + "={0}))";
+    return "(&" + groupFindAllFilter + "(" + groupMemberAttribute + "={0}))";
   }
 }
