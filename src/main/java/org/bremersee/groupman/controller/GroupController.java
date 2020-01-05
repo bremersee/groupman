@@ -16,11 +16,13 @@
 
 package org.bremersee.groupman.controller;
 
+import io.swagger.annotations.ApiParam;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupWebfluxControllerApi;
@@ -30,6 +32,8 @@ import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -94,6 +98,21 @@ public class GroupController
         .filter(groupEntity -> groupEntity.getOwners().contains(currentUser.getName()))
         .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
         .flatMap(groupEntity -> getGroupRepository().save(updateGroup(group, () -> groupEntity)));
+  }
+
+  @Override
+  public Mono<Group> patchGroup(String id, Group group) {
+    return oneWithCurrentUser(currentUser -> patchGroup(id, group, currentUser)
+        .map(this::mapToGroup));
+  }
+
+  private Mono<GroupEntity> patchGroup(String groupId, Group group, CurrentUser currentUser) {
+    return getGroupEntityById(groupId)
+        .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
+        .filter(groupEntity -> groupEntity.getOwners().contains(currentUser.getName()))
+        .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
+        .flatMap(groupEntity -> getGroupRepository()
+            .save(patchGroup(group, () -> groupEntity, currentUser)));
   }
 
   @Override
