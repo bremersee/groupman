@@ -118,10 +118,6 @@ class GroupAdminControllerFindGroupsTest {
   @BeforeAll
   void setUpData() {
     StepVerifier
-        .create(groupRepository.deleteAll())
-        .expectNextCount(0L)
-        .verifyComplete();
-    StepVerifier
         .create(groupRepository.save(group0))
         .consumeNextWith(groupEntity -> {
           assertNotNull(groupEntity.getId());
