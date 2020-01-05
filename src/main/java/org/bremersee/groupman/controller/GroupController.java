@@ -78,7 +78,6 @@ public class GroupController
     group.setCreatedBy(currentUser.getName());
     group.setSource(Source.INTERNAL);
     group.getOwners().add(currentUser.getName());
-
     return Mono.just(group)
         .flatMap(newGroup -> maxOwnedGroups < 0
             ? Mono.just(newGroup)
