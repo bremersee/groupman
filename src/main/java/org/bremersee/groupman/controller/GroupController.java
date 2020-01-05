@@ -78,15 +78,16 @@ public class GroupController
     group.setCreatedBy(currentUser.getName());
     group.setSource(Source.INTERNAL);
     group.getOwners().add(currentUser.getName());
-    if (maxOwnedGroups < 0) {
-      return getGroupRepository().save(mapToGroupEntity(group));
-    }
-    return getGroupRepository().countOwnedGroups(currentUser.getName())
-        .flatMap(size -> size >= maxOwnedGroups
-            ? Mono.error(() -> ServiceException.badRequest(
-            "The maximum number of groups has been reached.",
-            "GRP:MAX_OWNED_GROUPS"))
-            : Mono.just(group))
+
+    return Mono.just(group)
+        .flatMap(newGroup -> maxOwnedGroups < 0
+            ? Mono.just(newGroup)
+            : getGroupRepository().countOwnedGroups(currentUser.getName())
+                .flatMap(size -> size >= maxOwnedGroups
+                    ? Mono.error(() -> ServiceException.badRequest(
+                    "The maximum number of groups has been reached.",
+                    "GRP:MAX_OWNED_GROUPS"))
+                    : Mono.just(newGroup)))
         .flatMap(newGroup -> getGroupRepository().save(mapToGroupEntity(newGroup)));
   }
 
