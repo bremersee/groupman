@@ -17,13 +17,10 @@
 package org.bremersee.groupman.repository;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.index.IndexOperations;
-import org.springframework.data.mongodb.core.index.IndexResolver;
-import org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import reactor.core.publisher.Mono;
 
 /**
  * The custom group repository implementation.
@@ -32,32 +29,28 @@ import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
  */
 @Slf4j
 public class GroupRepositoryImpl implements GroupRepositoryCustom {
-  
-  private MongoTemplate mongoTemplate;
 
-  private MongoMappingContext mongoMappingContext;
+  private ReactiveMongoTemplate mongoTemplate;
 
-	/**
-	 * Instantiates a new custom group repository.
-	 *
-	 * @param mongoTemplate       the mongo template
-	 * @param mongoMappingContext the mongo mapping context
-	 */
-	public GroupRepositoryImpl(MongoTemplate mongoTemplate,
-      MongoMappingContext mongoMappingContext) {
+  /**
+   * Instantiates a new custom group repository.
+   *
+   * @param mongoTemplate the mongo template
+   */
+  public GroupRepositoryImpl(ReactiveMongoTemplate mongoTemplate) {
     this.mongoTemplate = mongoTemplate;
-    this.mongoMappingContext = mongoMappingContext;
   }
 
-	/**
-	 * Init indices after startup.
-	 */
-	@EventListener(ApplicationReadyEvent.class)
-	public void initIndicesAfterStartup() {
-	    log.info("Creating mongo index operations.");
-	    IndexOperations indexOps = mongoTemplate.indexOps(GroupEntity.class);
-	    IndexResolver resolver = new MongoPersistentEntityIndexResolver(mongoMappingContext);
-	    resolver.resolveIndexFor(GroupEntity.class).forEach(indexOps::ensureIndex);
-	}
-  
+  @Override
+  public Mono<Long> countOwnedGroups(String userName) {
+    return mongoTemplate
+        .count(Query.query(Criteria.where("owners").is(userName)), GroupEntity.class);
+  }
+
+  @Override
+  public Mono<Long> countMembership(String userName) {
+    return mongoTemplate
+        .count(Query.query(Criteria.where("members").is(userName)), GroupEntity.class);
+  }
+
 }

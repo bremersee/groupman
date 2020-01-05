@@ -32,6 +32,12 @@
       "type": "java.lang.String",
       "description": "If a role name is given, ldap will only be called, if the user has this role; if the role name is null or empty, ldap will always be called.",
       "defaultValue": "ROLE_LOCAL_USER"
+    },
+    {
+      "name": "bremersee.groupman.max-owned-groups",
+      "type": "java.lang.Long",
+      "description": "The maximum number od owned groups.",
+      "defaultValue": -1
     }
   ]
 }

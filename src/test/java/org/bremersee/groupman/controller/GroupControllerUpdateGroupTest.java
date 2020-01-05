@@ -1,9 +1,24 @@
+/*
+ * Copyright 2020 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.bremersee.groupman.controller;
 
 import static org.bremersee.security.core.AuthorityConstants.USER_ROLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -35,6 +50,8 @@ import reactor.test.StepVerifier;
 
 /**
  * The group controller update group test.
+ *
+ * @author Christian Bremer
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "bremersee.security.authentication.enable-jwt-support=true"
@@ -205,37 +222,6 @@ class GroupControllerUpdateGroupTest {
           assertNotNull(restApiException.getMessage());
           assertEquals("/api/groups/GCUGT0", restApiException.getPath());
           // System.out.println("RestApiException of Validation: " + restApiException);
-        });
-  }
-
-  /**
-   * Patch group.
-   */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
-  @Test
-  @Order(90)
-  void patchGroup() {
-    webTestClient
-        .patch()
-        .uri("/api/groups/{id}", "GCUGT0")
-        .accept(MediaType.APPLICATION_JSON)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body(BodyInserters.fromValue(Group.builder()
-            .name(group0.getName())
-            .description("")
-            .owners(Arrays.asList("anna", "stephen"))
-            .members(Arrays.asList("anna", "leopold", "molly"))
-            .build()))
-        .exchange()
-        .expectBody(Group.class)
-        .value((Consumer<Group>) group -> {
-          assertNotNull(group);
-          assertEquals(group0.getName(), group.getName());
-          assertNull(group.getDescription());
-          assertTrue(group.getOwners().containsAll(Arrays.asList("anna", "stephen", "molly")));
-          assertTrue(group.getMembers().containsAll(Arrays.asList("anna", "leopold", "molly")));
         });
   }
 
