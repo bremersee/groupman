@@ -67,23 +67,17 @@ class GroupRepositoryTest {
   void setUpData() {
     StepVerifier
         .create(groupRepository.save(group0))
-        .assertNext(groupEntity -> {
-          assertNotNull(groupEntity.getId());
-        })
+        .assertNext(groupEntity -> assertNotNull(groupEntity.getId()))
         .expectComplete()
         .verify();
     StepVerifier
         .create(groupRepository.save(group1))
-        .assertNext(groupEntity -> {
-          assertNotNull(groupEntity.getId());
-        })
+        .assertNext(groupEntity -> assertNotNull(groupEntity.getId()))
         .expectComplete()
         .verify();
     StepVerifier
         .create(groupRepository.save(group2))
-        .assertNext(groupEntity -> {
-          assertNotNull(groupEntity.getId());
-        })
+        .assertNext(groupEntity -> assertNotNull(groupEntity.getId()))
         .expectComplete()
         .verify();
   }
