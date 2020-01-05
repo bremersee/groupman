@@ -20,6 +20,9 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.ActiveProfiles;
 import reactor.test.StepVerifier;
 
+/**
+ * The group repository test.
+ */
 @SpringBootTest(webEnvironment = WebEnvironment.NONE, properties = {
     "bremersee.security.authentication.enable-jwt-support=false",
 })
@@ -63,25 +66,28 @@ class GroupRepositoryTest {
   @Autowired
   private GroupRepository groupRepository;
 
+  /**
+   * Sets up data.
+   */
   @BeforeAll
   void setUpData() {
     StepVerifier
         .create(groupRepository.save(group0))
         .assertNext(groupEntity -> assertNotNull(groupEntity.getId()))
-        .expectComplete()
-        .verify();
+        .verifyComplete();
     StepVerifier
         .create(groupRepository.save(group1))
         .assertNext(groupEntity -> assertNotNull(groupEntity.getId()))
-        .expectComplete()
-        .verify();
+        .verifyComplete();
     StepVerifier
         .create(groupRepository.save(group2))
         .assertNext(groupEntity -> assertNotNull(groupEntity.getId()))
-        .expectComplete()
-        .verify();
+        .verifyComplete();
   }
 
+  /**
+   * Count owned groups.
+   */
   @Test
   void countOwnedGroups() {
     StepVerifier

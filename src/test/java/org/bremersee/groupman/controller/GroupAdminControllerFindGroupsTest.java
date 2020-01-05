@@ -119,14 +119,14 @@ class GroupAdminControllerFindGroupsTest {
   void setUpData() {
     StepVerifier
         .create(groupRepository.save(group0))
-        .consumeNextWith(groupEntity -> {
+        .assertNext(groupEntity -> {
           assertNotNull(groupEntity.getId());
           assertEquals("GACFGT0", groupEntity.getId());
         })
         .verifyComplete();
     StepVerifier
         .create(groupRepository.save(group1))
-        .consumeNextWith(groupEntity -> {
+        .assertNext(groupEntity -> {
           assertNotNull(groupEntity.getId());
           assertEquals("GACFGT1", groupEntity.getId());
         })
