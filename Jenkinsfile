@@ -15,10 +15,32 @@ pipeline {
         jdk 'jdk8'
         maven 'm3'
       }
+      when {
+        not {
+          branch 'feature/*'
+        }
+      }
       steps {
         sh 'java -version'
         sh 'mvn -B --version'
         sh 'mvn -B clean test'
+      }
+    }
+    stage('Test feature') {
+      agent {
+        label 'maven'
+      }
+      when {
+        branch 'feature/*'
+      }
+      tools {
+        jdk 'jdk8'
+        maven 'm3'
+      }
+      steps {
+        sh 'java -version'
+        sh 'mvn -B --version'
+        sh 'mvn -B -P feature,allow-features clean test'
       }
     }
     stage('Push snapshot') {
