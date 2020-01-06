@@ -23,33 +23,14 @@ pipeline {
       steps {
         sh 'java -version'
         sh 'mvn -B --version'
-        sh 'mvn -B clean package'
-      }
-      post {
-        always {
-          step([$class: 'JacocoPublisher', execPattern: '**/coverage-reports/**.exec'])
-        }
-      }
-    }
-    stage('Test feature') {
-      agent {
-        label 'maven'
-      }
-      when {
-        branch 'feature/*'
-      }
-      tools {
-        jdk 'jdk8'
-        maven 'm3'
-      }
-      steps {
-        sh 'java -version'
-        sh 'mvn -B --version'
-        sh 'mvn -B -P feature,allow-features clean test'
+        sh 'mvn -B clean test'
       }
       post {
         always {
           junit 'target/surefire-reports/*.xml'
+          jacoco(
+              execPattern: '**/coverage-reports/*.exec'
+          )
         }
       }
     }
@@ -139,6 +120,31 @@ pipeline {
       }
       steps {
         sh 'mvn -B -P gh-pages-site clean site site:stage scm-publish:publish-scm'
+      }
+    }
+    stage('Test feature') {
+      agent {
+        label 'maven'
+      }
+      when {
+        branch 'feature/*'
+      }
+      tools {
+        jdk 'jdk8'
+        maven 'm3'
+      }
+      steps {
+        sh 'java -version'
+        sh 'mvn -B --version'
+        sh 'mvn -B -P feature,allow-features clean test'
+      }
+      post {
+        always {
+          junit 'target/surefire-reports/*.xml'
+          jacoco(
+              execPattern: '**/coverage-reports/*.exec'
+          )
+        }
       }
     }
   }
