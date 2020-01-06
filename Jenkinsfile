@@ -28,12 +28,7 @@ pipeline {
       post {
         always {
           junit 'target/surefire-reports/*.xml'
-          jacoco(
-              execPattern: '**/target/coverage-reports/*.exec',
-              classPattern: 'target/classes',
-              sourcePattern: 'src/main/java',
-              exclusionPattern: 'src/test*'
-          )
+          step([$class: 'JacocoPublisher', execPattern: '***/coverage-reports/**.exec'])
         }
       }
     }
