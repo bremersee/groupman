@@ -23,12 +23,12 @@ pipeline {
       steps {
         sh 'java -version'
         sh 'mvn -B --version'
-        sh 'mvn -B clean test'
+        sh 'mvn -B clean package'
       }
       post {
         always {
           junit 'target/surefire-reports/*.xml'
-          step([$class: 'JacocoPublisher', execPattern: '***/coverage-reports/**.exec'])
+          step([$class: 'JacocoPublisher', execPattern: '**/coverage-reports/**.exec'])
         }
       }
     }
