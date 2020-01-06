@@ -96,6 +96,9 @@ pipeline {
       agent {
         label 'maven'
       }
+      environment {
+        CODECOV_TOKEN = credentials('groupman-codecov-token')
+      }
       when {
         branch 'develop'
       }
@@ -106,10 +109,18 @@ pipeline {
       steps {
         sh 'mvn -B clean site-deploy'
       }
+      post {
+        always {
+          sh 'curl -s https://codecov.io/bash | bash -s - -t ${CODECOV_TOKEN}'
+        }
+      }
     }
     stage('Deploy release site') {
       agent {
         label 'maven'
+      }
+      environment {
+        CODECOV_TOKEN = credentials('groupman-codecov-token')
       }
       when {
         branch 'master'
@@ -120,6 +131,11 @@ pipeline {
       }
       steps {
         sh 'mvn -B -P gh-pages-site clean site site:stage scm-publish:publish-scm'
+      }
+      post {
+        always {
+          sh 'curl -s https://codecov.io/bash | bash -s - -t ${CODECOV_TOKEN}'
+        }
       }
     }
     stage('Test feature') {
