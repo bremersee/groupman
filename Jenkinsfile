@@ -25,6 +25,17 @@ pipeline {
         sh 'mvn -B --version'
         sh 'mvn -B clean test'
       }
+      post {
+        always {
+          junit 'target/surefire-reports/*.xml'
+          jacoco(
+              execPattern: 'target/*.exec',
+              classPattern: 'target/classes',
+              sourcePattern: 'src/main/java',
+              exclusionPattern: 'src/test*'
+          )
+        }
+      }
     }
     stage('Test feature') {
       agent {
@@ -41,6 +52,11 @@ pipeline {
         sh 'java -version'
         sh 'mvn -B --version'
         sh 'mvn -B -P feature,allow-features clean test'
+      }
+      post {
+        always {
+          junit 'target/surefire-reports/*.xml'
+        }
       }
     }
     stage('Push snapshot') {
