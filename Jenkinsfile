@@ -27,7 +27,7 @@ pipeline {
       }
       post {
         always {
-          junit 'target/surefire-reports/*.xml'
+          junit '**/surefire-reports/*.xml'
           jacoco(
               execPattern: '**/coverage-reports/*.exec'
           )
@@ -156,7 +156,7 @@ pipeline {
       }
       post {
         always {
-          junit 'target/surefire-reports/*.xml'
+          junit '**/surefire-reports/*.xml'
           jacoco(
               execPattern: '**/coverage-reports/*.exec'
           )
