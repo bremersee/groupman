@@ -47,7 +47,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -62,22 +61,22 @@ abstract class AbstractGroupController {
   /**
    * The default sort order.
    */
-<span class="fc" id="L65">  static final Sort SORT = Sort.by(&quot;name&quot;, &quot;createdBy&quot;);</span>
+<span class="fc" id="L64">  static final Sort SORT = Sort.by(&quot;name&quot;, &quot;createdBy&quot;);</span>
 
   /**
    * The default comparator.
    */
-<span class="fc" id="L70">  static final Comparator&lt;Object&gt; COMPARATOR = ComparatorBuilder.builder()</span>
-<span class="fc" id="L71">      .addAll(ComparatorSpringUtils.fromSort(SORT))</span>
-<span class="fc" id="L72">      .build();</span>
+<span class="fc" id="L69">  static final Comparator&lt;Object&gt; COMPARATOR = ComparatorBuilder.builder()</span>
+<span class="fc" id="L70">      .addAll(ComparatorSpringUtils.fromSort(SORT))</span>
+<span class="fc" id="L71">      .build();</span>
 
-<span class="fc" id="L74">  @Getter(AccessLevel.PACKAGE)</span>
+<span class="fc" id="L73">  @Getter(AccessLevel.PACKAGE)</span>
   private final ModelMapper modelMapper = new ModelMapper();
 
-<span class="fc" id="L77">  @Getter(AccessLevel.PACKAGE)</span>
+<span class="fc" id="L76">  @Getter(AccessLevel.PACKAGE)</span>
   private GroupRepository groupRepository;
 
-<span class="fc" id="L80">  @Getter(AccessLevel.PACKAGE)</span>
+<span class="fc" id="L79">  @Getter(AccessLevel.PACKAGE)</span>
   private GroupLdapRepository groupLdapRepository;
 
   private String localUserRole;
@@ -92,26 +91,26 @@ abstract class AbstractGroupController {
   public AbstractGroupController(
       final GroupRepository groupRepository,
       final GroupLdapRepository groupLdapRepository,
-<span class="fc" id="L95">      final String localUserRole) {</span>
+<span class="fc" id="L94">      final String localUserRole) {</span>
 
-<span class="fc" id="L97">    Assert.notNull(groupRepository, &quot;Group repository must not be null.&quot;);</span>
-<span class="fc" id="L98">    Assert.notNull(groupLdapRepository, &quot;Group ldap repository must not be null.&quot;);</span>
-<span class="fc" id="L99">    this.groupRepository = groupRepository;</span>
-<span class="fc" id="L100">    this.groupLdapRepository = groupLdapRepository;</span>
-<span class="fc" id="L101">    this.localUserRole = localUserRole;</span>
-<span class="fc" id="L102">    modelMapper.addConverter(new AbstractConverter&lt;Date, OffsetDateTime&gt;() {</span>
+<span class="fc" id="L96">    Assert.notNull(groupRepository, &quot;Group repository must not be null.&quot;);</span>
+<span class="fc" id="L97">    Assert.notNull(groupLdapRepository, &quot;Group ldap repository must not be null.&quot;);</span>
+<span class="fc" id="L98">    this.groupRepository = groupRepository;</span>
+<span class="fc" id="L99">    this.groupLdapRepository = groupLdapRepository;</span>
+<span class="fc" id="L100">    this.localUserRole = localUserRole;</span>
+<span class="fc" id="L101">    modelMapper.addConverter(new AbstractConverter&lt;Date, OffsetDateTime&gt;() {</span>
       @Override
       protected OffsetDateTime convert(Date date) {
-<span class="fc bfc" id="L105" title="All 2 branches covered.">        return date == null ? null : OffsetDateTime.ofInstant(date.toInstant(), ZoneId.of(&quot;UTC&quot;));</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        return date == null ? null : OffsetDateTime.ofInstant(date.toInstant(), ZoneId.of(&quot;UTC&quot;));</span>
       }
     });
-<span class="fc" id="L108">    modelMapper.addConverter(new AbstractConverter&lt;OffsetDateTime, Date&gt;() {</span>
+<span class="fc" id="L107">    modelMapper.addConverter(new AbstractConverter&lt;OffsetDateTime, Date&gt;() {</span>
       @Override
       protected Date convert(OffsetDateTime offsetDateTime) {
-<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        return offsetDateTime == null ? null : Date.from(offsetDateTime.toInstant());</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        return offsetDateTime == null ? null : Date.from(offsetDateTime.toInstant());</span>
       }
     });
-<span class="fc" id="L114">  }</span>
+<span class="fc" id="L113">  }</span>
 
   /**
    * One with current user mono.
@@ -121,11 +120,11 @@ abstract class AbstractGroupController {
    * @return the mono
    */
   &lt;R&gt; Mono&lt;R&gt; oneWithCurrentUser(Function&lt;CurrentUser, ? extends Mono&lt;R&gt;&gt; function) {
-<span class="fc" id="L124">    return ReactiveSecurityContextHolder.getContext()</span>
-<span class="fc" id="L125">        .map(SecurityContext::getAuthentication)</span>
-<span class="fc" id="L126">        .switchIfEmpty(Mono.error(ServiceException::forbidden))</span>
-<span class="fc" id="L127">        .map(authentication -&gt; new CurrentUser(authentication, localUserRole))</span>
-<span class="fc" id="L128">        .flatMap(function);</span>
+<span class="fc" id="L123">    return ReactiveSecurityContextHolder.getContext()</span>
+<span class="fc" id="L124">        .map(SecurityContext::getAuthentication)</span>
+<span class="fc" id="L125">        .switchIfEmpty(Mono.error(ServiceException::forbidden))</span>
+<span class="fc" id="L126">        .map(authentication -&gt; new CurrentUser(authentication, localUserRole))</span>
+<span class="fc" id="L127">        .flatMap(function);</span>
   }
 
   /**
@@ -136,11 +135,11 @@ abstract class AbstractGroupController {
    * @return the flux
    */
   &lt;R&gt; Flux&lt;R&gt; manyWithCurrentUser(Function&lt;CurrentUser, ? extends Publisher&lt;R&gt;&gt; function) {
-<span class="fc" id="L139">    return ReactiveSecurityContextHolder.getContext()</span>
-<span class="fc" id="L140">        .map(SecurityContext::getAuthentication)</span>
-<span class="fc" id="L141">        .switchIfEmpty(Mono.error(ServiceException::forbidden))</span>
-<span class="fc" id="L142">        .map(authentication -&gt; new CurrentUser(authentication, localUserRole))</span>
-<span class="fc" id="L143">        .flatMapMany(function);</span>
+<span class="fc" id="L138">    return ReactiveSecurityContextHolder.getContext()</span>
+<span class="fc" id="L139">        .map(SecurityContext::getAuthentication)</span>
+<span class="fc" id="L140">        .switchIfEmpty(Mono.error(ServiceException::forbidden))</span>
+<span class="fc" id="L141">        .map(authentication -&gt; new CurrentUser(authentication, localUserRole))</span>
+<span class="fc" id="L142">        .flatMapMany(function);</span>
   }
 
   /**
@@ -150,10 +149,10 @@ abstract class AbstractGroupController {
    * @return the group entity
    */
   Mono&lt;GroupEntity&gt; getGroupEntityById(final String groupId) {
-<span class="fc" id="L153">    return groupRepository</span>
-<span class="fc" id="L154">        .findById(groupId)</span>
-<span class="fc" id="L155">        .switchIfEmpty(groupLdapRepository.findByName(groupId))</span>
-<span class="fc" id="L156">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.notFound(&quot;Group&quot;, groupId)));</span>
+<span class="fc" id="L152">    return groupRepository</span>
+<span class="fc" id="L153">        .findById(groupId)</span>
+<span class="fc" id="L154">        .switchIfEmpty(groupLdapRepository.findByName(groupId))</span>
+<span class="fc" id="L155">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.notFound(&quot;Group&quot;, groupId)));</span>
   }
 
   /**
@@ -163,21 +162,21 @@ abstract class AbstractGroupController {
    * @return the group entities by ids
    */
   Flux&lt;GroupEntity&gt; getGroupEntitiesByIds(final List&lt;String&gt; ids) {
-<span class="pc bpc" id="L166" title="1 of 2 branches missed.">    return groupRepository</span>
-<span class="pc" id="L167">        .findByIdIn(ids == null ? Collections.emptyList() : ids)</span>
-<span class="fc" id="L168">        .concatWith(groupLdapRepository.findByNameIn(ids))</span>
-<span class="fc" id="L169">        .sort(COMPARATOR);</span>
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">    return groupRepository</span>
+<span class="pc" id="L166">        .findByIdIn(ids == null ? Collections.emptyList() : ids)</span>
+<span class="fc" id="L167">        .concatWith(groupLdapRepository.findByNameIn(ids))</span>
+<span class="fc" id="L168">        .sort(COMPARATOR);</span>
   }
 
   private Group prepareGroup(final Supplier&lt;Group&gt; groupSupplier) {
-<span class="fc" id="L173">    Group group = groupSupplier.get();</span>
-<span class="pc bpc" id="L174" title="1 of 2 branches missed.">    if (group.getMembers() == null) {</span>
-<span class="nc" id="L175">      group.setMembers(Collections.emptyList());</span>
+<span class="fc" id="L172">    Group group = groupSupplier.get();</span>
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">    if (group.getMembers() == null) {</span>
+<span class="nc" id="L174">      group.setMembers(Collections.emptyList());</span>
     }
-<span class="pc bpc" id="L177" title="1 of 2 branches missed.">    if (group.getOwners() == null) {</span>
-<span class="nc" id="L178">      group.setOwners(Collections.emptyList());</span>
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">    if (group.getOwners() == null) {</span>
+<span class="nc" id="L177">      group.setOwners(Collections.emptyList());</span>
     }
-<span class="fc" id="L180">    return group;</span>
+<span class="fc" id="L179">    return group;</span>
   }
 
   /**
@@ -187,11 +186,11 @@ abstract class AbstractGroupController {
    * @return the group representation
    */
   Group mapToGroup(final GroupEntity source) {
-<span class="fc" id="L190">    Group destination = new Group();</span>
-<span class="fc" id="L191">    destination.setMembers(new ArrayList&lt;&gt;());</span>
-<span class="fc" id="L192">    destination.setOwners(new ArrayList&lt;&gt;());</span>
-<span class="fc" id="L193">    getModelMapper().map(source, destination);</span>
-<span class="fc" id="L194">    return destination;</span>
+<span class="fc" id="L189">    Group destination = new Group();</span>
+<span class="fc" id="L190">    destination.setMembers(new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L191">    destination.setOwners(new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L192">    getModelMapper().map(source, destination);</span>
+<span class="fc" id="L193">    return destination;</span>
   }
 
   /**
@@ -201,9 +200,9 @@ abstract class AbstractGroupController {
    * @return the group entity
    */
   GroupEntity mapToGroupEntity(final Group source) {
-<span class="fc" id="L204">    GroupEntity destination = new GroupEntity();</span>
-<span class="fc" id="L205">    getModelMapper().map(prepareGroup(() -&gt; source), destination);</span>
-<span class="fc" id="L206">    return destination;</span>
+<span class="fc" id="L203">    GroupEntity destination = new GroupEntity();</span>
+<span class="fc" id="L204">    getModelMapper().map(prepareGroup(() -&gt; source), destination);</span>
+<span class="fc" id="L205">    return destination;</span>
   }
 
   /**
@@ -214,34 +213,32 @@ abstract class AbstractGroupController {
    * @return the group entity
    */
   GroupEntity updateGroup(final Group source, final Supplier&lt;GroupEntity&gt; destinationSupplier) {
-<span class="fc" id="L217">    final Group src = prepareGroup(() -&gt; source);</span>
-<span class="fc" id="L218">    final GroupEntity destination = destinationSupplier.get();</span>
-<span class="pc bpc" id="L219" title="1 of 2 branches missed.">    if (source.getVersion() != null) {</span>
-<span class="nc" id="L220">      destination.setVersion(source.getVersion());</span>
+<span class="fc" id="L216">    final Group src = prepareGroup(() -&gt; source);</span>
+<span class="fc" id="L217">    final GroupEntity destination = destinationSupplier.get();</span>
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">    if (source.getVersion() != null) {</span>
+<span class="nc" id="L219">      destination.setVersion(source.getVersion());</span>
     }
-<span class="fc" id="L222">    destination.setModifiedAt(new Date());</span>
-<span class="fc" id="L223">    destination.setDescription(src.getDescription());</span>
-<span class="fc" id="L224">    destination.setMembers(new LinkedHashSet&lt;&gt;(src.getMembers()));</span>
-<span class="fc" id="L225">    destination.setName(src.getName());</span>
-<span class="fc" id="L226">    destination.setOwners(new LinkedHashSet&lt;&gt;(src.getOwners()));</span>
-<span class="fc" id="L227">    return destination;</span>
+<span class="fc" id="L221">    destination.setModifiedAt(new Date());</span>
+<span class="fc" id="L222">    destination.setDescription(src.getDescription());</span>
+<span class="fc" id="L223">    destination.setMembers(new LinkedHashSet&lt;&gt;(src.getMembers()));</span>
+<span class="fc" id="L224">    destination.setName(src.getName());</span>
+<span class="fc" id="L225">    destination.setOwners(new LinkedHashSet&lt;&gt;(src.getOwners()));</span>
+<span class="fc" id="L226">    return destination;</span>
   }
 
   /**
    * The type Current user.
    */
   @Getter
-<span class="nc" id="L234">  @ToString</span>
-<span class="nc bnc" id="L235" title="All 14 branches missed.">  @EqualsAndHashCode(of = &quot;uuid&quot;)</span>
+<span class="nc" id="L233">  @ToString</span>
+<span class="nc bnc" id="L234" title="All 14 branches missed.">  @EqualsAndHashCode(of = &quot;name&quot;)</span>
   public static class CurrentUser {
 
-<span class="nc" id="L238">    private String uuid;</span>
+<span class="fc" id="L237">    private String name;</span>
 
-<span class="fc" id="L240">    private String name;</span>
+<span class="nc" id="L239">    private Set&lt;String&gt; roles;</span>
 
-<span class="nc" id="L242">    private Set&lt;String&gt; roles;</span>
-
-<span class="fc" id="L244">    private boolean localUser;</span>
+<span class="fc" id="L241">    private boolean localUser;</span>
 
     /**
      * Instantiates a new Current user.
@@ -249,22 +246,18 @@ abstract class AbstractGroupController {
      * @param authentication the authentication
      * @param localUserRole  the local user role
      */
-<span class="fc" id="L252">    public CurrentUser(Authentication authentication, String localUserRole) {</span>
-<span class="fc" id="L253">      uuid = authentication.getName();</span>
-<span class="fc" id="L254">      name = authentication.getName();</span>
-<span class="pc bpc" id="L255" title="1 of 2 branches missed.">      if (authentication.getAuthorities() != null) {</span>
-<span class="fc" id="L256">        roles = authentication.getAuthorities().stream()</span>
-<span class="fc" id="L257">            .map(GrantedAuthority::getAuthority)</span>
-<span class="fc" id="L258">            .collect(Collectors.toSet());</span>
+<span class="fc" id="L249">    public CurrentUser(Authentication authentication, String localUserRole) {</span>
+<span class="fc" id="L250">      name = authentication.getName();</span>
+<span class="pc bpc" id="L251" title="1 of 2 branches missed.">      if (authentication.getAuthorities() != null) {</span>
+<span class="fc" id="L252">        roles = authentication.getAuthorities().stream()</span>
+<span class="fc" id="L253">            .map(GrantedAuthority::getAuthority)</span>
+<span class="fc" id="L254">            .collect(Collectors.toSet());</span>
       } else {
-<span class="nc" id="L260">        roles = Collections.emptySet();</span>
+<span class="nc" id="L256">        roles = Collections.emptySet();</span>
       }
-<span class="pc bpc" id="L262" title="1 of 2 branches missed.">      if (authentication instanceof JwtAuthenticationToken) {</span>
-<span class="fc" id="L263">        uuid = ((JwtAuthenticationToken) authentication).getToken().getSubject();</span>
-      }
-<span class="pc bpc" id="L265" title="1 of 4 branches missed.">      localUser = localUserRole != null &amp;&amp; roles.contains(localUserRole);</span>
-<span class="fc" id="L266">    }</span>
+<span class="pc bpc" id="L258" title="1 of 4 branches missed.">      localUser = localUserRole != null &amp;&amp; roles.contains(localUserRole);</span>
+<span class="fc" id="L259">    }</span>
   }
 
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

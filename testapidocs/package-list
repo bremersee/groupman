@@ -1,4 +1,5 @@
 org.bremersee.groupman.config
 org.bremersee.groupman.controller
 org.bremersee.groupman.metrics
+org.bremersee.groupman.repository
 org.bremersee.groupman.repository.ldap.transcoder

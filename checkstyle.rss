@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<rss version="0.91">
+  <channel>
+    <title>groupman - Checkstyle report</title>
+    <link>https://github.com/bremersee/groupman</link>
+    <description>groupman - Checkstyle report</description>
+    <language>en-us</language>
+    <copyright>&#169;2020 bremersee.org</copyright>
+    <item>
+      <title>File: 30,
+             Errors: 0,
+             Warnings: 2,
+             Infos: 0
+      </title>
+            <link>https://github.com/bremersee/groupman/checkstyle.html</link>
+      <description>
+        <p>Click <a href="https://github.com/bremersee/groupman/checkstyle.html">here</a> for the full Checkstyle report.</p>
+
+        <table summary="Files" boder="1">
+          <thead>
+            <tr>
+              <th>Files</th>
+              <th style="width:30px;"><abbr title="Info">I</abbr></th>
+              <th style="width:30px;"><abbr title="Warning">W</abbr></th>
+              <th style="width:30px;"><abbr title="Error">E</abbr></th>
+            </tr>
+          </thead>
+          <tbody>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.GroupRepositoryTest.java">org/bremersee/groupman/repository/GroupRepositoryTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupControllerCreateGroupTest.java">org/bremersee/groupman/controller/GroupControllerCreateGroupTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.SwaggerProperties.java">org/bremersee/groupman/config/SwaggerProperties.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupController.java">org/bremersee/groupman/controller/GroupController.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupAdminControllerModifyGroupTest.java">org/bremersee/groupman/controller/GroupAdminControllerModifyGroupTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.AbstractGroupController.java">org/bremersee/groupman/controller/AbstractGroupController.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.SecurityConfiguration.java">org/bremersee/groupman/config/SecurityConfiguration.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.ldap.transcoder.GeneralizedTimeToDateValueTranscoderTest.java">org/bremersee/groupman/repository/ldap/transcoder/GeneralizedTimeToDateValueTranscoderTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.GroupEntity.java">org/bremersee/groupman/repository/GroupEntity.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupAdminControllerFindGroupsTest.java">org/bremersee/groupman/controller/GroupAdminControllerFindGroupsTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.GroupRepositoryImpl.java">org/bremersee/groupman/repository/GroupRepositoryImpl.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupAdminController.java">org/bremersee/groupman/controller/GroupAdminController.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupControllerGetGroupsTest.java">org/bremersee/groupman/controller/GroupControllerGetGroupsTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupControllerUpdateGroupTest.java">org/bremersee/groupman/controller/GroupControllerUpdateGroupTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.ldap.GroupLdapMapper.java">org/bremersee/groupman/repository/ldap/GroupLdapMapper.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.ldap.GroupLdapRepository.java">org/bremersee/groupman/repository/ldap/GroupLdapRepository.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.ldap.transcoder.GroupMemberValueTranscoder.java">org/bremersee/groupman/repository/ldap/transcoder/GroupMemberValueTranscoder.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.GroupRepository.java">org/bremersee/groupman/repository/GroupRepository.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.ldap.transcoder.GroupMemberValueTranscoderTest.java">org/bremersee/groupman/repository/ldap/transcoder/GroupMemberValueTranscoderTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.metrics.MetricsTest.java">org/bremersee/groupman/metrics/MetricsTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.ldap.DisabledGroupLdapRepository.java">org/bremersee/groupman/repository/ldap/DisabledGroupLdapRepository.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.ldap.GroupLdapRepositoryImpl.java">org/bremersee/groupman/repository/ldap/GroupLdapRepositoryImpl.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.DomainControllerProperties.java">org/bremersee/groupman/config/DomainControllerProperties.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.DomainControllerPropertiesTest.java">org/bremersee/groupman/config/DomainControllerPropertiesTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  1
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.Application.java">org/bremersee/groupman/Application.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.GroupRepositoryCustom.java">org/bremersee/groupman/repository/GroupRepositoryCustom.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.SwaggerConfiguration.java">org/bremersee/groupman/config/SwaggerConfiguration.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  1
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.ldap.transcoder.GeneralizedTimeToDateValueTranscoder.java">org/bremersee/groupman/repository/ldap/transcoder/GeneralizedTimeToDateValueTranscoder.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupAdminControllerAddGroupTest.java">org/bremersee/groupman/controller/GroupAdminControllerAddGroupTest.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.metrics.GaugeMetrics.java">org/bremersee/groupman/metrics/GaugeMetrics.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                      </tbody>
+        </table>
+        
+      </description>
+    </item>
+  </channel>
+</rss>
+

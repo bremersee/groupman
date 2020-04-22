@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +46,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2WebFlux;
  *
  * @author Christian Bremer
  */
+@ConditionalOnWebApplication
 @Configuration
 @EnableConfigurationProperties(SwaggerProperties.class)
 @EnableSwagger2WebFlux
@@ -60,10 +62,10 @@ public class SwaggerConfiguration {
    * @param swaggerProperties the swagger properties
    * @param resolver          the resolver
    */
-<span class="fc" id="L63">  public SwaggerConfiguration(SwaggerProperties swaggerProperties, TypeResolver resolver) {</span>
-<span class="fc" id="L64">    this.swaggerProperties = swaggerProperties;</span>
-<span class="fc" id="L65">    this.resolver = resolver;</span>
-<span class="fc" id="L66">  }</span>
+<span class="fc" id="L65">  public SwaggerConfiguration(SwaggerProperties swaggerProperties, TypeResolver resolver) {</span>
+<span class="fc" id="L66">    this.swaggerProperties = swaggerProperties;</span>
+<span class="fc" id="L67">    this.resolver = resolver;</span>
+<span class="fc" id="L68">  }</span>
 
   /**
    * Returns the swagger docket. The swagger definition will be available under {@code
@@ -73,56 +75,56 @@ public class SwaggerConfiguration {
    */
   @Bean
   public Docket api() {
-<span class="fc" id="L76">    return new Docket(DocumentationType.SWAGGER_2)</span>
-<span class="fc" id="L77">        .select()</span>
-<span class="fc" id="L78">        .apis(RequestHandlerSelectors.any())</span>
-<span class="fc" id="L79">        .paths(PathSelectors.ant(&quot;/api/**&quot;))</span>
-<span class="fc" id="L80">        .build()</span>
-<span class="fc" id="L81">        .pathMapping(swaggerProperties.getPathMapping())</span>
-<span class="fc" id="L82">        .apiInfo(apiInfo())</span>
+<span class="fc" id="L78">    return new Docket(DocumentationType.SWAGGER_2)</span>
+<span class="fc" id="L79">        .select()</span>
+<span class="fc" id="L80">        .apis(RequestHandlerSelectors.any())</span>
+<span class="fc" id="L81">        .paths(PathSelectors.ant(&quot;/api/**&quot;))</span>
+<span class="fc" id="L82">        .build()</span>
+<span class="fc" id="L83">        .pathMapping(swaggerProperties.getPathMapping())</span>
+<span class="fc" id="L84">        .apiInfo(apiInfo())</span>
 
-<span class="fc" id="L84">        .alternateTypeRules(new RecursiveAlternateTypeRule(resolver,</span>
-<span class="fc" id="L85">            Arrays.asList(</span>
-<span class="fc" id="L86">                AlternateTypeRules.newRule(</span>
-<span class="fc" id="L87">                    resolver.resolve(Mono.class, WildcardType.class),</span>
-<span class="fc" id="L88">                    resolver.resolve(WildcardType.class)),</span>
-<span class="fc" id="L89">                AlternateTypeRules.newRule(</span>
-<span class="fc" id="L90">                    resolver.resolve(ResponseEntity.class, WildcardType.class),</span>
-<span class="fc" id="L91">                    resolver.resolve(WildcardType.class))</span>
+<span class="fc" id="L86">        .alternateTypeRules(new RecursiveAlternateTypeRule(resolver,</span>
+<span class="fc" id="L87">            Arrays.asList(</span>
+<span class="fc" id="L88">                AlternateTypeRules.newRule(</span>
+<span class="fc" id="L89">                    resolver.resolve(Mono.class, WildcardType.class),</span>
+<span class="fc" id="L90">                    resolver.resolve(WildcardType.class)),</span>
+<span class="fc" id="L91">                AlternateTypeRules.newRule(</span>
+<span class="fc" id="L92">                    resolver.resolve(ResponseEntity.class, WildcardType.class),</span>
+<span class="fc" id="L93">                    resolver.resolve(WildcardType.class))</span>
             )))
-<span class="fc" id="L93">        .alternateTypeRules(new RecursiveAlternateTypeRule(resolver,</span>
-<span class="fc" id="L94">            Arrays.asList(</span>
-<span class="fc" id="L95">                AlternateTypeRules.newRule(</span>
-<span class="fc" id="L96">                    resolver.resolve(Flux.class, WildcardType.class),</span>
-<span class="fc" id="L97">                    resolver.resolve(List.class, WildcardType.class)),</span>
-<span class="fc" id="L98">                AlternateTypeRules.newRule(</span>
-<span class="fc" id="L99">                    resolver.resolve(ResponseEntity.class, WildcardType.class),</span>
-<span class="fc" id="L100">                    resolver.resolve(WildcardType.class))</span>
+<span class="fc" id="L95">        .alternateTypeRules(new RecursiveAlternateTypeRule(resolver,</span>
+<span class="fc" id="L96">            Arrays.asList(</span>
+<span class="fc" id="L97">                AlternateTypeRules.newRule(</span>
+<span class="fc" id="L98">                    resolver.resolve(Flux.class, WildcardType.class),</span>
+<span class="fc" id="L99">                    resolver.resolve(List.class, WildcardType.class)),</span>
+<span class="fc" id="L100">                AlternateTypeRules.newRule(</span>
+<span class="fc" id="L101">                    resolver.resolve(ResponseEntity.class, WildcardType.class),</span>
+<span class="fc" id="L102">                    resolver.resolve(WildcardType.class))</span>
             )));
 
   }
 
   private ApiInfo apiInfo() {
     final Contact contact;
-<span class="pc bpc" id="L107" title="1 of 2 branches missed.">    if (StringUtils.hasText(swaggerProperties.getContactName())</span>
-<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        || StringUtils.hasText(swaggerProperties.getContactUrl())</span>
-<span class="pc bpc" id="L109" title="1 of 2 branches missed.">        || StringUtils.hasText(swaggerProperties.getContactEmail())) {</span>
-<span class="nc" id="L110">      contact = new Contact(</span>
-<span class="nc" id="L111">          swaggerProperties.getContactName(),</span>
-<span class="nc" id="L112">          swaggerProperties.getContactUrl(),</span>
-<span class="nc" id="L113">          swaggerProperties.getContactEmail());</span>
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">    if (StringUtils.hasText(swaggerProperties.getContactName())</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        || StringUtils.hasText(swaggerProperties.getContactUrl())</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        || StringUtils.hasText(swaggerProperties.getContactEmail())) {</span>
+<span class="nc" id="L112">      contact = new Contact(</span>
+<span class="nc" id="L113">          swaggerProperties.getContactName(),</span>
+<span class="nc" id="L114">          swaggerProperties.getContactUrl(),</span>
+<span class="nc" id="L115">          swaggerProperties.getContactEmail());</span>
     } else {
-<span class="fc" id="L115">      contact = null;</span>
+<span class="fc" id="L117">      contact = null;</span>
     }
-<span class="fc" id="L117">    return new ApiInfo(</span>
-<span class="fc" id="L118">        swaggerProperties.getTitle(),</span>
-<span class="fc" id="L119">        swaggerProperties.getDescription(),</span>
-<span class="fc" id="L120">        swaggerProperties.getVersion(),</span>
-<span class="fc" id="L121">        swaggerProperties.getTermsOfServiceUrl(),</span>
+<span class="fc" id="L119">    return new ApiInfo(</span>
+<span class="fc" id="L120">        swaggerProperties.getTitle(),</span>
+<span class="fc" id="L121">        swaggerProperties.getDescription(),</span>
+<span class="fc" id="L122">        swaggerProperties.getVersion(),</span>
+<span class="fc" id="L123">        swaggerProperties.getTermsOfServiceUrl(),</span>
         contact,
-<span class="fc" id="L123">        swaggerProperties.getLicense(),</span>
-<span class="fc" id="L124">        swaggerProperties.getLicenseUrl(),</span>
-<span class="fc" id="L125">        Collections.emptyList());</span>
+<span class="fc" id="L125">        swaggerProperties.getLicense(),</span>
+<span class="fc" id="L126">        swaggerProperties.getLicenseUrl(),</span>
+<span class="fc" id="L127">        Collections.emptyList());</span>
   }
 
   /**
@@ -140,29 +142,29 @@ public class SwaggerConfiguration {
      */
     public RecursiveAlternateTypeRule(TypeResolver typeResolver, List&lt;AlternateTypeRule&gt; rules) {
       // Unused but cannot be null
-<span class="fc" id="L143">      super(typeResolver.resolve(Object.class), typeResolver.resolve(Object.class));</span>
-<span class="fc" id="L144">      this.rules = rules;</span>
-<span class="fc" id="L145">    }</span>
+<span class="fc" id="L145">      super(typeResolver.resolve(Object.class), typeResolver.resolve(Object.class));</span>
+<span class="fc" id="L146">      this.rules = rules;</span>
+<span class="fc" id="L147">    }</span>
 
     @Override
     public ResolvedType alternateFor(ResolvedType type) {
-<span class="fc" id="L149">      Stream&lt;ResolvedType&gt; rStream = rules.stream()</span>
-<span class="fc" id="L150">          .flatMap(rule -&gt; Stream.of(rule.alternateFor(type)));</span>
-<span class="fc" id="L151">      ResolvedType newType = rStream</span>
-<span class="pc bpc" id="L152" title="1 of 2 branches missed.">          .filter(alternateType -&gt; alternateType != type).findFirst().orElse(type);</span>
+<span class="fc" id="L151">      Stream&lt;ResolvedType&gt; rStream = rules.stream()</span>
+<span class="fc" id="L152">          .flatMap(rule -&gt; Stream.of(rule.alternateFor(type)));</span>
+<span class="fc" id="L153">      ResolvedType newType = rStream</span>
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">          .filter(alternateType -&gt; alternateType != type).findFirst().orElse(type);</span>
 
-<span class="pc bpc" id="L154" title="1 of 2 branches missed.">      if (appliesTo(newType)) {</span>
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">      if (appliesTo(newType)) {</span>
         // Recursion happens here
-<span class="nc" id="L156">        return alternateFor(newType);</span>
+<span class="nc" id="L158">        return alternateFor(newType);</span>
       }
 
-<span class="fc" id="L159">      return newType;</span>
+<span class="fc" id="L161">      return newType;</span>
     }
 
     @Override
     public boolean appliesTo(ResolvedType type) {
-<span class="fc" id="L164">      return rules.stream().anyMatch(rule -&gt; rule.appliesTo(type));</span>
+<span class="fc" id="L166">      return rules.stream().anyMatch(rule -&gt; rule.appliesTo(type));</span>
     }
   }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
