@@ -87,7 +87,27 @@ pipeline {
           else
             echo "Creating service ${SERVICE_NAME} with docker image ${DOCKER_IMAGE}:${DEV_TAG}."
             chmod 755 docker-swarm/service.sh
-            docker-swarm/service.sh "${DOCKER_IMAGE}:${DEV_TAG}" "default,ldap,mongodb,dev"
+            docker-swarm/service.sh "${DOCKER_IMAGE}:${DEV_TAG}" "swarm,ldap,mongodb,dev" 1
+          fi
+        '''
+      }
+    }
+    stage('Deploy on prod-swarm') {
+      agent {
+        label 'prod-swarm'
+      }
+      when {
+        branch 'master'
+      }
+      steps {
+        sh '''
+          if docker service ls | grep -q ${SERVICE_NAME}; then
+            echo "Updating service ${SERVICE_NAME} with docker image ${DOCKER_IMAGE}:${PROD_TAG}."
+            docker service update --image ${DOCKER_IMAGE}:${PROD_TAG} ${SERVICE_NAME}
+          else
+            echo "Creating service ${SERVICE_NAME} with docker image ${DOCKER_IMAGE}:${PROD_TAG}."
+            chmod 755 docker-swarm/service.sh
+            docker-swarm/service.sh "${DOCKER_IMAGE}:${PROD_TAG}" "swarm,ldap,mongodb,prod" 2
           fi
         '''
       }
