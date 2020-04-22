@@ -35,6 +35,10 @@ bremersee:
   groupman:
     local-role: "ROLE_LOCAL_USER"
 
+eureka:
+  client:
+    enabled: false
+
 spring:
   security:
     oauth2:
@@ -44,6 +48,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/test}
+      auto-index-creation: true
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     default-property-inclusion: non_null
@@ -69,6 +74,9 @@ management:
         allowed-headers: "*"
         allowed-methods: "*"
         allowed-origins: "*"
+  endpoint:
+    health:
+      show-details: always
 
 server:
   port: ${SERVER_PORT:8080}
@@ -99,10 +107,20 @@ bremersee:
           password: "actuator"
           authorities:
             - "ROLE_ACTUATOR"
+            - "ROLE_ACTUATOR_ADMIN"
         - name: "user"
           password: "user"
           authorities:
             - "ROLE_USER"
+      actuator:
+        roles:
+          - "ROLE_ACTUATOR"
+        admin-roles:
+          - "ROLE_ACTUATOR_ADMIN"
+      application:
+        admin-roles:
+          - "ROLE_ADMIN"
+          - "ROLE_GROUP_ADMIN"
 
 ---
 
@@ -137,7 +155,7 @@ bremersee:
     block-wait-time: 10000
     search-validator:
       search-request:
-        base-dn: ${LDAP_BASE_DN:dc=example,dc=org}
+        base-dn: ${LDAP_BASE_DN:cn=Users,dc=eixe,dc=bremersee,dc=org}
         search-filter:
           filter: ${LDAP_VALIDATION_FILTER:(cn=Administrator)}
         size-limit: 1
@@ -145,8 +163,8 @@ bremersee:
         return-attributes:
           - cn
   domain-controller:
-    group-base-dn: ${LDAP_GROUP_DN:cn=Groups,dc=example,dc=org}
-    user-base-dn: ${LDAP_USER_DN:cn=Users,dc=example,dc=org}
+    group-base-dn: ${LDAP_GROUP_DN:cn=Users,dc=eixe,dc=bremersee,dc=org}
+    user-base-dn: ${LDAP_USER_DN:cn=Users,dc=eixe,dc=bremersee,dc=org}
     admin-name: 'Administrator'
     ignored-ldap-groups:
       - 'Allowed RODC Password Replication Group'

@@ -20,26 +20,33 @@ import lombok.extern.slf4j.Slf4j;
 import org.bremersee.security.authentication.AuthenticationProperties;
 import org.bremersee.security.authentication.JsonPathReactiveJwtConverter;
 import org.bremersee.security.authentication.PasswordFlowReactiveAuthenticationManager;
+import org.bremersee.security.authentication.RoleBasedAuthorizationManager;
+import org.bremersee.security.authentication.RoleOrIpBasedAuthorizationManager;
 import org.bremersee.security.core.AuthorityConstants;
 import org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.util.matcher.AndServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 
 /**
  * The security configuration.
  *
  * @author Christian Bremer
  */
+@ConditionalOnWebApplication
 @Configuration
 @EnableWebFluxSecurity
 @Slf4j
@@ -48,12 +55,16 @@ public class SecurityConfiguration {
   /**
    * The jwt login.
    */
+  @ConditionalOnWebApplication
   @ConditionalOnProperty(
       prefix = "bremersee.security.authentication",
       name = "enable-jwt-support",
       havingValue = "true")
   @Configuration
+  @EnableConfigurationProperties(AuthenticationProperties.class)
   static class JwtLogin {
+
+    private AuthenticationProperties properties;
 
     private JsonPathReactiveJwtConverter jwtConverter;
 
@@ -62,13 +73,16 @@ public class SecurityConfiguration {
     /**
      * Instantiates a new jwt login.
      *
-     * @param jwtConverter                      the jwt converter
+     * @param properties the authentication properties
+     * @param jwtConverter the jwt converter
      * @param passwordFlowAuthenticationManager the password flow authentication manager
      */
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     public JwtLogin(
+        AuthenticationProperties properties,
         JsonPathReactiveJwtConverter jwtConverter,
         PasswordFlowReactiveAuthenticationManager passwordFlowAuthenticationManager) {
+      this.properties = properties;
       this.jwtConverter = jwtConverter;
       this.passwordFlowAuthenticationManager = passwordFlowAuthenticationManager;
     }
@@ -84,23 +98,30 @@ public class SecurityConfiguration {
     public SecurityWebFilterChain oauth2ResourceServerFilterChain(ServerHttpSecurity http) {
 
       log.info("msg=[Creating resource server filter chain.]");
-      http
+      return http
           .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
-          .csrf().disable()
-          .oauth2ResourceServer()
-          .jwt()
-          .jwtAuthenticationConverter(jwtConverter);
-
-      http
           .authorizeExchange()
-          .pathMatchers("/v2/**")
-          .permitAll()
+          .pathMatchers(HttpMethod.OPTIONS).permitAll()
+          .pathMatchers("/v2/**").permitAll()
           .pathMatchers("/api/admin/**")
-          .hasAuthority(AuthorityConstants.ADMIN_ROLE_NAME)
+          .hasAnyAuthority(adminRoles())
           .anyExchange()
-          .authenticated();
+          .authenticated()
+          .and()
+          .oauth2ResourceServer((rs) -> rs
+              .jwt()
+              .jwtAuthenticationConverter(jwtConverter)
+              .and())
+          .csrf().disable()
+          .build();
+    }
 
-      return http.build();
+    private String[] adminRoles() {
+      return properties.getApplication()
+          .adminRolesOrDefaults(AuthorityConstants.ADMIN_ROLE_NAME, "ROLE_GROUP_ADMIN")
+          .stream()
+          .map(properties::ensureRolePrefix)
+          .toArray(String[]::new);
     }
 
     /**
@@ -111,28 +132,42 @@ public class SecurityConfiguration {
      */
     @Bean
     @Order(52)
+    @SuppressWarnings("DuplicatedCode")
     public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
 
       log.info("msg=[Creating actuator filter chain.]");
-      http
+      return http
           .securityMatcher(EndpointRequest.toAnyEndpoint())
-          .csrf().disable()
-          .httpBasic()
-          .authenticationManager(passwordFlowAuthenticationManager);
-
-      http
           .authorizeExchange()
+          .pathMatchers(HttpMethod.OPTIONS).permitAll()
           .matchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
           .matchers(EndpointRequest.to(InfoEndpoint.class)).permitAll()
-          .anyExchange().hasAuthority(AuthorityConstants.ACTUATOR_ROLE_NAME);
-
-      return http.build();
+          .matchers(new AndServerWebExchangeMatcher(
+              EndpointRequest.toAnyEndpoint(),
+              ServerWebExchangeMatchers.pathMatchers(HttpMethod.GET, "/**")))
+          .access(new RoleOrIpBasedAuthorizationManager(
+              properties.getActuator().getRoles(),
+              properties.getRolePrefix(),
+              properties.getActuator().getIpAddresses()))
+          .matchers(EndpointRequest.toAnyEndpoint())
+          .access(new RoleBasedAuthorizationManager(
+              properties.getActuator().getAdminRoles(),
+              properties.getRolePrefix()))
+          .anyExchange().denyAll()
+          .and()
+          .httpBasic()
+          .authenticationManager(passwordFlowAuthenticationManager)
+          .and()
+          .formLogin().disable()
+          .csrf().disable()
+          .build();
     }
   }
 
   /**
    * The type Basic auth login.
    */
+  @ConditionalOnWebApplication
   @ConditionalOnProperty(
       prefix = "bremersee.security.authentication",
       name = "enable-jwt-support",
@@ -175,19 +210,26 @@ public class SecurityConfiguration {
       log.info("msg=[Creating resource server filter chain.]");
       return http
           .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
-          .csrf().disable()
           .authorizeExchange()
-          .pathMatchers("/v2/**")
-          .permitAll()
+          .pathMatchers(HttpMethod.OPTIONS).permitAll()
+          .pathMatchers("/v2/**").permitAll()
           .pathMatchers("/api/admin/**")
-          .hasAuthority(AuthorityConstants.ADMIN_ROLE_NAME)
-          .anyExchange()
-          .authenticated()
+          .hasAnyAuthority(adminRoles())
+          .anyExchange().authenticated()
           .and()
           .httpBasic()
           .and()
           .formLogin().disable()
+          .csrf().disable()
           .build();
+    }
+
+    private String[] adminRoles() {
+      return properties.getApplication()
+          .adminRolesOrDefaults(AuthorityConstants.ADMIN_ROLE_NAME, "ROLE_GROUP_ADMIN")
+          .stream()
+          .map(properties::ensureRolePrefix)
+          .toArray(String[]::new);
     }
 
     /**
@@ -198,20 +240,33 @@ public class SecurityConfiguration {
      */
     @Bean
     @Order(52)
+    @SuppressWarnings("DuplicatedCode")
     public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
 
       log.info("msg=[Creating actuator filter chain.]");
       return http
           .securityMatcher(EndpointRequest.toAnyEndpoint())
-          .csrf().disable()
           .authorizeExchange()
+          .pathMatchers(HttpMethod.OPTIONS).permitAll()
           .matchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
           .matchers(EndpointRequest.to(InfoEndpoint.class)).permitAll()
-          .anyExchange().hasAuthority(AuthorityConstants.ACTUATOR_ROLE_NAME)
+          .matchers(new AndServerWebExchangeMatcher(
+              EndpointRequest.toAnyEndpoint(),
+              ServerWebExchangeMatchers.pathMatchers(HttpMethod.GET, "/**")))
+          .access(new RoleOrIpBasedAuthorizationManager(
+              properties.getActuator().getRoles(),
+              properties.getRolePrefix(),
+              properties.getActuator().getIpAddresses()))
+          .matchers(EndpointRequest.toAnyEndpoint())
+          .access(new RoleBasedAuthorizationManager(
+              properties.getActuator().getAdminRoles(),
+              properties.getRolePrefix()))
+          .anyExchange().denyAll()
           .and()
           .httpBasic()
           .and()
           .formLogin().disable()
+          .csrf().disable()
           .build();
     }
   }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.bremersee.groupman.controller;
 
 import static org.bremersee.security.core.AuthorityConstants.USER_ROLE_NAME;
@@ -28,9 +44,12 @@ import org.springframework.web.reactive.function.BodyInserters;
 
 /**
  * The group controller create group tests.
+ *
+ * @author Christian Bremer
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "bremersee.security.authentication.enable-jwt-support=true"
+    "bremersee.security.authentication.enable-jwt-support=true",
+    "bremersee.groupman.max-owned-groups=3"
 })
 @ActiveProfiles({"default"})
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
@@ -155,7 +174,7 @@ class GroupControllerCreateGroupTest {
    * Create group and expect already exists.
    */
   @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
+      preferredUsername = "leopold",
       roles = {USER_ROLE_NAME})
   @Test
   void createGroupAndExpectAlreadyExists() {
@@ -185,6 +204,64 @@ class GroupControllerCreateGroupTest {
         .expectBody(RestApiException.class)
         .value((Consumer<RestApiException>) restApiException -> {
           assertEquals("GRP:1000", restApiException.getErrorCode()); // see application.yml
+        });
+  }
+
+  /**
+   * Create groups and expect max number of owned groups is reached.
+   */
+  @WithJwtAuthenticationToken(
+      preferredUsername = "anna-livia",
+      roles = {USER_ROLE_NAME})
+  @Test
+  void createGroupsAndExpectMaxNumberOfOwnedGroupsIsReached() {
+    webTestClient
+        .post()
+        .uri("/api/groups")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name("Group1")
+            .build()))
+        .exchange()
+        .expectStatus().isOk();
+
+    webTestClient
+        .post()
+        .uri("/api/groups")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name("Group2")
+            .build()))
+        .exchange()
+        .expectStatus().isOk();
+
+    webTestClient
+        .post()
+        .uri("/api/groups")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name("Group3")
+            .build()))
+        .exchange()
+        .expectStatus().isOk();
+
+    webTestClient
+        .post()
+        .uri("/api/groups")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(Group.builder()
+            .name("Group4")
+            .build()))
+        .exchange()
+        .expectStatus().isBadRequest()
+        .expectBody(RestApiException.class)
+        .value((Consumer<RestApiException>) restApiException -> {
+          assertEquals("GRP:MAX_OWNED_GROUPS", restApiException.getErrorCode());
+          assertEquals("/api/groups", restApiException.getPath());
         });
   }
 

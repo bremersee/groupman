@@ -16,11 +16,29 @@
 
 package org.bremersee.groupman.repository;
 
+import reactor.core.publisher.Mono;
+
 /**
  * The interface Group repository custom.
  *
  * @author Christian Bremer
  */
 public interface GroupRepositoryCustom {
+
+  /**
+   * Count owned groups.
+   *
+   * @param userName the user name
+   * @return the size of owned groups
+   */
+  Mono<Long> countOwnedGroups(String userName);
+
+  /**
+   * Count membership.
+   *
+   * @param userName the user name
+   * @return the size of membership
+   */
+  Mono<Long> countMembership(String userName);
 
 }

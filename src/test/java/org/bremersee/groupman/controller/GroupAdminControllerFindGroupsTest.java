@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.bremersee.groupman.controller;
 
 import static org.bremersee.security.core.AuthorityConstants.ADMIN_ROLE_NAME;
@@ -31,6 +47,8 @@ import reactor.test.StepVerifier;
 
 /**
  * The group admin controller find groups tests.
+ *
+ * @author Christian Bremer
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "bremersee.security.authentication.enable-jwt-support=true",
@@ -118,19 +136,15 @@ class GroupAdminControllerFindGroupsTest {
   @BeforeAll
   void setUpData() {
     StepVerifier
-        .create(groupRepository.deleteAll())
-        .expectNextCount(0L)
-        .verifyComplete();
-    StepVerifier
         .create(groupRepository.save(group0))
-        .consumeNextWith(groupEntity -> {
+        .assertNext(groupEntity -> {
           assertNotNull(groupEntity.getId());
           assertEquals("GACFGT0", groupEntity.getId());
         })
         .verifyComplete();
     StepVerifier
         .create(groupRepository.save(group1))
-        .consumeNextWith(groupEntity -> {
+        .assertNext(groupEntity -> {
           assertNotNull(groupEntity.getId());
           assertEquals("GACFGT1", groupEntity.getId());
         })

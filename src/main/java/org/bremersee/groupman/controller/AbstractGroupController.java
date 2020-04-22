@@ -47,7 +47,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -232,10 +231,8 @@ abstract class AbstractGroupController {
    */
   @Getter
   @ToString
-  @EqualsAndHashCode(of = "uuid")
+  @EqualsAndHashCode(of = "name")
   public static class CurrentUser {
-
-    private String uuid;
 
     private String name;
 
@@ -250,7 +247,6 @@ abstract class AbstractGroupController {
      * @param localUserRole  the local user role
      */
     public CurrentUser(Authentication authentication, String localUserRole) {
-      uuid = authentication.getName();
       name = authentication.getName();
       if (authentication.getAuthorities() != null) {
         roles = authentication.getAuthorities().stream()
@@ -258,9 +254,6 @@ abstract class AbstractGroupController {
             .collect(Collectors.toSet());
       } else {
         roles = Collections.emptySet();
-      }
-      if (authentication instanceof JwtAuthenticationToken) {
-        uuid = ((JwtAuthenticationToken) authentication).getToken().getSubject();
       }
       localUser = localUserRole != null && roles.contains(localUserRole);
     }
