@@ -35,6 +35,10 @@ bremersee:
   groupman:
     local-role: "ROLE_LOCAL_USER"
 
+eureka:
+  client:
+    enabled: false
+
 spring:
   security:
     oauth2:
