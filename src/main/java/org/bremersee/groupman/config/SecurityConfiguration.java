@@ -88,25 +88,23 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Builds the OAuth2 resource server filter chain.
+     * Builds the resource server filter chain with JWT.
      *
      * @param http the http
      * @return the security web filter chain
      */
     @Bean
     @Order(51)
-    public SecurityWebFilterChain oauth2ResourceServerFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain jwtResourceServerFilterChain(ServerHttpSecurity http) {
 
-      log.info("msg=[Creating resource server filter chain.]");
+      log.info("Creating resource server filter chain with JWT.");
       return http
           .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
           .authorizeExchange()
           .pathMatchers(HttpMethod.OPTIONS).permitAll()
           .pathMatchers("/v2/**").permitAll()
-          .pathMatchers("/api/admin/**")
-          .hasAnyAuthority(adminRoles())
-          .anyExchange()
-          .authenticated()
+          .pathMatchers("/api/admin/**").hasAnyAuthority(adminRoles())
+          .anyExchange().authenticated()
           .and()
           .oauth2ResourceServer((rs) -> rs
               .jwt()
@@ -125,7 +123,7 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Builds the actuator filter chain.
+     * Builds the actuator filter chain with password flow and basic auth.
      *
      * @param http the http security configuration object
      * @return the security web filter chain
@@ -135,7 +133,7 @@ public class SecurityConfiguration {
     @SuppressWarnings("DuplicatedCode")
     public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
 
-      log.info("msg=[Creating actuator filter chain.]");
+      log.info("Creating actuator filter chain with password flow and basic auth.");
       return http
           .securityMatcher(EndpointRequest.toAnyEndpoint())
           .authorizeExchange()
@@ -165,7 +163,7 @@ public class SecurityConfiguration {
   }
 
   /**
-   * The type Basic auth login.
+   * The in-memory login.
    */
   @ConditionalOnWebApplication
   @ConditionalOnProperty(
@@ -174,23 +172,23 @@ public class SecurityConfiguration {
       havingValue = "false", matchIfMissing = true)
   @Configuration
   @EnableConfigurationProperties(AuthenticationProperties.class)
-  static class BasicAuthLogin {
+  static class InMemoryLogin {
 
     private AuthenticationProperties properties;
 
     /**
-     * Instantiates a new Basic auth login.
+     * Instantiates a in-memory login.
      *
      * @param properties the properties
      */
-    public BasicAuthLogin(AuthenticationProperties properties) {
+    public InMemoryLogin(AuthenticationProperties properties) {
       this.properties = properties;
     }
 
     /**
-     * User details service map reactive user details service.
+     * User details service.
      *
-     * @return the map reactive user details service
+     * @return the user details service
      */
     @Bean
     public MapReactiveUserDetailsService userDetailsService() {
@@ -198,16 +196,16 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Builds the OAuth2 resource server filter chain.
+     * Builds the resource server filter chain with in-memory users and basic auth.
      *
      * @param http the http
      * @return the security web filter chain
      */
     @Bean
     @Order(51)
-    public SecurityWebFilterChain oauth2ResourceServerFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain inMemoryResourceServerFilterChain(ServerHttpSecurity http) {
 
-      log.info("msg=[Creating resource server filter chain.]");
+      log.info("Creating resource server filter chain with in-memory user authentication.");
       return http
           .securityMatcher(new NegatedServerWebExchangeMatcher(EndpointRequest.toAnyEndpoint()))
           .authorizeExchange()
@@ -233,7 +231,7 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Builds the actuator filter chain.
+     * Builds the actuator filter chain with in-memory users and basic auth.
      *
      * @param http the http security configuration object
      * @return the security web filter chain
@@ -243,7 +241,7 @@ public class SecurityConfiguration {
     @SuppressWarnings("DuplicatedCode")
     public SecurityWebFilterChain actuatorFilterChain(ServerHttpSecurity http) {
 
-      log.info("msg=[Creating actuator filter chain.]");
+      log.info("Creating actuator filter chain with in-memory users and basic auth.");
       return http
           .securityMatcher(EndpointRequest.toAnyEndpoint())
           .authorizeExchange()
