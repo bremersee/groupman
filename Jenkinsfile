@@ -18,7 +18,7 @@ pipeline {
         label 'maven'
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       when {
@@ -51,7 +51,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {
@@ -73,7 +73,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {
@@ -144,7 +144,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {
@@ -170,7 +170,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {
@@ -190,7 +190,7 @@ pipeline {
         branch 'feature/*'
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {

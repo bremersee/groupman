@@ -56,7 +56,7 @@ import reactor.test.StepVerifier;
  * @author Christian Bremer
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "bremersee.security.authentication.enable-jwt-support=true",
+    "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/jwk",
     "spring.ldap.embedded.base-dn=dc=bremersee,dc=org",
     "spring.ldap.embedded.credential.username=uid=admin",
     "spring.ldap.embedded.credential.password=secret",
@@ -69,7 +69,7 @@ import reactor.test.StepVerifier;
     "bremersee.ldaptive.use-ssl=false",
     "bremersee.ldaptive.use-start-tls=false",
     "bremersee.ldaptive.bind-dn=uid=admin",
-    "bremersee.ldaptive.bind-credential=secret",
+    "bremersee.ldaptive.bind-credentials=secret",
     "bremersee.ldaptive.pooled=false",
     "bremersee.domain-controller.group-base-dn=ou=groups,dc=bremersee,dc=org",
     "bremersee.domain-controller.group-member-attribute=uniqueMember",
@@ -80,7 +80,7 @@ import reactor.test.StepVerifier;
     "bremersee.domain-controller.group-find-one-filter=(&(objectClass=groupOfUniqueNames)(cn={0}))",
     "bremersee.groupman.max-owned-groups=100"
 })
-@ActiveProfiles({"default", "ldap"})
+@ActiveProfiles({"ldap"})
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GroupControllerGetGroupsTest {

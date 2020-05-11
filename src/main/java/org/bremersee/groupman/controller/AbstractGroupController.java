@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.bremersee.groupman.controller;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -39,7 +37,6 @@ import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
-import org.modelmapper.AbstractConverter;
 import org.modelmapper.ModelMapper;
 import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Sort;
@@ -71,26 +68,28 @@ abstract class AbstractGroupController {
       .build();
 
   @Getter(AccessLevel.PACKAGE)
-  private final ModelMapper modelMapper = new ModelMapper();
+  private final ModelMapper modelMapper;
 
   @Getter(AccessLevel.PACKAGE)
-  private GroupRepository groupRepository;
+  private final GroupRepository groupRepository;
 
   @Getter(AccessLevel.PACKAGE)
-  private GroupLdapRepository groupLdapRepository;
+  private final GroupLdapRepository groupLdapRepository;
 
-  private String localUserRole;
+  private final String localUserRole;
 
   /**
    * Instantiates a new abstract group controller.
    *
-   * @param groupRepository     the group repository
+   * @param groupRepository the group repository
    * @param groupLdapRepository the group ldap repository
-   * @param localUserRole       the local user role
+   * @param modelMapper the model mapper
+   * @param localUserRole the local user role
    */
   public AbstractGroupController(
       final GroupRepository groupRepository,
       final GroupLdapRepository groupLdapRepository,
+      final ModelMapper modelMapper,
       final String localUserRole) {
 
     Assert.notNull(groupRepository, "Group repository must not be null.");
@@ -98,24 +97,13 @@ abstract class AbstractGroupController {
     this.groupRepository = groupRepository;
     this.groupLdapRepository = groupLdapRepository;
     this.localUserRole = localUserRole;
-    modelMapper.addConverter(new AbstractConverter<Date, OffsetDateTime>() {
-      @Override
-      protected OffsetDateTime convert(Date date) {
-        return date == null ? null : OffsetDateTime.ofInstant(date.toInstant(), ZoneId.of("UTC"));
-      }
-    });
-    modelMapper.addConverter(new AbstractConverter<OffsetDateTime, Date>() {
-      @Override
-      protected Date convert(OffsetDateTime offsetDateTime) {
-        return offsetDateTime == null ? null : Date.from(offsetDateTime.toInstant());
-      }
-    });
+    this.modelMapper = modelMapper;
   }
 
   /**
    * One with current user mono.
    *
-   * @param <R>      the type parameter
+   * @param <R> the type parameter
    * @param function the function
    * @return the mono
    */
@@ -130,7 +118,7 @@ abstract class AbstractGroupController {
   /**
    * Many with current user flux.
    *
-   * @param <R>      the type parameter
+   * @param <R> the type parameter
    * @param function the function
    * @return the flux
    */
@@ -208,7 +196,7 @@ abstract class AbstractGroupController {
   /**
    * Update group entity with group representation.
    *
-   * @param source              the group representation
+   * @param source the group representation
    * @param destinationSupplier the group entity supplier
    * @return the group entity
    */
@@ -227,24 +215,24 @@ abstract class AbstractGroupController {
   }
 
   /**
-   * The type Current user.
+   * The current user.
    */
   @Getter
   @ToString
   @EqualsAndHashCode(of = "name")
   public static class CurrentUser {
 
-    private String name;
+    private final String name;
 
-    private Set<String> roles;
+    private final Set<String> roles;
 
-    private boolean localUser;
+    private final boolean localUser;
 
     /**
-     * Instantiates a new Current user.
+     * Instantiates a new current user.
      *
      * @param authentication the authentication
-     * @param localUserRole  the local user role
+     * @param localUserRole the local user role
      */
     public CurrentUser(Authentication authentication, String localUserRole) {
       name = authentication.getName();

@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:14.0.1-jdk-slim
 MAINTAINER Christian Bremer <bremersee@googlemail.com>
 ARG JAR_FILE
 ADD target/${JAR_FILE} /opt/app.jar

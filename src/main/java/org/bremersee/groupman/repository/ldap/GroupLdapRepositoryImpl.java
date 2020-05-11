@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,10 @@ import org.bremersee.groupman.config.DomainControllerProperties;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.ldaptive.SearchFilter;
 import org.ldaptive.SearchRequest;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,24 +46,25 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class GroupLdapRepositoryImpl implements GroupLdapRepository {
 
-  private DomainControllerProperties properties;
+  private final DomainControllerProperties properties;
 
-  private LdaptiveTemplate ldaptiveTemplate;
+  private final LdaptiveTemplate ldaptiveTemplate;
 
-  private GroupLdapMapper mapper;
+  private final GroupLdapMapper mapper;
 
   /**
    * Instantiates a new group ldap repository.
    *
-   * @param properties       the properties
+   * @param properties the properties
    * @param ldaptiveTemplate the ldap template
    */
   public GroupLdapRepositoryImpl(
       DomainControllerProperties properties,
-      LdaptiveTemplate ldaptiveTemplate) {
+      ObjectProvider<LdaptiveTemplate> ldaptiveTemplate) {
     this.properties = properties;
-    this.ldaptiveTemplate = ldaptiveTemplate;
+    this.ldaptiveTemplate = ldaptiveTemplate.getIfAvailable();
     this.mapper = new GroupLdapMapper(properties);
+    Assert.notNull(this.ldaptiveTemplate, "Ldaptive template must be present.");
   }
 
   @Override

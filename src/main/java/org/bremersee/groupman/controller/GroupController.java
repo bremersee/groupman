@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.bremersee.groupman.model.Status;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
@@ -46,24 +47,25 @@ public class GroupController
     extends AbstractGroupController
     implements GroupWebfluxControllerApi {
 
-  private Long maxOwnedGroups;
+  private final Long maxOwnedGroups;
 
   /**
    * Instantiates a new group controller.
    *
-   * @param groupRepository     the group repository
+   * @param groupRepository the group repository
    * @param groupLdapRepository the group ldap repository
-   * @param localRole           if a role name is given, ldap will only be called, if the user has
-   *                            this role; if the role name is null or empty, ldap will always be
-   *                            called
-   * @param maxOwnedGroups      the max owned groups
+   * @param modelMapper the model mapper
+   * @param localRole if a role name is given, ldap will only be called, if the user has this
+   *     role; if the role name is null or empty, ldap will always be called
+   * @param maxOwnedGroups the max owned groups
    */
   public GroupController(
       GroupRepository groupRepository,
       GroupLdapRepository groupLdapRepository,
+      ModelMapper modelMapper,
       @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole,
       @Value("${bremersee.groupman.max-owned-groups:-1}") Long maxOwnedGroups) {
-    super(groupRepository, groupLdapRepository, localRole);
+    super(groupRepository, groupLdapRepository, modelMapper, localRole);
     this.maxOwnedGroups = maxOwnedGroups != null ? maxOwnedGroups : -1L;
   }
 
