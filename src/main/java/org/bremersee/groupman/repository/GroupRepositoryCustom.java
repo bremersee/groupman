@@ -19,7 +19,7 @@ package org.bremersee.groupman.repository;
 import reactor.core.publisher.Mono;
 
 /**
- * The interface Group repository custom.
+ * The custom group repository interface.
  *
  * @author Christian Bremer
  */

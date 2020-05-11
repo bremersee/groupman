@@ -32,7 +32,7 @@ public interface GroupRepository
   /**
    * Find groups by owner or member.
    *
-   * @param owner  the owner
+   * @param owner the owner
    * @param member the member
    * @return the groups
    */
@@ -44,7 +44,7 @@ public interface GroupRepository
    * Find groups by owner.
    *
    * @param owner the owner
-   * @param sort  the sort order
+   * @param sort the sort order
    * @return the groups
    */
   Flux<GroupEntity> findByOwnersIsContaining(String owner, Sort sort);
@@ -60,7 +60,7 @@ public interface GroupRepository
   /**
    * Find groups with the specified IDs.
    *
-   * @param ids  the ids
+   * @param ids the ids
    * @return the groups
    */
   Flux<GroupEntity> findByIdIn(List<String> ids);

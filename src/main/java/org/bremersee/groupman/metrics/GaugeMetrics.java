@@ -36,8 +36,8 @@ public class GaugeMetrics {
   /**
    * Instantiates new gauge metrics.
    *
-   * @param meterRegistry       the meter registry
-   * @param groupRepository     the group repository
+   * @param meterRegistry the meter registry
+   * @param groupRepository the group repository
    * @param groupLdapRepository the group ldap repository
    */
   public GaugeMetrics(
