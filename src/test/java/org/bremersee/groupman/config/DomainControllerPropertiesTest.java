@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
  */
 class DomainControllerPropertiesTest {
 
-  private static DomainControllerProperties properties = new DomainControllerProperties();
+  private static final DomainControllerProperties properties = new DomainControllerProperties();
 
   /**
    * Sets up.

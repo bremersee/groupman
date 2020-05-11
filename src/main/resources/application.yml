@@ -1,15 +1,6 @@
 bremersee:
   ldaptive:
     enabled: false
-  security:
-    cors:
-      allow-all: true
-    authentication:
-      enable-jwt-support: ${JWT_SUPPORT:true}
-      password-flow:
-        client-id: ${OPENID_CLIENT_ID:omnia}
-        client-secret: ${OPENID_CLIENT_SECRET:changeit}
-        token-endpoint: ${OPENID_TOKEN_ENDPOINT:https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/token}
   exception-mapping:
     api-paths:
       - /api/**
@@ -34,29 +25,38 @@ bremersee:
         code: "GRP:1002"
   groupman:
     local-role: "ROLE_LOCAL_USER"
+  actuator:
+    auth:
+      enable: auto
+      enable-cors: false
+  cors:
+    enable: false
+  auth:
+    resource-server: auto
+    path-matchers:
+      - ant-pattern: "/**"
+        http-method: "OPTIONS"
+        access-mode: permit_all
+      - ant-pattern: "/v3/**"
+        access-mode: permit_all
+      - ant-pattern: "/webjars/**"
+        access-mode: permit_all
+      - ant-pattern: "/swagger-ui.html"
+        access-mode: permit_all
+      - ant-pattern: "/api/admin/**"
+        roles:
+          - "ROLE_ADMIN"
+          - "ROLE_GROUP_ADMIN"
 
 eureka:
   client:
     enabled: false
 
 spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${OPENID_KEYS_URI:https://openid.dev.bremersee.org/auth/realms/omnia/protocol/openid-connect/certs}
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/test}
       auto-index-creation: true
-  jackson:
-    date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
-    default-property-inclusion: non_null
-    property-naming-strategy: LOWER_CAMEL_CASE
-    locale: de_DE
-    serialization:
-      WRITE_DATES_AS_TIMESTAMPS: false
-    time-zone: GMT
   sleuth:
     enabled: ${SLEUTH_ENABLED:false}
     sampler:
@@ -70,13 +70,9 @@ management:
     web:
       exposure:
         include: "*"
-      cors:
-        allowed-headers: "*"
-        allowed-methods: "*"
-        allowed-origins: "*"
   endpoint:
     health:
-      show-details: always
+      show-details: when_authorized
 
 server:
   port: ${SERVER_PORT:8080}
@@ -84,43 +80,32 @@ server:
 logging:
   level:
     ROOT: info
-    org.bremersee: debug
-    reactor: info
-    org.springframework: info
+    com.netflix.eureka.registry: warn
+    com.netflix.discovery.shared.resolver: warn
+    org.springframework.cloud.configclient: warn
 
 ---
 
 spring:
-  profiles: basic-auth
+  profiles: in-memory
 
 bremersee:
-  security:
-    authentication:
-      enable-jwt-support: false
-      basic-auth-users:
-        - name: "admin"
-          password: "admin"
-          authorities:
-            - "ROLE_USER"
-            - "ROLE_ADMIN"
-        - name: "actuator"
-          password: "actuator"
-          authorities:
-            - "ROLE_ACTUATOR"
-            - "ROLE_ACTUATOR_ADMIN"
-        - name: "user"
-          password: "user"
-          authorities:
-            - "ROLE_USER"
-      actuator:
-        roles:
-          - "ROLE_ACTUATOR"
-        admin-roles:
-          - "ROLE_ACTUATOR_ADMIN"
-      application:
-        admin-roles:
+  auth:
+    in-memory-users:
+      - name: "admin"
+        password: "admin"
+        authorities:
+          - "ROLE_USER"
           - "ROLE_ADMIN"
-          - "ROLE_GROUP_ADMIN"
+      - name: "actuator"
+        password: "actuator"
+        authorities:
+          - "ROLE_ACTUATOR"
+          - "ROLE_ACTUATOR_ADMIN"
+      - name: "user"
+        password: "user"
+        authorities:
+          - "ROLE_USER"
 
 ---
 
@@ -138,12 +123,12 @@ spring:
 bremersee:
   ldaptive:
     enabled: true
-    use-unbound-id-provider: false
+    use-unbound-id-provider: true
     ldap-url: ${LDAP_URL:ldaps://example.org:636}
     use-ssl: ${LDAP_SSL:true}
     use-start-tls: ${LDAP_START_TLS:false}
     bind-dn: ${LDAP_BIND_DN:areader@example.org}
-    bind-credential: ${LDAP_BIND_PASSWORD:changeit}
+    bind-credentials: ${LDAP_BIND_PASSWORD:changeit}
     pooled: true
     min-pool-size: 3
     max-pool-size: 10
