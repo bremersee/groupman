@@ -22,14 +22,9 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import org.bremersee.comparator.ComparatorBuilder;
 import org.bremersee.comparator.spring.ComparatorSpringUtils;
 import org.bremersee.exception.ServiceException;
@@ -37,13 +32,9 @@ import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
+import org.bremersee.security.core.ReactiveUserContextCaller;
 import org.modelmapper.ModelMapper;
-import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -68,6 +59,9 @@ abstract class AbstractGroupController {
       .build();
 
   @Getter(AccessLevel.PACKAGE)
+  private final ReactiveUserContextCaller caller = new ReactiveUserContextCaller();
+
+  @Getter(AccessLevel.PACKAGE)
   private final ModelMapper modelMapper;
 
   @Getter(AccessLevel.PACKAGE)
@@ -76,6 +70,7 @@ abstract class AbstractGroupController {
   @Getter(AccessLevel.PACKAGE)
   private final GroupLdapRepository groupLdapRepository;
 
+  @Getter(AccessLevel.PACKAGE)
   private final String localUserRole;
 
   /**
@@ -98,36 +93,6 @@ abstract class AbstractGroupController {
     this.groupLdapRepository = groupLdapRepository;
     this.localUserRole = localUserRole;
     this.modelMapper = modelMapper;
-  }
-
-  /**
-   * One with current user mono.
-   *
-   * @param <R> the type parameter
-   * @param function the function
-   * @return the mono
-   */
-  <R> Mono<R> oneWithCurrentUser(Function<CurrentUser, ? extends Mono<R>> function) {
-    return ReactiveSecurityContextHolder.getContext()
-        .map(SecurityContext::getAuthentication)
-        .switchIfEmpty(Mono.error(ServiceException::forbidden))
-        .map(authentication -> new CurrentUser(authentication, localUserRole))
-        .flatMap(function);
-  }
-
-  /**
-   * Many with current user flux.
-   *
-   * @param <R> the type parameter
-   * @param function the function
-   * @return the flux
-   */
-  <R> Flux<R> manyWithCurrentUser(Function<CurrentUser, ? extends Publisher<R>> function) {
-    return ReactiveSecurityContextHolder.getContext()
-        .map(SecurityContext::getAuthentication)
-        .switchIfEmpty(Mono.error(ServiceException::forbidden))
-        .map(authentication -> new CurrentUser(authentication, localUserRole))
-        .flatMapMany(function);
   }
 
   /**
@@ -212,39 +177,6 @@ abstract class AbstractGroupController {
     destination.setName(src.getName());
     destination.setOwners(new LinkedHashSet<>(src.getOwners()));
     return destination;
-  }
-
-  /**
-   * The current user.
-   */
-  @Getter
-  @ToString
-  @EqualsAndHashCode(of = "name")
-  public static class CurrentUser {
-
-    private final String name;
-
-    private final Set<String> roles;
-
-    private final boolean localUser;
-
-    /**
-     * Instantiates a new current user.
-     *
-     * @param authentication the authentication
-     * @param localUserRole the local user role
-     */
-    public CurrentUser(Authentication authentication, String localUserRole) {
-      name = authentication.getName();
-      if (authentication.getAuthorities() != null) {
-        roles = authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .collect(Collectors.toSet());
-      } else {
-        roles = Collections.emptySet();
-      }
-      localUser = localUserRole != null && roles.contains(localUserRole);
-    }
   }
 
 }

@@ -27,6 +27,7 @@ import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
+import org.bremersee.security.core.UserContext;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
@@ -82,12 +83,14 @@ public class GroupAdminController
       throw new UnsupportedOperationException(
           "Creating a group with source 'LDAP' is not supported.");
     }
-    return oneWithCurrentUser(currentUser -> addGroup(group, currentUser).map(this::mapToGroup));
+    return getCaller()
+        .oneWithUserContext(userContext -> addGroup(group, userContext))
+        .map(this::mapToGroup);
   }
 
-  private Mono<GroupEntity> addGroup(Group group, CurrentUser currentUser) {
+  private Mono<GroupEntity> addGroup(Group group, UserContext userContext) {
     if (!StringUtils.hasText(group.getCreatedBy())) {
-      group.setCreatedBy(currentUser.getName());
+      group.setCreatedBy(userContext.getName());
     }
     return getGroupRepository().save(mapToGroupEntity(group));
   }

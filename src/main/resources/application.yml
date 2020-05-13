@@ -28,15 +28,12 @@ bremersee:
   actuator:
     auth:
       enable: auto
-      enable-cors: false
+      enable-cors: true
   cors:
     enable: false
   auth:
     resource-server: auto
     path-matchers:
-      - ant-pattern: "/**"
-        http-method: "OPTIONS"
-        access-mode: permit_all
       - ant-pattern: "/v3/**"
         access-mode: permit_all
       - ant-pattern: "/webjars/**"

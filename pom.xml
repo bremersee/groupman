@@ -151,10 +151,12 @@
       <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
     </dependency>
     <!-- Caffeine-backed LoadBalancer Cache -->
+    <!--
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
     </dependency>
+    -->
 
     <!-- OpenAPI -->
     <!--
