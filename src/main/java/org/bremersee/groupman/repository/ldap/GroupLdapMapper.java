@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,9 @@ public class GroupLdapMapper implements LdaptiveEntryMapper<GroupEntity> {
 
   private static final StringValueTranscoder STRING_VALUE_TRANSCODER = new StringValueTranscoder();
 
-  private DomainControllerProperties properties;
+  private final DomainControllerProperties properties;
 
-  private GroupMemberValueTranscoder groupMemberValueTranscoder;
+  private final GroupMemberValueTranscoder groupMemberValueTranscoder;
 
   /**
    * Instantiates a new group ldap mapper.

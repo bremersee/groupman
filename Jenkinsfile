@@ -1,10 +1,16 @@
 pipeline {
   agent none
   environment {
-    SERVICE_NAME='groupman'
-    DOCKER_IMAGE='bremersee/groupman'
-    DEV_TAG='snapshot'
-    PROD_TAG='latest'
+    SERVICE_NAME = 'groupman'
+    DOCKER_IMAGE = 'bremersee/groupman'
+    DEV_TAG = 'snapshot'
+    PROD_TAG = 'latest'
+    PUSH_SNAPSHOT = true
+    PUSH_RELEASE = true
+    DEPLOY_SNAPSHOT = true
+    DEPLOY_RELEASE = true
+    SNAPSHOT_SITE = true
+    RELEASE_SITE = true
   }
   stages {
     stage('Test') {
@@ -12,7 +18,7 @@ pipeline {
         label 'maven'
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       when {
@@ -39,10 +45,13 @@ pipeline {
         label 'maven'
       }
       when {
-        branch 'develop'
+        allOf {
+          branch 'develop'
+          environment name: 'PUSH_SNAPSHOT', value: 'true'
+        }
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {
@@ -58,10 +67,13 @@ pipeline {
         label 'maven'
       }
       when {
-        branch 'master'
+        allOf {
+          branch 'master'
+          environment name: 'PUSH_RELEASE', value: 'true'
+        }
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {
@@ -77,7 +89,10 @@ pipeline {
         label 'dev-swarm'
       }
       when {
-        branch 'develop'
+        allOf {
+          branch 'develop'
+          environment name: 'DEPLOY_SNAPSHOT', value: 'true'
+        }
       }
       steps {
         sh '''
@@ -97,7 +112,10 @@ pipeline {
         label 'prod-swarm'
       }
       when {
-        branch 'master'
+        allOf {
+          branch 'master'
+          environment name: 'DEPLOY_RELEASE', value: 'true'
+        }
       }
       steps {
         sh '''
@@ -120,10 +138,13 @@ pipeline {
         CODECOV_TOKEN = credentials('groupman-codecov-token')
       }
       when {
-        branch 'develop'
+        allOf {
+          branch 'develop'
+          environment name: 'SNAPSHOT_SITE', value: 'true'
+        }
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {
@@ -143,10 +164,13 @@ pipeline {
         CODECOV_TOKEN = credentials('groupman-codecov-token')
       }
       when {
-        branch 'master'
+        allOf {
+          branch 'master'
+          environment name: 'RELEASE_SITE', value: 'true'
+        }
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {
@@ -166,7 +190,7 @@ pipeline {
         branch 'feature/*'
       }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
         maven 'm3'
       }
       steps {

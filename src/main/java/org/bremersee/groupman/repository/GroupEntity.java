@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.lang.NonNull;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -89,16 +90,16 @@ public class GroupEntity implements Comparable<GroupEntity> {
   /**
    * Instantiates a new Group entity.
    *
-   * @param id          the id
-   * @param version     the version
-   * @param createdBy   the created by
-   * @param createdAt   the created at
-   * @param modifiedAt  the modified at
-   * @param source      the source
-   * @param name        the name
+   * @param id the id
+   * @param version the version
+   * @param createdBy the created by
+   * @param createdAt the created at
+   * @param modifiedAt the modified at
+   * @param source the source
+   * @param name the name
    * @param description the description
-   * @param members     the members
-   * @param owners      the owners
+   * @param members the members
+   * @param owners the owners
    */
   @Builder
   public GroupEntity(
@@ -125,15 +126,15 @@ public class GroupEntity implements Comparable<GroupEntity> {
   }
 
   @Override
-  public int compareTo(GroupEntity o) {
+  public int compareTo(@NonNull GroupEntity o) {
     String s1 = getName() == null ? "" : getName();
-    String s2 = o == null || o.getName() == null ? "" : o.getName();
+    String s2 = o.getName() == null ? "" : o.getName();
     int c = s1.compareToIgnoreCase(s2);
     if (c != 0) {
       return c;
     }
     s1 = getCreatedBy() == null ? "" : getCreatedBy();
-    s2 = o == null || o.getCreatedBy() == null ? "" : o.getCreatedBy();
+    s2 = o.getCreatedBy() == null ? "" : o.getCreatedBy();
     return s1.compareToIgnoreCase(s2);
   }
 }

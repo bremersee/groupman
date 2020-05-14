@@ -23,7 +23,6 @@ import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -46,13 +45,13 @@ class GeneralizedTimeToDateValueTranscoderTest {
     Date date = transcoder.decodeStringValue(ldapValue);
     assertNotNull(date);
     OffsetDateTime dateTime = OffsetDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC);
-    Assert.assertEquals(Month.DECEMBER, dateTime.getMonth());
-    Assert.assertEquals(26, dateTime.getDayOfMonth());
-    Assert.assertEquals(15, dateTime.getHour());
-    Assert.assertEquals(45, dateTime.getMinute());
-    Assert.assertEquals(54, dateTime.getSecond());
+    assertEquals(Month.DECEMBER, dateTime.getMonth());
+    assertEquals(26, dateTime.getDayOfMonth());
+    assertEquals(15, dateTime.getHour());
+    assertEquals(45, dateTime.getMinute());
+    assertEquals(54, dateTime.getSecond());
 
-    Assert.assertEquals(ldapValue, transcoder.encodeStringValue(date));
+    assertEquals(ldapValue, transcoder.encodeStringValue(date));
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
+import org.bremersee.security.core.UserContext;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,15 +49,17 @@ public class GroupAdminController
   /**
    * Instantiates a new group admin controller.
    *
-   * @param groupRepository     the group repository
+   * @param groupRepository the group repository
    * @param groupLdapRepository the group ldap repository
-   * @param localRole           the local role
+   * @param modelMapper the model mapper
+   * @param localRole the local role
    */
   public GroupAdminController(
       GroupRepository groupRepository,
       GroupLdapRepository groupLdapRepository,
+      ModelMapper modelMapper,
       @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole) {
-    super(groupRepository, groupLdapRepository, localRole);
+    super(groupRepository, groupLdapRepository, modelMapper, localRole);
   }
 
   @Override
@@ -79,12 +83,14 @@ public class GroupAdminController
       throw new UnsupportedOperationException(
           "Creating a group with source 'LDAP' is not supported.");
     }
-    return oneWithCurrentUser(currentUser -> addGroup(group, currentUser).map(this::mapToGroup));
+    return getCaller()
+        .oneWithUserContext(userContext -> addGroup(group, userContext))
+        .map(this::mapToGroup);
   }
 
-  private Mono<GroupEntity> addGroup(Group group, CurrentUser currentUser) {
+  private Mono<GroupEntity> addGroup(Group group, UserContext userContext) {
     if (!StringUtils.hasText(group.getCreatedBy())) {
-      group.setCreatedBy(currentUser.getName());
+      group.setCreatedBy(userContext.getName());
     }
     return getGroupRepository().save(mapToGroupEntity(group));
   }

@@ -10,7 +10,8 @@ docker service create \
   --restart-max-attempts 10 \
   --restart-window 60s \
   --update-delay 10s \
-  --constraint 'node.role == worker' \
+  --constraint 'node.role==worker' \
+  --constraint 'node.labels.primary==true' \
   -e APPLICATION_NAME='groupman' \
   -e ACTIVE_PROFILES=$2 \
   -e CONFIG_CLIENT_ENABLED='true' \
