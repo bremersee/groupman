@@ -1,6 +1,6 @@
 # Groupman
 
-[![codecov](https://codecov.io/gh/bremersee/groupman/branch/develop/graph/badge.svg)](https://codecov.io/gh/bremersee/groupman)
+[![codecov](https://codecov.io/gh/bremersee/groupman/branch/master/graph/badge.svg)](https://codecov.io/gh/bremersee/groupman)
 
 A group management service.
 
