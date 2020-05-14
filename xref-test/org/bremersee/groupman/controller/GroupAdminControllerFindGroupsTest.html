@@ -59,7 +59,7 @@
 <a class="jxr_linenumber" name="L51" href="#L51">51</a>  <em class="jxr_javadoccomment"> * @author Christian Bremer</em>
 <a class="jxr_linenumber" name="L52" href="#L52">52</a>  <em class="jxr_javadoccomment"> */</em>
 <a class="jxr_linenumber" name="L53" href="#L53">53</a>  @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-<a class="jxr_linenumber" name="L54" href="#L54">54</a>      <span class="jxr_string">"bremersee.security.authentication.enable-jwt-support=true"</span>,
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      <span class="jxr_string">"spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/jwk"</span>,
 <a class="jxr_linenumber" name="L55" href="#L55">55</a>      <span class="jxr_string">"spring.ldap.embedded.base-dn=dc=bremersee,dc=org"</span>,
 <a class="jxr_linenumber" name="L56" href="#L56">56</a>      <span class="jxr_string">"spring.ldap.embedded.credential.username=uid=admin"</span>,
 <a class="jxr_linenumber" name="L57" href="#L57">57</a>      <span class="jxr_string">"spring.ldap.embedded.credential.password=secret"</span>,
@@ -72,7 +72,7 @@
 <a class="jxr_linenumber" name="L64" href="#L64">64</a>      <span class="jxr_string">"bremersee.ldaptive.use-ssl=false"</span>,
 <a class="jxr_linenumber" name="L65" href="#L65">65</a>      <span class="jxr_string">"bremersee.ldaptive.use-start-tls=false"</span>,
 <a class="jxr_linenumber" name="L66" href="#L66">66</a>      <span class="jxr_string">"bremersee.ldaptive.bind-dn=uid=admin"</span>,
-<a class="jxr_linenumber" name="L67" href="#L67">67</a>      <span class="jxr_string">"bremersee.ldaptive.bind-credential=secret"</span>,
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      <span class="jxr_string">"bremersee.ldaptive.bind-credentials=secret"</span>,
 <a class="jxr_linenumber" name="L68" href="#L68">68</a>      <span class="jxr_string">"bremersee.ldaptive.pooled=false"</span>,
 <a class="jxr_linenumber" name="L69" href="#L69">69</a>      <span class="jxr_string">"bremersee.domain-controller.group-base-dn=ou=groups,dc=bremersee,dc=org"</span>,
 <a class="jxr_linenumber" name="L70" href="#L70">70</a>      <span class="jxr_string">"bremersee.domain-controller.group-member-attribute=uniqueMember"</span>,
@@ -82,7 +82,7 @@
 <a class="jxr_linenumber" name="L74" href="#L74">74</a>      <span class="jxr_string">"bremersee.domain-controller.group-find-all-filter=(objectClass=groupOfUniqueNames)"</span>,
 <a class="jxr_linenumber" name="L75" href="#L75">75</a>      <span class="jxr_string">"bremersee.domain-controller.group-find-one-filter=(&amp;(objectClass=groupOfUniqueNames)(cn={0}))"</span>
 <a class="jxr_linenumber" name="L76" href="#L76">76</a>  })
-<a class="jxr_linenumber" name="L77" href="#L77">77</a>  @ActiveProfiles({<span class="jxr_string">"default"</span>, <span class="jxr_string">"ldap"</span>})
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  @ActiveProfiles({<span class="jxr_string">"ldap"</span>})
 <a class="jxr_linenumber" name="L78" href="#L78">78</a>  @TestInstance(Lifecycle.PER_CLASS) <em class="jxr_comment">// allows us to use @BeforeAll with a non-static method</em>
 <a class="jxr_linenumber" name="L79" href="#L79">79</a>  @TestMethodOrder(MethodOrderer.OrderAnnotation.<strong class="jxr_keyword">class</strong>)
 <a class="jxr_linenumber" name="L80" href="#L80">80</a>  <strong class="jxr_keyword">class</strong> GroupAdminControllerFindGroupsTest {

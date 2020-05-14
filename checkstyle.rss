@@ -25,9 +25,9 @@ under the License.
     <language>en-us</language>
     <copyright>&#169;2020 bremersee.org</copyright>
     <item>
-      <title>File: 30,
+      <title>File: 28,
              Errors: 0,
-             Warnings: 2,
+             Warnings: 1,
              Infos: 0
       </title>
             <link>https://github.com/bremersee/groupman/checkstyle.html</link>
@@ -74,20 +74,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.SwaggerProperties.java">org/bremersee/groupman/config/SwaggerProperties.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.GroupController.java">org/bremersee/groupman/controller/GroupController.java</a>
                 </td>
                 <td>
@@ -117,20 +103,6 @@ under the License.
                           <tr>
                 <td>
                   <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.controller.AbstractGroupController.java">org/bremersee/groupman/controller/AbstractGroupController.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.SecurityConfiguration.java">org/bremersee/groupman/config/SecurityConfiguration.java</a>
                 </td>
                 <td>
                   0
@@ -187,6 +159,20 @@ under the License.
                           <tr>
                 <td>
                   <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.repository.GroupRepositoryImpl.java">org/bremersee/groupman/repository/GroupRepositoryImpl.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.ModelMapperConfiguration.java">org/bremersee/groupman/config/ModelMapperConfiguration.java</a>
                 </td>
                 <td>
                   0
@@ -403,20 +389,6 @@ under the License.
                 </td>
                 <td>
                   0
-                </td>
-                <td>
-                  0
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/bremersee/groupman/checkstyle.html#org.bremersee.groupman.config.SwaggerConfiguration.java">org/bremersee/groupman/config/SwaggerConfiguration.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  1
                 </td>
                 <td>
                   0

@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"org.bremersee.groupman.config"},{"l":"org.bremersee.groupman.controller"},{"l":"org.bremersee.groupman.metrics"},{"l":"org.bremersee.groupman.repository"},{"l":"org.bremersee.groupman.repository.ldap.transcoder"}]

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GroupController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman.controller</a> &gt; <span class="el_source">GroupController.java</span></div><h1>GroupController.java</h1><pre class="source lang-java linenums">/*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import org.bremersee.groupman.model.Status;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
+import org.bremersee.security.core.UserContext;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
@@ -41,162 +43,173 @@ import reactor.core.publisher.Mono;
  * @author Christian Bremer
  */
 @RestController
-<span class="fc" id="L44">@Slf4j</span>
+<span class="fc" id="L46">@Slf4j</span>
 public class GroupController
     extends AbstractGroupController
     implements GroupWebfluxControllerApi {
 
-  private Long maxOwnedGroups;
+  private final Long maxOwnedGroups;
 
   /**
    * Instantiates a new group controller.
    *
-   * @param groupRepository     the group repository
+   * @param groupRepository the group repository
    * @param groupLdapRepository the group ldap repository
-   * @param localRole           if a role name is given, ldap will only be called, if the user has
-   *                            this role; if the role name is null or empty, ldap will always be
-   *                            called
-   * @param maxOwnedGroups      the max owned groups
+   * @param modelMapper the model mapper
+   * @param localRole if a role name is given, ldap will only be called, if the user has this
+   *     role; if the role name is null or empty, ldap will always be called
+   * @param maxOwnedGroups the max owned groups
    */
   public GroupController(
       GroupRepository groupRepository,
       GroupLdapRepository groupLdapRepository,
+      ModelMapper modelMapper,
       @Value(&quot;${bremersee.groupman.local-role:ROLE_LOCAL_USER}&quot;) String localRole,
       @Value(&quot;${bremersee.groupman.max-owned-groups:-1}&quot;) Long maxOwnedGroups) {
-<span class="fc" id="L66">    super(groupRepository, groupLdapRepository, localRole);</span>
-<span class="pc bpc" id="L67" title="1 of 2 branches missed.">    this.maxOwnedGroups = maxOwnedGroups != null ? maxOwnedGroups : -1L;</span>
-<span class="fc" id="L68">  }</span>
+<span class="fc" id="L69">    super(groupRepository, groupLdapRepository, modelMapper, localRole);</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">    this.maxOwnedGroups = maxOwnedGroups != null ? maxOwnedGroups : -1L;</span>
+<span class="fc" id="L71">  }</span>
 
   @Override
   public Mono&lt;Group&gt; createGroup(Group group) {
-<span class="fc" id="L72">    return oneWithCurrentUser(currentUser -&gt; createGroup(group, currentUser).map(this::mapToGroup));</span>
+<span class="fc" id="L75">    return getCaller()</span>
+<span class="fc" id="L76">        .oneWithUserContext(userContext -&gt; createGroup(group, userContext))</span>
+<span class="fc" id="L77">        .map(this::mapToGroup);</span>
   }
 
-  private Mono&lt;GroupEntity&gt; createGroup(Group group, CurrentUser currentUser) {
-<span class="fc" id="L76">    group.setId(null);</span>
-<span class="fc" id="L77">    group.setCreatedAt(OffsetDateTime.now(ZoneId.of(&quot;UTC&quot;)));</span>
-<span class="fc" id="L78">    group.setModifiedAt(group.getCreatedAt());</span>
-<span class="fc" id="L79">    group.setCreatedBy(currentUser.getName());</span>
-<span class="fc" id="L80">    group.setSource(Source.INTERNAL);</span>
-<span class="fc" id="L81">    group.getOwners().add(currentUser.getName());</span>
-<span class="fc" id="L82">    return Mono.just(group)</span>
-<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        .flatMap(newGroup -&gt; maxOwnedGroups &lt; 0</span>
-<span class="pc" id="L84">            ? Mono.just(newGroup)</span>
-<span class="fc" id="L85">            : getGroupRepository().countOwnedGroups(currentUser.getName())</span>
-<span class="fc bfc" id="L86" title="All 2 branches covered.">                .flatMap(size -&gt; size &gt;= maxOwnedGroups</span>
-<span class="fc" id="L87">                    ? Mono.error(() -&gt; ServiceException.badRequest(</span>
+  private Mono&lt;GroupEntity&gt; createGroup(Group group, UserContext currentUser) {
+<span class="fc" id="L81">    group.setId(null);</span>
+<span class="fc" id="L82">    group.setCreatedAt(OffsetDateTime.now(ZoneId.of(&quot;UTC&quot;)));</span>
+<span class="fc" id="L83">    group.setModifiedAt(group.getCreatedAt());</span>
+<span class="fc" id="L84">    group.setCreatedBy(currentUser.getName());</span>
+<span class="fc" id="L85">    group.setSource(Source.INTERNAL);</span>
+<span class="fc" id="L86">    group.getOwners().add(currentUser.getName());</span>
+<span class="fc" id="L87">    return Mono.just(group)</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        .flatMap(newGroup -&gt; maxOwnedGroups &lt; 0</span>
+<span class="nc" id="L89">            ? Mono.just(newGroup)</span>
+<span class="fc" id="L90">            : getGroupRepository().countOwnedGroups(currentUser.getName())</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">                .flatMap(size -&gt; size &gt;= maxOwnedGroups</span>
+<span class="fc" id="L92">                    ? Mono.error(() -&gt; ServiceException.badRequest(</span>
                     &quot;The maximum number of groups has been reached.&quot;,
                     &quot;GRP:MAX_OWNED_GROUPS&quot;))
-<span class="fc" id="L90">                    : Mono.just(newGroup)))</span>
-<span class="fc" id="L91">        .flatMap(newGroup -&gt; getGroupRepository().save(mapToGroupEntity(newGroup)));</span>
+<span class="fc" id="L95">                    : Mono.just(newGroup)))</span>
+<span class="fc" id="L96">        .flatMap(newGroup -&gt; getGroupRepository().save(mapToGroupEntity(newGroup)));</span>
   }
 
   @Override
   public Mono&lt;Group&gt; getGroupById(String groupId) {
-<span class="fc" id="L96">    return super.getGroupEntityById(groupId)</span>
-<span class="fc" id="L97">        .map(this::mapToGroup);</span>
+<span class="fc" id="L101">    return super.getGroupEntityById(groupId)</span>
+<span class="fc" id="L102">        .map(this::mapToGroup);</span>
   }
 
   @Override
   public Mono&lt;Group&gt; updateGroup(String groupId, Group group) {
-<span class="fc" id="L102">    return oneWithCurrentUser(currentUser -&gt; updateGroup(groupId, group, currentUser)</span>
-<span class="fc" id="L103">        .map(this::mapToGroup));</span>
+<span class="fc" id="L107">    return getCaller()</span>
+<span class="fc" id="L108">        .oneWithUserContext(userContext -&gt; updateGroup(groupId, group, userContext))</span>
+<span class="fc" id="L109">        .map(this::mapToGroup);</span>
   }
 
-  private Mono&lt;GroupEntity&gt; updateGroup(String groupId, Group group, CurrentUser currentUser) {
-<span class="fc bfc" id="L107" title="All 2 branches covered.">    if (group.getOwners().isEmpty()) {</span>
-<span class="fc" id="L108">      group.getOwners().add(currentUser.getName());</span>
+  private Mono&lt;GroupEntity&gt; updateGroup(String groupId, Group group, UserContext userContext) {
+<span class="fc bfc" id="L113" title="All 2 branches covered.">    if (group.getOwners().isEmpty()) {</span>
+<span class="fc" id="L114">      group.getOwners().add(userContext.getName());</span>
     }
-<span class="fc" id="L110">    return getGroupEntityById(groupId)</span>
-<span class="pc" id="L111">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.notFound(&quot;Group&quot;, groupId)))</span>
-<span class="fc" id="L112">        .filter(groupEntity -&gt; groupEntity.getOwners().contains(currentUser.getName()))</span>
-<span class="fc" id="L113">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.forbidden(&quot;Group&quot;, groupId)))</span>
-<span class="fc" id="L114">        .flatMap(groupEntity -&gt; getGroupRepository().save(updateGroup(group, () -&gt; groupEntity)));</span>
+<span class="fc" id="L116">    return getGroupEntityById(groupId)</span>
+<span class="pc" id="L117">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.notFound(&quot;Group&quot;, groupId)))</span>
+<span class="fc" id="L118">        .filter(groupEntity -&gt; groupEntity.getOwners().contains(userContext.getName()))</span>
+<span class="fc" id="L119">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.forbidden(&quot;Group&quot;, groupId)))</span>
+<span class="fc" id="L120">        .flatMap(groupEntity -&gt; getGroupRepository().save(updateGroup(group, () -&gt; groupEntity)));</span>
   }
 
   @Override
   public Mono&lt;Void&gt; deleteGroup(String groupId) {
-<span class="fc" id="L119">    return oneWithCurrentUser(currentUser -&gt; deleteGroup(groupId, currentUser));</span>
+<span class="fc" id="L125">    return getCaller()</span>
+<span class="fc" id="L126">        .oneWithUserContext(userContext -&gt; deleteGroup(groupId, userContext));</span>
   }
 
-  private Mono&lt;Void&gt; deleteGroup(String groupId, CurrentUser currentUser) {
-<span class="fc" id="L123">    return getGroupRepository().findById(groupId)</span>
-<span class="pc" id="L124">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.notFound(&quot;Group&quot;, groupId)))</span>
-<span class="fc" id="L125">        .filter(groupEntity -&gt; groupEntity.getOwners().contains(currentUser.getName()))</span>
-<span class="fc" id="L126">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.forbidden(&quot;Group&quot;, groupId)))</span>
-<span class="fc" id="L127">        .flatMap(groupEntity -&gt; getGroupRepository().delete(groupEntity));</span>
+  private Mono&lt;Void&gt; deleteGroup(String groupId, UserContext userContext) {
+<span class="fc" id="L130">    return getGroupRepository().findById(groupId)</span>
+<span class="pc" id="L131">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.notFound(&quot;Group&quot;, groupId)))</span>
+<span class="fc" id="L132">        .filter(groupEntity -&gt; groupEntity.getOwners().contains(userContext.getName()))</span>
+<span class="fc" id="L133">        .switchIfEmpty(Mono.error(() -&gt; ServiceException.forbidden(&quot;Group&quot;, groupId)))</span>
+<span class="fc" id="L134">        .flatMap(groupEntity -&gt; getGroupRepository().delete(groupEntity));</span>
   }
 
   @Override
   public Flux&lt;Group&gt; getGroupsByIds(List&lt;String&gt; ids) {
-<span class="fc" id="L132">    return super.getGroupEntitiesByIds(ids)</span>
-<span class="fc" id="L133">        .map(this::mapToGroup);</span>
+<span class="fc" id="L139">    return super.getGroupEntitiesByIds(ids)</span>
+<span class="fc" id="L140">        .map(this::mapToGroup);</span>
   }
 
   @Override
   public Flux&lt;Group&gt; getEditableGroups() {
-<span class="fc" id="L138">    return manyWithCurrentUser(currentUser -&gt; getEditableGroups(currentUser).map(this::mapToGroup));</span>
+<span class="fc" id="L145">    return getCaller()</span>
+<span class="fc" id="L146">        .manyWithUserContext(this::getEditableGroups)</span>
+<span class="fc" id="L147">        .map(this::mapToGroup);</span>
   }
 
-  private Flux&lt;GroupEntity&gt; getEditableGroups(CurrentUser currentUser) {
-<span class="fc" id="L142">    return getGroupRepository().findByOwnersIsContaining(currentUser.getName(), SORT);</span>
+  private Flux&lt;GroupEntity&gt; getEditableGroups(UserContext userContext) {
+<span class="fc" id="L151">    return getGroupRepository().findByOwnersIsContaining(userContext.getName(), SORT);</span>
   }
 
   @Override
   public Flux&lt;Group&gt; getUsableGroups() {
-<span class="fc" id="L147">    return manyWithCurrentUser(currentUser -&gt; getUsableGroups(currentUser).map(this::mapToGroup));</span>
+<span class="fc" id="L156">    return getCaller()</span>
+<span class="fc" id="L157">        .manyWithUserContext(this::getUsableGroups)</span>
+<span class="fc" id="L158">        .map(this::mapToGroup);</span>
   }
 
-  private Flux&lt;GroupEntity&gt; getUsableGroups(CurrentUser currentUser) {
-<span class="fc" id="L151">    final String name = currentUser.getName();</span>
-<span class="fc" id="L152">    return getGroupRepository().findByOwnersIsContainingOrMembersIsContaining(name, name)</span>
-<span class="fc" id="L153">        .concatWith(getGroupLdapRepository().findByMembersIsContaining(name))</span>
-<span class="fc" id="L154">        .sort(COMPARATOR);</span>
+  private Flux&lt;GroupEntity&gt; getUsableGroups(UserContext userContext) {
+<span class="fc" id="L162">    final String name = userContext.getName();</span>
+<span class="fc" id="L163">    return getGroupRepository().findByOwnersIsContainingOrMembersIsContaining(name, name)</span>
+<span class="fc" id="L164">        .concatWith(getGroupLdapRepository().findByMembersIsContaining(name))</span>
+<span class="fc" id="L165">        .sort(COMPARATOR);</span>
   }
 
   @Override
   public Flux&lt;Group&gt; getMembership() {
-<span class="fc" id="L159">    return manyWithCurrentUser(currentUser -&gt; getMembership(currentUser).map(this::mapToGroup));</span>
+<span class="fc" id="L170">    return getCaller()</span>
+<span class="fc" id="L171">        .manyWithUserContext(this::getMembership)</span>
+<span class="fc" id="L172">        .map(this::mapToGroup);</span>
   }
 
-  private Flux&lt;GroupEntity&gt; getMembership(CurrentUser currentUser) {
-<span class="fc" id="L163">    final String name = currentUser.getName();</span>
-<span class="fc bfc" id="L164" title="All 2 branches covered.">    if (currentUser.isLocalUser()) {</span>
-<span class="fc" id="L165">      return getGroupRepository().findByMembersIsContaining(name)</span>
-<span class="fc" id="L166">          .concatWith(getGroupLdapRepository().findByMembersIsContaining(name))</span>
-<span class="fc" id="L167">          .sort(COMPARATOR);</span>
+  private Flux&lt;GroupEntity&gt; getMembership(UserContext userContext) {
+<span class="fc" id="L176">    final String name = userContext.getName();</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">    if (userContext.hasRole(getLocalUserRole())) {</span>
+<span class="fc" id="L178">      return getGroupRepository().findByMembersIsContaining(name)</span>
+<span class="fc" id="L179">          .concatWith(getGroupLdapRepository().findByMembersIsContaining(name))</span>
+<span class="fc" id="L180">          .sort(COMPARATOR);</span>
     }
-<span class="fc" id="L169">    return getGroupRepository().findByMembersIsContaining(name).sort(COMPARATOR);</span>
+<span class="fc" id="L182">    return getGroupRepository().findByMembersIsContaining(name).sort(COMPARATOR);</span>
   }
 
   @Override
   public Mono&lt;Set&lt;String&gt;&gt; getMembershipIds() {
-<span class="fc" id="L174">    return oneWithCurrentUser(currentUser -&gt; getMembership(currentUser)</span>
-<span class="fc" id="L175">        .map(GroupEntity::getId).collect(Collectors.toSet()));</span>
+<span class="fc" id="L187">    return getCaller().oneWithUserContext(userContext -&gt; getMembership(userContext)</span>
+<span class="fc" id="L188">        .map(GroupEntity::getId).collect(Collectors.toSet()));</span>
   }
 
   @Override
   public Mono&lt;Status&gt; getStatus() {
-<span class="fc" id="L180">    return oneWithCurrentUser(this::getStatus);</span>
+<span class="fc" id="L193">    return getCaller().oneWithUserContext(this::getStatus);</span>
   }
 
-  private Mono&lt;Status&gt; getStatus(CurrentUser currentUser) {
-<span class="fc" id="L184">    return getGroupRepository().countOwnedGroups(currentUser.getName())</span>
-<span class="fc" id="L185">        .zipWith(getMembershipSum(currentUser))</span>
-<span class="fc" id="L186">        .map(sizes -&gt; Status.builder()</span>
-<span class="fc" id="L187">            .ownedGroupSize(sizes.getT1())</span>
-<span class="fc" id="L188">            .membershipSize(sizes.getT2())</span>
-<span class="fc" id="L189">            .maxOwnedGroups(maxOwnedGroups)</span>
-<span class="fc" id="L190">            .build());</span>
+  private Mono&lt;Status&gt; getStatus(UserContext userContext) {
+<span class="fc" id="L197">    return getGroupRepository().countOwnedGroups(userContext.getName())</span>
+<span class="fc" id="L198">        .zipWith(getMembershipSum(userContext))</span>
+<span class="fc" id="L199">        .map(sizes -&gt; Status.builder()</span>
+<span class="fc" id="L200">            .ownedGroupSize(sizes.getT1())</span>
+<span class="fc" id="L201">            .membershipSize(sizes.getT2())</span>
+<span class="fc" id="L202">            .maxOwnedGroups(maxOwnedGroups)</span>
+<span class="fc" id="L203">            .build());</span>
   }
 
-  private Mono&lt;Long&gt; getMembershipSum(CurrentUser currentUser) {
-<span class="fc bfc" id="L194" title="All 2 branches covered.">    if (currentUser.isLocalUser()) {</span>
-<span class="fc" id="L195">      return getGroupRepository().countMembership(currentUser.getName())</span>
-<span class="fc" id="L196">          .zipWith(getGroupLdapRepository().countMembership(currentUser.getName()))</span>
-<span class="fc" id="L197">          .map(sizes -&gt; sizes.getT1() + sizes.getT2());</span>
+  private Mono&lt;Long&gt; getMembershipSum(UserContext userContext) {
+<span class="fc bfc" id="L207" title="All 2 branches covered.">    if (userContext.hasRole(getLocalUserRole())) {</span>
+<span class="fc" id="L208">      return getGroupRepository().countMembership(userContext.getName())</span>
+<span class="fc" id="L209">          .zipWith(getGroupLdapRepository().countMembership(userContext.getName()))</span>
+<span class="fc" id="L210">          .map(sizes -&gt; sizes.getT1() + sizes.getT2());</span>
     }
-<span class="fc" id="L199">    return getGroupRepository().countMembership(currentUser.getName());</span>
+<span class="fc" id="L212">    return getGroupRepository().countMembership(userContext.getName());</span>
   }
 
 }
