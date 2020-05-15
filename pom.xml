@@ -25,8 +25,8 @@
 
     <start-class>org.bremersee.groupman.Application</start-class>
 
-    <groupman-api-spring-reactive.version>2.0.0</groupman-api-spring-reactive.version>
-    <common-base.version>2.1.0</common-base.version>
+    <groupman-api-spring-reactive.version>2.0.1</groupman-api-spring-reactive.version>
+    <common-base.version>2.1.2</common-base.version>
     <comparator.version>2.1.0</comparator.version>
   </properties>
 
