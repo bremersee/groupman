@@ -44,6 +44,8 @@ bremersee:
         roles:
           - "ROLE_ADMIN"
           - "ROLE_GROUP_ADMIN"
+  redis:
+    embedded: true
 
 eureka:
   client:
