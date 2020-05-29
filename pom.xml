@@ -7,12 +7,12 @@
   <parent>
     <groupId>org.bremersee</groupId>
     <artifactId>common-service-parent</artifactId>
-    <version>2.0.2</version>
+    <version>2.0.3</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <artifactId>groupman</artifactId>
-  <version>2.0.1</version>
+  <version>2.0.2</version>
   <packaging>jar</packaging>
 
   <name>groupman</name>
@@ -25,9 +25,9 @@
 
     <start-class>org.bremersee.groupman.Application</start-class>
 
-    <groupman-api-spring-reactive.version>2.0.1</groupman-api-spring-reactive.version>
-    <common-base.version>2.1.2</common-base.version>
-    <comparator.version>2.1.0</comparator.version>
+    <groupman-api-spring-reactive.version>2.0.2</groupman-api-spring-reactive.version>
+    <common-base.version>2.1.4</common-base.version>
+    <comparator.version>2.1.1</comparator.version>
   </properties>
 
   <scm>
@@ -101,10 +101,6 @@
       <artifactId>comparator</artifactId>
       <version>${comparator.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.modelmapper</groupId>
-      <artifactId>modelmapper</artifactId>
-    </dependency>
 
     <!-- MongoDB -->
     <dependency>
@@ -115,6 +111,10 @@
       <groupId>de.flapdoodle.embed</groupId>
       <artifactId>de.flapdoodle.embed.mongo</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.modelmapper</groupId>
+      <artifactId>modelmapper</artifactId>
     </dependency>
 
     <!-- Sleuth and zipkin -->
@@ -157,6 +157,16 @@
       <artifactId>caffeine</artifactId>
     </dependency>
     -->
+
+    <!-- Jwt cache -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>it.ozimov</groupId>
+      <artifactId>embedded-redis</artifactId>
+    </dependency>
 
     <!-- OpenAPI -->
     <!--
