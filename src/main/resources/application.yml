@@ -76,6 +76,10 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+  # Redis health check is broken: https://github.com/spring-projects/spring-boot/issues/22061
+  health:
+    redis:
+      enabled: false
 
 server:
   port: ${SERVER_PORT:8080}
