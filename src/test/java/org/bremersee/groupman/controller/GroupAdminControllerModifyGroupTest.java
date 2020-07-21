@@ -41,7 +41,6 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -80,12 +79,6 @@ class GroupAdminControllerModifyGroupTest {
       .build();
 
   /**
-   * The application context.
-   */
-  @Autowired
-  ApplicationContext context;
-
-  /**
    * The web test client.
    */
   @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -97,18 +90,6 @@ class GroupAdminControllerModifyGroupTest {
    */
   @Autowired
   GroupRepository groupRepository;
-
-  /**
-   * Setup tests.
-   */
-  @BeforeAll
-  void setUp() {
-    // https://docs.spring.io/spring-security/site/docs/current/reference/html/test-webflux.html
-    WebTestClient
-        .bindToApplicationContext(this.context)
-        .configureClient()
-        .build();
-  }
 
   /**
    * Sets up data.
