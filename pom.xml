@@ -12,7 +12,7 @@
   </parent>
 
   <artifactId>groupman</artifactId>
-  <version>2.1.1-SNAPSHOT</version>
+  <version>2.1.1</version>
   <packaging>jar</packaging>
 
   <name>groupman</name>
@@ -169,12 +169,6 @@
     </dependency>
 
     <!-- OpenAPI -->
-    <!--
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-webflux-core</artifactId>
-    </dependency>
-    -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-webflux-ui</artifactId>
