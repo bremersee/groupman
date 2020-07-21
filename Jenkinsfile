@@ -6,11 +6,11 @@ pipeline {
     DEV_TAG = 'snapshot'
     PROD_TAG = 'latest'
     PUSH_SNAPSHOT = true
-    PUSH_RELEASE = true
+    PUSH_RELEASE = false
     DEPLOY_SNAPSHOT = true
     DEPLOY_RELEASE = true
     SNAPSHOT_SITE = true
-    RELEASE_SITE = true
+    RELEASE_SITE = false
   }
   options {
     buildDiscarder(logRotator(numToKeepStr: '8', artifactNumToKeepStr: '8'))
