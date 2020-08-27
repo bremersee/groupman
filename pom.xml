@@ -12,7 +12,7 @@
   </parent>
 
   <artifactId>groupman</artifactId>
-  <version>2.1.2-SNAPSHOT</version>
+  <version>2.1.2</version>
   <packaging>jar</packaging>
 
   <name>groupman</name>
