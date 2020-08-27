@@ -76,7 +76,7 @@ management:
   endpoint:
     health:
       show-details: when_authorized
-  # Redis health check is broken: https://github.com/spring-projects/spring-boot/issues/22061
+  # Redis health check is broken: https://github.com/spring-projects/spring-boot/issues/22061 (will be fixed in 2.4.0)
   health:
     redis:
       enabled: false
