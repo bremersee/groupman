@@ -20,8 +20,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Optional;
-import org.ldaptive.io.AbstractStringValueTranscoder;
-import org.ldaptive.io.GeneralizedTimeValueTranscoder;
+import org.ldaptive.transcode.AbstractStringValueTranscoder;
+import org.ldaptive.transcode.GeneralizedTimeValueTranscoder;
 import org.springframework.util.StringUtils;
 
 /**

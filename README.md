@@ -8,4 +8,4 @@ A group management service.
 
 - [Release](https://bremersee.github.io/groupman/index.html)
 
-- [Snapshot](https://nexus.bremersee.org/repository/maven-sites/groupman/2.1.3-SNAPSHOT/index.html)
+- [Snapshot](https://nexus.bremersee.org/repository/maven-sites/groupman/2.2.0-SNAPSHOT/index.html)

@@ -23,10 +23,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.bremersee.data.ldaptive.LdaptiveTemplate;
+import org.bremersee.data.ldaptive.reactive.ReactiveLdaptiveTemplate;
 import org.bremersee.groupman.config.DomainControllerProperties;
 import org.bremersee.groupman.repository.GroupEntity;
-import org.ldaptive.SearchFilter;
+import org.ldaptive.FilterTemplate;
 import org.ldaptive.SearchRequest;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Profile;
@@ -48,7 +48,7 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
 
   private final DomainControllerProperties properties;
 
-  private final LdaptiveTemplate ldaptiveTemplate;
+  private final ReactiveLdaptiveTemplate ldaptiveTemplate;
 
   private final GroupLdapMapper mapper;
 
@@ -60,7 +60,7 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
    */
   public GroupLdapRepositoryImpl(
       DomainControllerProperties properties,
-      ObjectProvider<LdaptiveTemplate> ldaptiveTemplate) {
+      ObjectProvider<ReactiveLdaptiveTemplate> ldaptiveTemplate) {
     this.properties = properties;
     this.ldaptiveTemplate = ldaptiveTemplate.getIfAvailable();
     this.mapper = new GroupLdapMapper(properties);
@@ -74,26 +74,31 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
 
   @Override
   public Flux<GroupEntity> findAll() {
-    final SearchRequest searchRequest = new SearchRequest(
-        properties.getGroupBaseDn(),
-        new SearchFilter(properties.getGroupFindAllFilter()));
-    searchRequest.setSearchScope(properties.getGroupSearchScope());
-    return Flux.fromStream(ldaptiveTemplate.findAll(searchRequest, mapper)
-        .filter(groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName())));
+    return ldaptiveTemplate.
+        findAll(
+            SearchRequest.builder()
+                .dn(properties.getGroupBaseDn())
+                .filter(properties.getGroupFindAllFilter())
+                .scope(properties.getGroupSearchScope())
+                .build(),
+            mapper)
+        .filter(groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));
   }
 
   @Override
   public Mono<GroupEntity> findByName(String name) {
-    final SearchFilter searchFilter = new SearchFilter(properties.getGroupFindOneFilter());
-    searchFilter.setParameter(0, name);
-    final SearchRequest searchRequest = new SearchRequest(
-        properties.getGroupBaseDn(),
-        searchFilter);
-    searchRequest.setSearchScope(properties.getGroupSearchScope());
-    return ldaptiveTemplate.findOne(searchRequest, mapper)
-        .filter(groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()))
-        .map(Mono::just)
-        .orElse(Mono.empty());
+    return ldaptiveTemplate
+        .findOne(
+            SearchRequest.builder()
+                .dn(properties.getGroupBaseDn())
+                .filter(FilterTemplate.builder()
+                    .filter(properties.getGroupFindOneFilter())
+                    .parameters(name)
+                    .build())
+                .scope(properties.getGroupSearchScope())
+                .build(),
+            mapper)
+        .filter(groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));
   }
 
   @Override
@@ -102,14 +107,22 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
     if (names.isEmpty()) {
       return Flux.empty();
     }
-    final SearchFilter sf = new SearchFilter(properties.getGroupFindByNamesFilter(names.size()));
-    if (!names.isEmpty()) {
-      sf.setParameters(names.toArray(new String[0]));
+    FilterTemplate filterTemplate = new FilterTemplate();
+    filterTemplate.setFilter(properties.getGroupFindByNamesFilter(names.size()));
+    int i = 0;
+    for (String name : names) {
+      filterTemplate.setParameter(i, name);
+      i++;
     }
-    final SearchRequest searchRequest = new SearchRequest(properties.getGroupBaseDn(), sf);
-    searchRequest.setSearchScope(properties.getGroupSearchScope());
-    return Flux.fromStream(ldaptiveTemplate.findAll(searchRequest, mapper)
-        .filter(groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName())));
+    return ldaptiveTemplate
+        .findAll(
+            SearchRequest.builder()
+                .dn(properties.getGroupBaseDn())
+                .filter(filterTemplate)
+                .scope(properties.getGroupSearchScope())
+                .build(),
+            mapper)
+        .filter(groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));
   }
 
   @Override
@@ -117,17 +130,20 @@ public class GroupLdapRepositoryImpl implements GroupLdapRepository {
     if (!StringUtils.hasText(name)) {
       return Flux.empty();
     }
-    final SearchFilter sf = new SearchFilter(properties.getGroupFindByMemberContainsFilter());
-    if (properties.isMemberDn()) {
-      final String userDn = createDn(properties.getUserRdn(), name, properties.getUserBaseDn());
-      sf.setParameters(new String[]{userDn});
-    } else {
-      sf.setParameters(new String[]{name});
-    }
-    final SearchRequest searchRequest = new SearchRequest(properties.getGroupBaseDn(), sf);
-    searchRequest.setSearchScope(properties.getGroupSearchScope());
-    return Flux.fromStream(ldaptiveTemplate.findAll(searchRequest, mapper)
-        .filter(groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName())));
+    return ldaptiveTemplate
+        .findAll(
+            SearchRequest.builder()
+                .dn(properties.getGroupBaseDn())
+                .filter(FilterTemplate.builder()
+                    .filter(properties.getGroupFindByMemberContainsFilter())
+                    .parameters(properties.isMemberDn()
+                        ? createDn(properties.getUserRdn(), name, properties.getUserBaseDn())
+                        : name)
+                    .build())
+                .scope(properties.getGroupSearchScope())
+                .build(),
+            mapper)
+        .filter(groupEntity -> !properties.getIgnoredLdapGroups().contains(groupEntity.getName()));
   }
 
 }

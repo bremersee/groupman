@@ -19,7 +19,7 @@ package org.bremersee.groupman.repository.ldap.transcoder;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.data.ldaptive.LdaptiveEntryMapper;
 import org.bremersee.groupman.config.DomainControllerProperties;
-import org.ldaptive.io.AbstractStringValueTranscoder;
+import org.ldaptive.transcode.AbstractStringValueTranscoder;
 import org.springframework.util.StringUtils;
 
 /**

@@ -28,7 +28,7 @@ import org.bremersee.groupman.repository.ldap.transcoder.GeneralizedTimeToDateVa
 import org.bremersee.groupman.repository.ldap.transcoder.GroupMemberValueTranscoder;
 import org.ldaptive.AttributeModification;
 import org.ldaptive.LdapEntry;
-import org.ldaptive.io.StringValueTranscoder;
+import org.ldaptive.transcode.StringValueTranscoder;
 
 /**
  * The group ldap mapper.

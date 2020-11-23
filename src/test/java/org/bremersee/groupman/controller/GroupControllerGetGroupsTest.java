@@ -63,7 +63,6 @@ import reactor.test.StepVerifier;
     "spring.ldap.embedded.port=12391",
     "spring.ldap.embedded.validation.enabled=false",
     "bremersee.ldaptive.enabled=true",
-    "bremersee.ldaptive.use-unbound-id-provider=true",
     "bremersee.ldaptive.ldap-url=ldap://localhost:12391",
     "bremersee.ldaptive.use-ssl=false",
     "bremersee.ldaptive.use-start-tls=false",
