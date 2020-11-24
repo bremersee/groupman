@@ -135,7 +135,7 @@ bremersee:
     bind-dn: ${LDAP_BIND_DN:areader@example.org}
     bind-credentials: ${LDAP_BIND_PASSWORD:changeit}
     pooled: true
-    min-pool-size: 3
+    min-pool-size: 5
     max-pool-size: 10
     validate-on-check-in: false
     validate-on-check-out: false
