@@ -16,26 +16,26 @@
 
 package org.bremersee.groupman.controller;
 
-import static org.bremersee.security.core.AuthorityConstants.USER_ROLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
-import java.util.function.Consumer;
 import org.bremersee.exception.model.RestApiException;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
-import org.bremersee.groupman.repository.GroupRepository;
-import org.bremersee.test.security.authentication.WithJwtAuthenticationToken;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
@@ -44,10 +44,11 @@ import org.springframework.web.reactive.function.BodyInserters;
  *
  * @author Christian Bremer
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/jwk",
+@SpringBootTest(webEnvironment = WebEnvironment.MOCK, properties = {
     "bremersee.groupman.max-owned-groups=3"
 })
+@AutoConfigureWebTestClient
+@AutoConfigureDataMongo
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GroupControllerCreateGroupTest {
@@ -55,22 +56,13 @@ class GroupControllerCreateGroupTest {
   /**
    * The web test client.
    */
-  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
   WebTestClient webTestClient;
 
   /**
-   * The Group repository.
-   */
-  @Autowired
-  GroupRepository groupRepository;
-
-  /**
    * Create group and expect bad request.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   void createGroupAndExpectBadRequest() {
     webTestClient
@@ -88,9 +80,7 @@ class GroupControllerCreateGroupTest {
   /**
    * Create group and expect no members.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   void createGroupAndExpectNoMembers() {
     webTestClient
@@ -104,7 +94,7 @@ class GroupControllerCreateGroupTest {
             .build()))
         .exchange()
         .expectBody(Group.class)
-        .value((Consumer<Group>) group -> {
+        .value(group -> {
           assertNotNull(group);
           assertNotNull(group.getId());
           assertEquals(0L, group.getVersion());
@@ -123,9 +113,7 @@ class GroupControllerCreateGroupTest {
   /**
    * Create group and expect with owners and members.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   void createGroupAndExpectWithOwnersAndMembers() {
     webTestClient
@@ -141,7 +129,7 @@ class GroupControllerCreateGroupTest {
             .build()))
         .exchange()
         .expectBody(Group.class)
-        .value((Consumer<Group>) group -> {
+        .value(group -> {
           assertNotNull(group);
           assertTrue(group.getOwners().containsAll(Arrays.asList("anna", "stephen", "molly")));
           assertTrue(group.getMembers().containsAll(Arrays.asList("anna", "leopold", "molly")));
@@ -151,9 +139,7 @@ class GroupControllerCreateGroupTest {
   /**
    * Create group and expect already exists.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "leopold",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "leopold", authorities = "ROLE_USER")
   @Test
   void createGroupAndExpectAlreadyExists() {
     webTestClient
@@ -180,7 +166,7 @@ class GroupControllerCreateGroupTest {
         .exchange()
         .expectStatus().is4xxClientError()
         .expectBody(RestApiException.class)
-        .value((Consumer<RestApiException>) restApiException -> {
+        .value(restApiException -> {
           assertEquals("GRP:1000", restApiException.getErrorCode()); // see application.yml
         });
   }
@@ -188,9 +174,7 @@ class GroupControllerCreateGroupTest {
   /**
    * Create groups and expect max number of owned groups is reached.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "anna-livia",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "anna-livia", authorities = "ROLE_USER")
   @Test
   void createGroupsAndExpectMaxNumberOfOwnedGroupsIsReached() {
     webTestClient
@@ -237,7 +221,7 @@ class GroupControllerCreateGroupTest {
         .exchange()
         .expectStatus().isBadRequest()
         .expectBody(RestApiException.class)
-        .value((Consumer<RestApiException>) restApiException -> {
+        .value(restApiException -> {
           assertEquals("GRP:MAX_OWNED_GROUPS", restApiException.getErrorCode());
           assertEquals("/api/groups", restApiException.getPath());
         });

@@ -16,7 +16,6 @@
 
 package org.bremersee.groupman.controller;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -26,14 +25,13 @@ import java.util.function.Supplier;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.bremersee.comparator.ComparatorBuilder;
-import org.bremersee.comparator.spring.ComparatorSpringUtils;
+import org.bremersee.comparator.spring.mapper.SortMapper;
 import org.bremersee.exception.ServiceException;
+import org.bremersee.groupman.mapper.GroupMapper;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
-import org.bremersee.security.core.ReactiveUserContextCaller;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Sort;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
@@ -54,15 +52,15 @@ abstract class AbstractGroupController {
   /**
    * The default comparator.
    */
-  static final Comparator<Object> COMPARATOR = ComparatorBuilder.builder()
-      .addAll(ComparatorSpringUtils.fromSort(SORT))
+  static final Comparator<Object> COMPARATOR = ComparatorBuilder.newInstance()
+      .addAll(SortMapper.fromSort(SORT))
       .build();
 
   @Getter(AccessLevel.PACKAGE)
-  private final ReactiveUserContextCaller caller = new ReactiveUserContextCaller();
+  private final UserContextCaller caller = new UserContextCaller();
 
   @Getter(AccessLevel.PACKAGE)
-  private final ModelMapper modelMapper;
+  private final GroupMapper groupMapper;
 
   @Getter(AccessLevel.PACKAGE)
   private final GroupRepository groupRepository;
@@ -78,13 +76,13 @@ abstract class AbstractGroupController {
    *
    * @param groupRepository the group repository
    * @param groupLdapRepository the group ldap repository
-   * @param modelMapper the model mapper
+   * @param groupMapper the model mapper
    * @param localUserRole the local user role
    */
   public AbstractGroupController(
       final GroupRepository groupRepository,
       final GroupLdapRepository groupLdapRepository,
-      final ModelMapper modelMapper,
+      final GroupMapper groupMapper,
       final String localUserRole) {
 
     Assert.notNull(groupRepository, "Group repository must not be null.");
@@ -92,7 +90,7 @@ abstract class AbstractGroupController {
     this.groupRepository = groupRepository;
     this.groupLdapRepository = groupLdapRepository;
     this.localUserRole = localUserRole;
-    this.modelMapper = modelMapper;
+    this.groupMapper = groupMapper;
   }
 
   /**
@@ -139,11 +137,7 @@ abstract class AbstractGroupController {
    * @return the group representation
    */
   Group mapToGroup(final GroupEntity source) {
-    Group destination = new Group();
-    destination.setMembers(new ArrayList<>());
-    destination.setOwners(new ArrayList<>());
-    getModelMapper().map(source, destination);
-    return destination;
+    return prepareGroup(() -> getGroupMapper().mapEntity(source));
   }
 
   /**
@@ -153,9 +147,7 @@ abstract class AbstractGroupController {
    * @return the group entity
    */
   GroupEntity mapToGroupEntity(final Group source) {
-    GroupEntity destination = new GroupEntity();
-    getModelMapper().map(prepareGroup(() -> source), destination);
-    return destination;
+    return groupMapper.mapDto(prepareGroup(() -> source));
   }
 
   /**

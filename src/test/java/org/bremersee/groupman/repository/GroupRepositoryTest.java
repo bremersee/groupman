@@ -31,6 +31,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import reactor.test.StepVerifier;
@@ -41,6 +42,7 @@ import reactor.test.StepVerifier;
  * @author Christian Bremer
  */
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
+@AutoConfigureDataMongo
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GroupRepositoryTest {

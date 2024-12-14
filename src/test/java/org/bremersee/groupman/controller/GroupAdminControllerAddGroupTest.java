@@ -16,27 +16,24 @@
 
 package org.bremersee.groupman.controller;
 
-import static org.bremersee.security.core.AuthorityConstants.ADMIN_ROLE_NAME;
-import static org.bremersee.security.core.AuthorityConstants.USER_ROLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
-import java.util.function.Consumer;
 import org.bremersee.exception.model.RestApiException;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
-import org.bremersee.groupman.repository.GroupRepository;
-import org.bremersee.test.security.authentication.WithJwtAuthenticationToken;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
@@ -45,30 +42,22 @@ import org.springframework.web.reactive.function.BodyInserters;
  *
  * @author Christian Bremer
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/jwk"
-})
-@TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
+@SpringBootTest(webEnvironment = WebEnvironment.MOCK)
+@AutoConfigureWebTestClient
+@AutoConfigureDataMongo
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GroupAdminControllerAddGroupTest {
 
   /**
    * The web test client.
    */
-  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
   WebTestClient webTestClient;
 
   /**
-   * The Group repository.
-   */
-  @Autowired
-  GroupRepository groupRepository;
-
-  /**
    * Add group and expect forbidden.
    */
-  @WithJwtAuthenticationToken(roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "junit", authorities = {"ROLE_USER"})
   @Test
   void addGroupAndExpectForbidden() {
     webTestClient
@@ -87,7 +76,7 @@ class GroupAdminControllerAddGroupTest {
   /**
    * Add group and expect bad request.
    */
-  @WithJwtAuthenticationToken(roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
   @Test
   void addGroupAndExpectBadRequest() {
     webTestClient
@@ -105,7 +94,7 @@ class GroupAdminControllerAddGroupTest {
   /**
    * Add group with source ldap and expect bad request.
    */
-  @WithJwtAuthenticationToken(roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
   @Test
   void addGroupWithSourceLdapAndExpectBadRequest() {
     webTestClient
@@ -121,7 +110,7 @@ class GroupAdminControllerAddGroupTest {
         .exchange()
         .expectStatus().isBadRequest()
         .expectBody(RestApiException.class)
-        .value((Consumer<RestApiException>) restApiException -> {
+        .value(restApiException -> {
           assertEquals("GRP:1002", restApiException.getErrorCode()); // see application.yml
         });
   }
@@ -129,9 +118,7 @@ class GroupAdminControllerAddGroupTest {
   /**
    * Add group and expect no owners and members.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "admin",
-      roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
   @Test
   void addGroupAndExpectNoOwnersAndMembers() {
     webTestClient
@@ -145,7 +132,7 @@ class GroupAdminControllerAddGroupTest {
             .build()))
         .exchange()
         .expectBody(Group.class)
-        .value((Consumer<Group>) group -> {
+        .value(group -> {
           assertNotNull(group);
           assertNotNull(group.getId());
           assertEquals(0L, group.getVersion());
@@ -163,9 +150,7 @@ class GroupAdminControllerAddGroupTest {
   /**
    * Add group and expect with owners and members.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "admin",
-      roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
   @Test
   void addGroupAndExpectWithOwnersAndMembers() {
     webTestClient
@@ -181,7 +166,7 @@ class GroupAdminControllerAddGroupTest {
             .build()))
         .exchange()
         .expectBody(Group.class)
-        .value((Consumer<Group>) group -> {
+        .value(group -> {
           assertNotNull(group);
           assertTrue(group.getOwners().containsAll(Arrays.asList("anna", "stephen")));
           assertTrue(group.getMembers().containsAll(Arrays.asList("anna", "leopold", "molly")));
@@ -191,9 +176,7 @@ class GroupAdminControllerAddGroupTest {
   /**
    * Add group and expect already exists.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "admin",
-      roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(username = "admin", authorities = {"ROLE_ADMIN"})
   @Test
   void addGroupAndExpectAlreadyExists() {
     webTestClient
@@ -220,7 +203,7 @@ class GroupAdminControllerAddGroupTest {
         .exchange()
         .expectStatus().is4xxClientError()
         .expectBody(RestApiException.class)
-        .value((Consumer<RestApiException>) restApiException -> {
+        .value(restApiException -> {
           assertEquals("GRP:1000", restApiException.getErrorCode()); // see application.yml
         });
   }

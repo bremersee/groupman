@@ -16,7 +16,6 @@
 
 package org.bremersee.groupman.controller;
 
-import static org.bremersee.security.core.AuthorityConstants.USER_ROLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,13 +24,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.bremersee.exception.model.RestApiException;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
-import org.bremersee.test.security.authentication.WithJwtAuthenticationToken;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -40,8 +37,12 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.test.StepVerifier;
@@ -51,9 +52,9 @@ import reactor.test.StepVerifier;
  *
  * @author Christian Bremer
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/jwk"
-})
+@SpringBootTest(webEnvironment = WebEnvironment.MOCK)
+@AutoConfigureWebTestClient
+@AutoConfigureDataMongo
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GroupControllerUpdateGroupTest {
@@ -94,7 +95,6 @@ class GroupControllerUpdateGroupTest {
   /**
    * The web test client.
    */
-  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
   WebTestClient webTestClient;
 
@@ -139,9 +139,7 @@ class GroupControllerUpdateGroupTest {
   /**
    * Update group and expect forbidden.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   @Order(10)
   void updateGroupAndExpectForbidden() {
@@ -160,9 +158,7 @@ class GroupControllerUpdateGroupTest {
   /**
    * Update group and expect not found.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   @Order(11)
   void updateGroupAndExpectNotFound() {
@@ -181,9 +177,7 @@ class GroupControllerUpdateGroupTest {
   /**
    * Update group and expect bad request.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   @Order(50)
   void updateGroupAndExpectBadRequest() {
@@ -197,7 +191,7 @@ class GroupControllerUpdateGroupTest {
         .exchange()
         .expectStatus().isBadRequest()
         .expectBody(RestApiException.class)
-        .value((Consumer<RestApiException>) restApiException -> {
+        .value(restApiException -> {
           assertNotNull(restApiException.getMessage());
           assertEquals("/api/groups/GCUGT0", restApiException.getPath());
           // System.out.println("RestApiException of Validation: " + restApiException);
@@ -207,9 +201,7 @@ class GroupControllerUpdateGroupTest {
   /**
    * Update group.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   @Order(100)
   void updateGroup() {
@@ -227,7 +219,7 @@ class GroupControllerUpdateGroupTest {
             .build()))
         .exchange()
         .expectBody(Group.class)
-        .value((Consumer<Group>) group -> {
+        .value(group -> {
           assertNotNull(group);
           assertEquals("molly", group.getCreatedBy());
           assertEquals("Modified", group.getName());
@@ -240,9 +232,7 @@ class GroupControllerUpdateGroupTest {
   /**
    * Delete group.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   @Order(110)
   void deleteGroup() {
@@ -263,9 +253,7 @@ class GroupControllerUpdateGroupTest {
   /**
    * Delete group and expect forbidden.
    */
-  @WithJwtAuthenticationToken(
-      preferredUsername = "molly",
-      roles = {USER_ROLE_NAME})
+  @WithMockUser(username = "molly", authorities = "ROLE_USER")
   @Test
   @Order(111)
   void deleteGroupAndExpectForbidden() {

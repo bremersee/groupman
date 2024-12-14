@@ -22,13 +22,12 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.api.GroupAdminWebfluxControllerApi;
+import org.bremersee.groupman.mapper.GroupMapper;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
 import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
-import org.bremersee.security.core.UserContext;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,7 +56,7 @@ public class GroupAdminController
   public GroupAdminController(
       GroupRepository groupRepository,
       GroupLdapRepository groupLdapRepository,
-      ModelMapper modelMapper,
+      GroupMapper modelMapper,
       @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole) {
     super(groupRepository, groupLdapRepository, modelMapper, localRole);
   }

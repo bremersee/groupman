@@ -16,8 +16,6 @@
 
 package org.bremersee.groupman.controller;
 
-import static org.bremersee.security.core.AuthorityConstants.ADMIN_ROLE_NAME;
-import static org.bremersee.security.core.AuthorityConstants.USER_ROLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,12 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.bremersee.groupman.model.Group;
 import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.bremersee.groupman.repository.GroupRepository;
-import org.bremersee.test.security.authentication.WithJwtAuthenticationToken;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
@@ -38,8 +34,12 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.test.StepVerifier;
@@ -49,7 +49,7 @@ import reactor.test.StepVerifier;
  *
  * @author Christian Bremer
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+@SpringBootTest(webEnvironment = WebEnvironment.MOCK, properties = {
     "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/jwk",
     "spring.ldap.embedded.base-dn=dc=bremersee,dc=org",
     "spring.ldap.embedded.credential.username=uid=admin",
@@ -57,10 +57,7 @@ import reactor.test.StepVerifier;
     "spring.ldap.embedded.ldif=classpath:schema.ldif",
     "spring.ldap.embedded.port=12390",
     "spring.ldap.embedded.validation.enabled=false",
-    "bremersee.ldaptive.enabled=true",
-    "bremersee.ldaptive.use-unbound-id-provider=true",
     "bremersee.ldaptive.ldap-url=ldap://localhost:12390",
-    "bremersee.ldaptive.use-ssl=false",
     "bremersee.ldaptive.use-start-tls=false",
     "bremersee.ldaptive.bind-dn=uid=admin",
     "bremersee.ldaptive.bind-credentials=secret",
@@ -73,6 +70,8 @@ import reactor.test.StepVerifier;
     "bremersee.domain-controller.group-find-all-filter=(objectClass=groupOfUniqueNames)",
     "bremersee.domain-controller.group-find-one-filter=(&(objectClass=groupOfUniqueNames)(cn={0}))"
 })
+@AutoConfigureWebTestClient
+@AutoConfigureDataMongo
 @ActiveProfiles({"ldap"})
 @TestInstance(Lifecycle.PER_CLASS) // allows us to use @BeforeAll with a non-static method
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -101,7 +100,6 @@ class GroupAdminControllerFindGroupsTest {
   /**
    * The web test client.
    */
-  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
   WebTestClient webTestClient;
 
@@ -135,7 +133,7 @@ class GroupAdminControllerFindGroupsTest {
   /**
    * Find groups and expect forbidden.
    */
-  @WithJwtAuthenticationToken(roles = {USER_ROLE_NAME})
+  @WithMockUser(authorities = {"ROLE_USER"})
   @Test
   void findGroupsAndExpectForbidden() {
     webTestClient
@@ -149,7 +147,7 @@ class GroupAdminControllerFindGroupsTest {
   /**
    * Find groups and expect ok.
    */
-  @WithJwtAuthenticationToken(roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(authorities = {"ROLE_ADMIN"})
   @Test
   void findGroupsAndExpectOk() {
     webTestClient
@@ -171,7 +169,7 @@ class GroupAdminControllerFindGroupsTest {
   /**
    * Find group by id and expect ok.
    */
-  @WithJwtAuthenticationToken(roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(authorities = {"ROLE_ADMIN"})
   @Test
   void findGroupByIdAndExpectOk() {
     webTestClient
@@ -181,7 +179,7 @@ class GroupAdminControllerFindGroupsTest {
         .exchange()
         .expectStatus().isOk()
         .expectBody(Group.class)
-        .value((Consumer<Group>) group -> {
+        .value(group -> {
           assertEquals(group0.getName(), group.getName());
           assertEquals(group0.getDescription(), group.getDescription());
         });
@@ -190,7 +188,7 @@ class GroupAdminControllerFindGroupsTest {
   /**
    * Find ldap group by id and expect ok.
    */
-  @WithJwtAuthenticationToken(roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(authorities = {"ROLE_ADMIN"})
   @Test
   void findLdapGroupByIdAndExpectOk() {
     webTestClient
@@ -200,7 +198,7 @@ class GroupAdminControllerFindGroupsTest {
         .exchange()
         .expectStatus().isOk()
         .expectBody(Group.class)
-        .value((Consumer<Group>) group -> {
+        .value(group -> {
           assertEquals("developers", group.getName());
           assertTrue(group.getMembers().contains("anna"));
           assertTrue(group.getMembers().contains("hans"));
@@ -210,7 +208,7 @@ class GroupAdminControllerFindGroupsTest {
   /**
    * Find group by ids and expect ok.
    */
-  @WithJwtAuthenticationToken(roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(authorities = {"ROLE_ADMIN"})
   @Test
   void findGroupByIdsAndExpectOk() {
     webTestClient
@@ -231,7 +229,7 @@ class GroupAdminControllerFindGroupsTest {
   /**
    * Find group by id and expect not found.
    */
-  @WithJwtAuthenticationToken(roles = {ADMIN_ROLE_NAME})
+  @WithMockUser(authorities = {"ROLE_ADMIN"})
   @Test
   void findGroupByIdAndExpectNotFound() {
     webTestClient

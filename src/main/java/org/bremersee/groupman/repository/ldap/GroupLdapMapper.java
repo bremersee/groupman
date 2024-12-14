@@ -16,11 +16,11 @@
 
 package org.bremersee.groupman.repository.ldap;
 
-import static org.bremersee.data.ldaptive.LdaptiveEntryMapper.getAttributeValue;
+import static org.bremersee.ldaptive.LdaptiveEntryMapper.getAttributeValue;
 
 import java.util.Collections;
-import javax.validation.constraints.NotNull;
-import org.bremersee.data.ldaptive.LdaptiveEntryMapper;
+import jakarta.validation.constraints.NotNull;
+import org.bremersee.ldaptive.LdaptiveEntryMapper;
 import org.bremersee.groupman.config.DomainControllerProperties;
 import org.bremersee.groupman.model.Source;
 import org.bremersee.groupman.repository.GroupEntity;

@@ -16,14 +16,14 @@
 
 package org.bremersee.groupman.repository.ldap;
 
-import static org.bremersee.data.ldaptive.LdaptiveEntryMapper.createDn;
+import static org.bremersee.ldaptive.LdaptiveEntryMapper.createDn;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.bremersee.data.ldaptive.reactive.ReactiveLdaptiveTemplate;
+import org.bremersee.ldaptive.reactive.ReactiveLdaptiveTemplate;
 import org.bremersee.groupman.config.DomainControllerProperties;
 import org.bremersee.groupman.repository.GroupEntity;
 import org.ldaptive.FilterTemplate;

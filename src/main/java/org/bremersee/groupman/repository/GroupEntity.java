@@ -16,11 +16,13 @@
 
 package org.bremersee.groupman.repository;
 
+import static java.util.Objects.requireNonNullElseGet;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -121,8 +123,8 @@ public class GroupEntity implements Comparable<GroupEntity> {
     this.source = source;
     this.name = name;
     this.description = description;
-    this.members = members;
-    this.owners = owners;
+    this.members = requireNonNullElseGet(members, LinkedHashSet::new);
+    this.owners = requireNonNullElseGet(owners, LinkedHashSet::new);
   }
 
   @Override

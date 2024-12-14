@@ -5,12 +5,12 @@ pipeline {
     DOCKER_IMAGE = 'bremersee/groupman'
     DEV_TAG = 'snapshot'
     PROD_TAG = 'latest'
-    PUSH_SNAPSHOT = true
-    PUSH_RELEASE = true
-    DEPLOY_SNAPSHOT = true
-    DEPLOY_RELEASE = true
+    PUSH_SNAPSHOT = false
+    PUSH_RELEASE = false
+    DEPLOY_SNAPSHOT = false
+    DEPLOY_RELEASE = false
     SNAPSHOT_SITE = true
-    RELEASE_SITE = true
+    RELEASE_SITE = false
   }
   options {
     buildDiscarder(logRotator(numToKeepStr: '8', artifactNumToKeepStr: '8'))
@@ -21,7 +21,7 @@ pipeline {
         label 'maven'
       }
       tools {
-        jdk 'jdk11'
+        jdk 'jdk17'
         maven 'm3'
       }
       when {
@@ -54,7 +54,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk11'
+        jdk 'jdk17'
         maven 'm3'
       }
       steps {
@@ -71,12 +71,12 @@ pipeline {
       }
       when {
         allOf {
-          branch 'master'
+          branch 'main'
           environment name: 'PUSH_RELEASE', value: 'true'
         }
       }
       tools {
-        jdk 'jdk11'
+        jdk 'jdk17'
         maven 'm3'
       }
       steps {
@@ -116,7 +116,7 @@ pipeline {
       }
       when {
         allOf {
-          branch 'master'
+          branch 'main'
           environment name: 'DEPLOY_RELEASE', value: 'true'
         }
       }
@@ -147,7 +147,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk11'
+        jdk 'jdk17'
         maven 'm3'
       }
       steps {
@@ -168,12 +168,12 @@ pipeline {
       }
       when {
         allOf {
-          branch 'master'
+          branch 'main'
           environment name: 'RELEASE_SITE', value: 'true'
         }
       }
       tools {
-        jdk 'jdk11'
+        jdk 'jdk17'
         maven 'm3'
       }
       steps {
@@ -193,7 +193,7 @@ pipeline {
         branch 'feature/*'
       }
       tools {
-        jdk 'jdk11'
+        jdk 'jdk17'
         maven 'm3'
       }
       steps {
