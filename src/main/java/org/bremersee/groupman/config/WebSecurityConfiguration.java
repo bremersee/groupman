@@ -19,7 +19,10 @@ package org.bremersee.groupman.config;
 import static java.util.Objects.requireNonNull;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
+import lombok.extern.slf4j.Slf4j;
+import org.bremersee.spring.security.ldaptive.authentication.ReactiveLdaptiveAuthenticationManager;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
@@ -29,6 +32,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity.CsrfSpec;
@@ -51,32 +56,37 @@ import reactor.core.publisher.Mono;
     OAuth2ResourceServerProperties.class
 })
 @Configuration
+@Slf4j
 public class WebSecurityConfiguration {
 
   private final OAuth2ResourceServerProperties resourceServerProperties;
 
-  //private final CorsConfigurationSource corsConfigurationSource;
-
   private final Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter;
 
+  private final ReactiveAuthenticationManager basicAuthenticationManager;
+
   /**
-   * Instantiates a new Web security configuration.
+   * Instantiates a new web security configuration.
    *
    * @param resourceServerProperties the resource server properties
    * @param jwtConverterProvider the jwt converter provider
+   * @param ldaptiveAuthenticationManager the ldaptive authentication manager
+   * @param inMemory the in memory
    */
   public WebSecurityConfiguration(
       OAuth2ResourceServerProperties resourceServerProperties,
-      //CorsConfigurationSource corsConfigurationSource,
-      ObjectProvider<Converter<Jwt, AbstractAuthenticationToken>> jwtConverterProvider) {
+      ObjectProvider<Converter<Jwt, AbstractAuthenticationToken>> jwtConverterProvider,
+      ObjectProvider<ReactiveLdaptiveAuthenticationManager> ldaptiveAuthenticationManager,
+      ObjectProvider<UserDetailsRepositoryReactiveAuthenticationManager> inMemory) {
     this.resourceServerProperties = resourceServerProperties;
-    //this.corsConfigurationSource = corsConfigurationSource;
-    jwtAuthenticationConverter = jwtConverterProvider
+    this.jwtAuthenticationConverter = jwtConverterProvider
         .getIfAvailable(JwtAuthenticationConverter::new);
+    ReactiveAuthenticationManager tmp = ldaptiveAuthenticationManager.getIfAvailable();
+    this.basicAuthenticationManager = tmp != null ? tmp : inMemory.getIfAvailable();
   }
 
   /**
-   * Security web filter chain.
+   * Creates security web filter chain.
    *
    * @param http the http
    * @return the security web filter chain
@@ -88,19 +98,16 @@ public class WebSecurityConfiguration {
             .pathMatchers(HttpMethod.OPTIONS, "/**")
             .permitAll()
 
-            .matchers(
-                org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest.to(
-                    InfoEndpoint.class, HealthEndpoint.class))
+            .matchers(EndpointRequest.to(InfoEndpoint.class, HealthEndpoint.class))
             .permitAll()
 
             .matchers(new AndServerWebExchangeMatcher(
-                org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest.toAnyEndpoint(),
+                EndpointRequest.toAnyEndpoint(),
                 ServerWebExchangeMatchers.pathMatchers(HttpMethod.GET, "/**")
             ))
             .hasAnyAuthority("ROLE_ACTUATOR", "ROLE_ACTUATOR_ADMIN")
 
-            .matchers(
-                org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest.toAnyEndpoint())
+            .matchers(EndpointRequest.toAnyEndpoint())
             .hasAuthority("ROLE_ACTUATOR_ADMIN")
 
             .pathMatchers("/api/admin/**")
@@ -118,16 +125,32 @@ public class WebSecurityConfiguration {
         .headers(configurer -> configurer
             .frameOptions(c -> c.mode(Mode.SAMEORIGIN)))
 
-        .formLogin(FormLoginSpec::disable)
-    ;
+        .formLogin(FormLoginSpec::disable);
+
+    if (!isEmpty(basicAuthenticationManager)) {
+      log.info("Basic authentication manager enabled: {}", basicAuthenticationManager);
+      http
+          .httpBasic(customizer -> customizer
+              .authenticationManager(basicAuthenticationManager));
+
+    } else {
+      log.info("Basic authentication manager disabled.");
+    }
+
     if (!isEmpty(resourceServerProperties.getJwt().getJwkSetUri())) {
+      log.info("Authentication of bearer token enabled: {}",
+          resourceServerProperties.getJwt().getJwkSetUri());
       http
           .oauth2ResourceServer(customizer -> customizer
               .jwt(jwtConfigurer -> jwtConfigurer
+
                   .jwtAuthenticationConverter(jwt -> Mono
                       .just(requireNonNull(jwtAuthenticationConverter.convert(jwt))))
                   .jwkSetUri(resourceServerProperties.getJwt().getJwkSetUri())));
+    } else {
+      log.info("Authentication of bearer token disabled.");
     }
+
     return http.build();
   }
 

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
@@ -43,10 +44,13 @@ import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataM
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.test.StepVerifier;
 
 /**
@@ -54,8 +58,7 @@ import reactor.test.StepVerifier;
  *
  * @author Christian Bremer
  */
-@SpringBootTest(webEnvironment = WebEnvironment.MOCK, properties = {
-    "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/jwk",
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, properties = {
     "spring.ldap.embedded.base-dn=dc=bremersee,dc=org",
     "spring.ldap.embedded.credential.username=uid=admin",
     "spring.ldap.embedded.credential.password=secret",
@@ -74,7 +77,8 @@ import reactor.test.StepVerifier;
     "bremersee.domain-controller.user-rdn=uid",
     "bremersee.domain-controller.group-find-all-filter=(objectClass=groupOfUniqueNames)",
     "bremersee.domain-controller.group-find-one-filter=(&(objectClass=groupOfUniqueNames)(cn={0}))",
-    "bremersee.groupman.max-owned-groups=100"
+    "bremersee.groupman.max-owned-groups=100",
+    "bremersee.authentication.ldaptive.template=open_ldap"
 })
 @AutoConfigureWebTestClient
 @AutoConfigureDataMongo
@@ -118,6 +122,9 @@ class GroupControllerGetGroupsTest {
       .members(Stream.of("molly", "leopold", "stephen").collect(Collectors.toSet()))
       .build();
 
+  @LocalServerPort
+  int port;
+
   /**
    * The web test client.
    */
@@ -155,6 +162,28 @@ class GroupControllerGetGroupsTest {
           assertNotNull(groupEntity.getId());
           assertEquals("GCGGT2", groupEntity.getId());
         })
+        .verifyComplete();
+  }
+
+  /**
+   * Gets group by id with real ldap authentication.
+   */
+  @Test
+  void getGroupByIdWithRealLdapAuthentication() {
+    WebClient webClient = WebClient.builder()
+        .baseUrl("http://localhost:" + port)
+        .defaultHeader(HttpHeaders.AUTHORIZATION,
+            "Basic " + Base64.getEncoder().encodeToString("leopold:secret".getBytes()))
+        .build();
+
+    StepVerifier
+        .create(webClient
+            .get()
+            .uri("/api/groups/{id}", "GCGGT0")
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(Group.class))
+        .assertNext(group -> assertEquals("GCGGT0", group.getId()))
         .verifyComplete();
   }
 

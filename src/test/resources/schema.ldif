@@ -24,7 +24,7 @@ objectclass: inetOrgPerson
 cn: Anna Livia Plurabelle
 sn: Plurabelle
 uid: anna
-password: secret
+userPassword: secret
 
 dn: uid=hans,ou=people,dc=bremersee,dc=org
 objectclass: top
@@ -34,7 +34,7 @@ objectclass: inetOrgPerson
 cn: Hans Castorp
 sn: Castorp
 uid: hans
-password: secret
+userPassword: secret
 
 dn: uid=leopold,ou=people,dc=bremersee,dc=org
 objectclass: top
@@ -44,7 +44,7 @@ objectclass: inetOrgPerson
 cn: Leopold
 sn: Bloom
 uid: leopold
-password: secret
+userPassword: secret
 
 # Create Groups
 dn: cn=developers,ou=groups,dc=bremersee,dc=org
