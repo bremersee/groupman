@@ -16,6 +16,8 @@
 
 package org.bremersee.groupman.metrics;
 
+import static java.util.Objects.requireNonNullElse;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import java.util.Collections;
@@ -60,12 +62,12 @@ public class GaugeMetrics {
 
   private double groupsInDatabaseSize(GroupRepository groupRepository) {
     Long size = groupRepository.count().block();
-    return size != null ? size : 0.;
+    return requireNonNullElse(size, 0L);
   }
 
   private double groupsInDirectorySize(GroupLdapRepository groupRepository) {
     Long size = groupRepository.count().block();
-    return size != null ? size : 0.;
+    return requireNonNullElse(size, 0L);
   }
 
 }
