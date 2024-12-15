@@ -18,8 +18,7 @@ pipeline {
   stages {
     stage('Test') {
       agent {
-        label 'amd64'
-        label 'maven'
+        label 'amd64 maven'
       }
       tools {
         jdk 'jdk17'
@@ -136,8 +135,7 @@ pipeline {
     }
     stage('Deploy snapshot site') {
       agent {
-        label 'amd64'
-        label 'maven'
+        label 'amd64 maven'
       }
       environment {
         CODECOV_TOKEN = credentials('groupman-codecov-token')
