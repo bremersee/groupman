@@ -18,6 +18,7 @@ pipeline {
   stages {
     stage('Test') {
       agent {
+        label 'amd64'
         label 'maven'
       }
       tools {
@@ -135,6 +136,7 @@ pipeline {
     }
     stage('Deploy snapshot site') {
       agent {
+        label 'amd64'
         label 'maven'
       }
       environment {
@@ -161,6 +163,7 @@ pipeline {
     }
     stage('Deploy release site') {
       agent {
+        label 'amd64'
         label 'maven'
       }
       environment {
