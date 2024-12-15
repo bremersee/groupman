@@ -88,6 +88,7 @@ pipeline {
         '''
       }
     }
+    /*
     stage('Deploy on dev-swarm') {
       agent {
         label 'dev-swarm'
@@ -134,6 +135,7 @@ pipeline {
         '''
       }
     }
+    */
     stage('Deploy snapshot site') {
       agent {
         label 'amd64 && maven'
@@ -188,7 +190,7 @@ pipeline {
     }
     stage('Test feature') {
       agent {
-        label 'maven'
+        label 'amd64 && maven'
       }
       when {
         branch 'feature/*'
