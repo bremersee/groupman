@@ -16,6 +16,7 @@
 
 package org.bremersee.groupman.service;
 
+import static java.util.Objects.requireNonNullElse;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.util.function.Predicate;
@@ -58,6 +59,8 @@ public class GroupService {
 
   private final String realm;
 
+  private final int maxGroups;
+
   private final String mainGroupName;
 
   private String mainGroupId;
@@ -70,6 +73,7 @@ public class GroupService {
    * @param groupMapper the group mapper
    * @param userMapper the user mapper
    * @param realm the realm
+   * @param maxGroups the max groups (-1 == infinitive)
    * @param mainGroupName the main group name
    */
   public GroupService(
@@ -78,6 +82,7 @@ public class GroupService {
       GroupMapper groupMapper,
       UserMapper userMapper,
       @Value("${bremersee.keycloak.realm:master}") String realm,
+      @Value("${bremersee.groupman.max-groups:100}") int maxGroups,
       @Value("${bremersee.groupman.main-group-name:groupman}") String mainGroupName) {
 
     Assert.notNull(keycloakAdminClient, "Keycloak admin client must not be null.");
@@ -90,6 +95,7 @@ public class GroupService {
     this.groupMapper = groupMapper;
     this.userMapper = userMapper;
     this.realm = isEmpty(realm) ? "master" : realm;
+    this.maxGroups = maxGroups;
     this.mainGroupName = isEmpty(mainGroupName) ? "groupman" : mainGroupName;
   }
 
@@ -122,6 +128,10 @@ public class GroupService {
     GroupRepresentation group = new GroupRepresentation();
     groupMapper.mapInto(groupDto, group);
     return getUserMainGroup(userId)
+        .filter(g -> maxGroups < 0
+            || maxGroups < requireNonNullElse(g.getSubGroupCount(), 100L))
+        .switchIfEmpty(Mono
+            .error(ServiceException.badRequest("Too many groups.", "too_many_groups")))
         .mapNotNull(GroupRepresentation::getId)
         .flatMap(id -> keycloakAdminClient.createSubGroup(realm, id, group))
         .map(groupMapper::mapToDto);
