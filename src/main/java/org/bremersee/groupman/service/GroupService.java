@@ -19,6 +19,7 @@ package org.bremersee.groupman.service;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 import java.util.function.Predicate;
+import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.mapper.GroupMapper;
 import org.bremersee.groupman.mapper.UserMapper;
@@ -44,6 +45,7 @@ import reactor.util.function.Tuple2;
  * @author Christian Bremer
  */
 @Service
+@Slf4j
 public class GroupService {
 
   private final KeycloakAdminClient keycloakAdminClient;
@@ -100,8 +102,12 @@ public class GroupService {
         .getGroupByPath(realm, "/" + mainGroupName)
         .switchIfEmpty(keycloakAdminClient.saveGroup(realm, createNewMainGroup()))
         .block();
-    Assert.notNull(mainGroup, "Main group is required.");
-    mainGroupId = mainGroup.getId();
+    if (isEmpty(mainGroup)) {
+      log.warn("Main group with name '{}' could not be created. Is keycloak admin api a MOCK?",
+          mainGroupName);
+    } else {
+      mainGroupId = mainGroup.getId();
+    }
   }
 
   /**
@@ -267,6 +273,10 @@ public class GroupService {
   }
 
   private Mono<GroupRepresentation> getUserMainGroup(String userId) {
+    if (isEmpty(mainGroupId)) {
+      return Mono.error(ServiceException
+          .internalServerError("Main group is not initialized.", "main_group_is_missing"));
+    }
     return keycloakAdminClient.getGroupByPath(realm, "/" + mainGroupName + "/" + userId)
         .switchIfEmpty(createNewUserMainGroup(userId)
             .flatMap(group -> keycloakAdminClient.createSubGroup(realm, mainGroupId, group)));

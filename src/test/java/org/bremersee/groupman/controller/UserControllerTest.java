@@ -22,7 +22,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.util.List;
 import org.bremersee.groupman.model.User;
-import org.bremersee.groupman.service.GroupService;
 import org.bremersee.groupman.service.UserService;
 import org.bremersee.spring.security.test.context.support.WithNormalizedUser;
 import org.junit.jupiter.api.Test;
@@ -45,9 +44,6 @@ import reactor.core.publisher.Flux;
 @AutoConfigureWebTestClient
 @ActiveProfiles({"test"})
 class UserControllerTest {
-
-  @MockitoBean
-  private GroupService groupService;
 
   @MockitoBean
   private UserService userService;
