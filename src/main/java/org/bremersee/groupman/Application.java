@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.bremersee.groupman;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 
 /**
  * The main application.
@@ -26,7 +25,6 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
  * @author Christian Bremer
  */
 @SpringBootApplication
-@EnableReactiveMongoRepositories
 public class Application {
 
   /**

@@ -1,5 +1,7 @@
 pipeline {
-  agent none
+  agent {
+    label 'jdk21 && maven && docker'
+  }
   environment {
     SERVICE_NAME = 'groupman'
     DOCKER_IMAGE = 'bremersee/groupman'
@@ -17,11 +19,8 @@ pipeline {
   }
   stages {
     stage('Test') {
-      agent {
-        label 'amd64 && maven'
-      }
       tools {
-        jdk 'jdk17'
+        jdk 'jdk21'
         maven 'm3'
       }
       when {
@@ -45,9 +44,6 @@ pipeline {
       }
     }
     stage('Push snapshot') {
-      agent {
-        label 'maven'
-      }
       when {
         allOf {
           branch 'develop'
@@ -55,7 +51,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk17'
+        jdk 'jdk21'
         maven 'm3'
       }
       steps {
@@ -67,9 +63,6 @@ pipeline {
       }
     }
     stage('Push release') {
-      agent {
-        label 'maven'
-      }
       when {
         allOf {
           branch 'main'
@@ -77,7 +70,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk17'
+        jdk 'jdk21'
         maven 'm3'
       }
       steps {
@@ -90,9 +83,6 @@ pipeline {
     }
     /*
     stage('Deploy on dev-swarm') {
-      agent {
-        label 'dev-swarm'
-      }
       when {
         allOf {
           branch 'develop'
@@ -113,9 +103,6 @@ pipeline {
       }
     }
     stage('Deploy on prod-swarm') {
-      agent {
-        label 'prod-swarm'
-      }
       when {
         allOf {
           branch 'main'
@@ -137,9 +124,6 @@ pipeline {
     }
     */
     stage('Deploy snapshot site') {
-      agent {
-        label 'amd64 && maven'
-      }
       environment {
         CODECOV_TOKEN = credentials('groupman-codecov-token')
       }
@@ -150,7 +134,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk17'
+        jdk 'jdk21'
         maven 'm3'
       }
       steps {
@@ -163,9 +147,6 @@ pipeline {
       }
     }
     stage('Deploy release site') {
-      agent {
-        label 'amd64 && maven'
-      }
       environment {
         CODECOV_TOKEN = credentials('groupman-codecov-token')
       }
@@ -176,7 +157,7 @@ pipeline {
         }
       }
       tools {
-        jdk 'jdk17'
+        jdk 'jdk21'
         maven 'm3'
       }
       steps {
@@ -189,14 +170,11 @@ pipeline {
       }
     }
     stage('Test feature') {
-      agent {
-        label 'amd64 && maven'
-      }
       when {
         branch 'feature/*'
       }
       tools {
-        jdk 'jdk17'
+        jdk 'jdk21'
         maven 'm3'
       }
       steps {
