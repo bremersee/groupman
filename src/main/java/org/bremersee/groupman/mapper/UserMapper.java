@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman.repository.ldap;
+package org.bremersee.groupman.mapper;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+import org.bremersee.groupman.model.User;
+import org.bremersee.keycloak.api.model.UserRepresentation;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants.ComponentModel;
 
 /**
- * The disabled group ldap repository can be used, if there is no LDAP with additional groups or in
- * unit tests.
+ * The user mapper.
  *
  * @author Christian Bremer
  */
-@Profile("!ldap")
-@Component
-public class DisabledGroupLdapRepository implements GroupLdapRepository {
+@Mapper(componentModel = ComponentModel.SPRING)
+public interface UserMapper {
+
+  /**
+   * Map representation to user.
+   *
+   * @param source the source
+   * @return the user
+   */
+  User mapToDto(UserRepresentation source);
 
 }

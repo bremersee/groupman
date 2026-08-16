@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package org.bremersee.groupman.mapper;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.Date;
+import org.bremersee.groupman.model.GroupBase;
 import org.bremersee.groupman.model.Group;
-import org.bremersee.groupman.repository.GroupEntity;
+import org.bremersee.keycloak.api.model.GroupRepresentation;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants.ComponentModel;
+import org.mapstruct.MappingTarget;
 
 /**
  * The group mapper.
@@ -33,45 +33,28 @@ import org.mapstruct.MappingConstants.ComponentModel;
 public interface GroupMapper {
 
   /**
-   * Map group entity to group.
+   * Map representation to group.
    *
-   * @param groupEntity the group entity
+   * @param source the source
    * @return the group
    */
-  Group mapEntity(GroupEntity groupEntity);
+  Group mapToDto(GroupRepresentation source);
 
   /**
-   * Map group to group entity.
+   * Map group into representation.
    *
-   * @param group the group
-   * @return the group entity
+   * @param source the source
+   * @param target the target
    */
-  GroupEntity mapDto(Group group);
-
-  /**
-   * Map date to offset date time.
-   *
-   * @param date the date
-   * @return the offset date time
-   */
-  default OffsetDateTime mapDate(Date date) {
-    if (date == null) {
-      return null;
-    }
-    return OffsetDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC);
-  }
-
-  /**
-   * Map offset date time to date.
-   *
-   * @param offsetDateTime the offset date time
-   * @return the date
-   */
-  default Date mapOffsetDateTime(OffsetDateTime offsetDateTime) {
-    if (offsetDateTime == null) {
-      return null;
-    }
-    return Date.from(offsetDateTime.toInstant());
-  }
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "path", ignore = true)
+  @Mapping(target = "parentId", ignore = true)
+  @Mapping(target = "subGroupCount", ignore = true)
+  @Mapping(target = "subGroups", ignore = true)
+  @Mapping(target = "attributes", ignore = true)
+  @Mapping(target = "realmRoles", ignore = true)
+  @Mapping(target = "clientRoles", ignore = true)
+  @Mapping(target = "access", ignore = true)
+  void mapInto(GroupBase source, @MappingTarget GroupRepresentation target);
 
 }

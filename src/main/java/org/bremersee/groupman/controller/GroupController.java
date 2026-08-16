@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,34 @@
 
 package org.bremersee.groupman.controller;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.bremersee.exception.ServiceException;
-import org.bremersee.groupman.api.GroupWebfluxControllerApi;
-import org.bremersee.groupman.mapper.GroupMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import org.bremersee.exception.model.RestApiException;
 import org.bremersee.groupman.model.Group;
-import org.bremersee.groupman.model.Source;
-import org.bremersee.groupman.model.Status;
-import org.bremersee.groupman.repository.GroupEntity;
-import org.bremersee.groupman.repository.GroupRepository;
-import org.bremersee.groupman.repository.ldap.GroupLdapRepository;
-import org.springframework.beans.factory.annotation.Value;
+import org.bremersee.groupman.model.GroupCreate;
+import org.bremersee.groupman.model.GroupUpdate;
+import org.bremersee.groupman.model.User;
+import org.bremersee.groupman.service.GroupService;
+import org.bremersee.spring.security.core.ReactiveAuthenticationOperations;
+import org.bremersee.spring.security.core.ReactiveAuthenticationTemplate;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.util.Assert;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,173 +54,335 @@ import reactor.core.publisher.Mono;
  * @author Christian Bremer
  */
 @RestController
-@Slf4j
-public class GroupController
-    extends AbstractGroupController
-    implements GroupWebfluxControllerApi {
+@RequestMapping(path = "/api/groups")
+@Validated
+public class GroupController {
 
-  private final Long maxOwnedGroups;
+  private final ReactiveAuthenticationOperations<Authentication> authTemplate;
+
+  private final GroupService groupService;
 
   /**
    * Instantiates a new group controller.
    *
-   * @param groupRepository the group repository
-   * @param groupLdapRepository the group ldap repository
-   * @param modelMapper the model mapper
-   * @param localRole if a role name is given, ldap will only be called, if the user has this
-   *     role; if the role name is null or empty, ldap will always be called
-   * @param maxOwnedGroups the max owned groups
+   * @param groupService the group service
    */
-  public GroupController(
-      GroupRepository groupRepository,
-      GroupLdapRepository groupLdapRepository,
-      GroupMapper modelMapper,
-      @Value("${bremersee.groupman.local-role:ROLE_LOCAL_USER}") String localRole,
-      @Value("${bremersee.groupman.max-owned-groups:-1}") Long maxOwnedGroups) {
-    super(groupRepository, groupLdapRepository, modelMapper, localRole);
-    this.maxOwnedGroups = maxOwnedGroups != null ? maxOwnedGroups : -1L;
+  public GroupController(GroupService groupService) {
+
+    Assert.notNull(groupService, "Group service must not be null.");
+    this.authTemplate = new ReactiveAuthenticationTemplate<>();
+    this.groupService = groupService;
   }
 
-  @Override
-  public Mono<Group> createGroup(Group group) {
-    return getCaller()
-        .oneWithUserContext(userContext -> createGroup(group, userContext))
-        .map(this::mapToGroup);
+  /**
+   * Create group.
+   *
+   * @param group the group
+   * @return the mono
+   */
+  @Operation(
+      description = "Create group.",
+      security = {
+          @SecurityRequirement(name = "bearer-jwt")
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "OK"),
+          @ApiResponse(responseCode = "400", description = "Bad request", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "500", description = "Internal server error", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
+  @PostMapping(
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<Group> createGroup(@Valid @RequestBody GroupCreate group) {
+    return authTemplate.oneWithAuthentication(auth -> groupService
+        .createGroup(auth.getName(), group));
   }
 
-  private Mono<GroupEntity> createGroup(Group group, UserContext currentUser) {
-    group.setId(null);
-    group.setCreatedAt(OffsetDateTime.now(ZoneId.of("UTC")));
-    group.setModifiedAt(group.getCreatedAt());
-    group.setCreatedBy(currentUser.getName());
-    group.setSource(Source.INTERNAL);
-    group.getOwners().add(currentUser.getName());
-    return Mono.just(group)
-        .flatMap(newGroup -> maxOwnedGroups < 0
-            ? Mono.just(newGroup)
-            : getGroupRepository().countOwnedGroups(currentUser.getName())
-                .flatMap(size -> size >= maxOwnedGroups
-                    ? Mono.error(() -> ServiceException.badRequest(
-                    "The maximum number of groups has been reached.",
-                    "GRP:MAX_OWNED_GROUPS"))
-                    : Mono.just(newGroup)))
-        .flatMap(newGroup -> getGroupRepository().save(mapToGroupEntity(newGroup)));
+  /**
+   * Gets groups.
+   *
+   * @param search the search
+   * @return the groups
+   */
+  @Operation(
+      description = "Get groups.",
+      security = {
+          @SecurityRequirement(name = "bearer-jwt")
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "OK"),
+          @ApiResponse(responseCode = "400", description = "Bad request", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "500", description = "Internal server error", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
+  @GetMapping(
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public Flux<Group> getGroups(
+      @Parameter(name = "search", description = "A String contained in name or description.")
+      @RequestParam(name = "search", required = false) String search) {
+
+    return authTemplate.manyWithAuthentication(auth -> groupService
+        .getGroups(auth.getName(), search));
   }
 
-  @Override
-  public Mono<Group> getGroupById(String groupId) {
-    return super.getGroupEntityById(groupId)
-        .map(this::mapToGroup);
+  /**
+   * Gets group.
+   *
+   * @param groupId the group id
+   * @return the group
+   */
+  @GetMapping(
+      path = "/{groupId}",
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<Group> getGroup(@PathVariable String groupId) {
+    return authTemplate.oneWithAuthentication(auth -> groupService
+        .getGroup(auth.getName(), groupId));
   }
 
-  @Override
-  public Mono<Group> updateGroup(String groupId, Group group) {
-    return getCaller()
-        .oneWithUserContext(userContext -> updateGroup(groupId, group, userContext))
-        .map(this::mapToGroup);
+  /**
+   * Gets members.
+   *
+   * @param groupId the group id
+   * @param first the first
+   * @param max the max
+   * @return the members
+   */
+  @Operation(
+      description = "Get members.",
+      security = {
+          @SecurityRequirement(name = "bearer-jwt")
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "OK"),
+          @ApiResponse(responseCode = "400", description = "Bad request", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "500", description = "Internal server error", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
+  @GetMapping(
+      path = "/{groupId}/members",
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public Flux<User> getMembers(
+      @Parameter(name = "groupId", description = "The ID of the group.", required = true)
+      @PathVariable String groupId,
+
+      @Parameter(name = "first", description = "Pagination offset.")
+      @RequestParam(name = "first", required = false) Integer first,
+
+      @Parameter(name = "max", description = "Maximum results size (defaults to 100).")
+      @RequestParam(name = "max", required = false) Integer max) {
+
+    return authTemplate.manyWithAuthentication(auth -> groupService
+        .getMembers(auth.getName(), groupId, first, max));
   }
 
-  private Mono<GroupEntity> updateGroup(String groupId, Group group, UserContext userContext) {
-    if (group.getOwners().isEmpty()) {
-      group.getOwners().add(userContext.getName());
-    }
-    return getGroupEntityById(groupId)
-        .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
-        .filter(groupEntity -> groupEntity.getOwners().contains(userContext.getName()))
-        .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
-        .flatMap(groupEntity -> getGroupRepository().save(updateGroup(group, () -> groupEntity)));
+  /**
+   * Add member.
+   *
+   * @param groupId the group id
+   * @param userId the user id
+   * @return the mono
+   */
+  @Operation(
+      description = "Add member.",
+      security = {
+          @SecurityRequirement(name = "bearer-jwt")
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "OK"),
+          @ApiResponse(responseCode = "400", description = "Bad request", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "500", description = "Internal server error", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
+  @PutMapping(
+      path = "/{groupId}/members/{userId}",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<Void> addMember(
+      @Parameter(name = "groupId", description = "The ID of the group.", required = true)
+      @PathVariable String groupId,
+
+      @Parameter(name = "userId", description = "The ID of the user (member).", required = true)
+      @PathVariable String userId) {
+
+    return authTemplate.oneWithAuthentication(auth -> groupService
+        .addMember(auth.getName(), groupId, userId));
   }
 
-  @Override
-  public Mono<Void> deleteGroup(String groupId) {
-    return getCaller()
-        .oneWithUserContext(userContext -> deleteGroup(groupId, userContext));
+  /**
+   * Remove member.
+   *
+   * @param groupId the group id
+   * @param userId the user id
+   * @return the mono
+   */
+  @Operation(
+      description = "Remove member.",
+      security = {
+          @SecurityRequirement(name = "bearer-jwt")
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "OK"),
+          @ApiResponse(responseCode = "400", description = "Bad request", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "500", description = "Internal server error", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
+  @DeleteMapping(
+      path = "/{groupId}/members/{userId}",
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<Void> removeMember(
+      @Parameter(name = "groupId", description = "The ID of the group.", required = true)
+      @PathVariable String groupId,
+
+      @Parameter(name = "userId", description = "The ID of the user (member).", required = true)
+      @PathVariable String userId) {
+
+    return authTemplate.oneWithAuthentication(auth -> groupService
+        .removeMember(auth.getName(), groupId, userId));
   }
 
-  private Mono<Void> deleteGroup(String groupId, UserContext userContext) {
-    return getGroupRepository().findById(groupId)
-        .switchIfEmpty(Mono.error(() -> ServiceException.notFound("Group", groupId)))
-        .filter(groupEntity -> groupEntity.getOwners().contains(userContext.getName()))
-        .switchIfEmpty(Mono.error(() -> ServiceException.forbidden("Group", groupId)))
-        .flatMap(groupEntity -> getGroupRepository().delete(groupEntity));
+  /**
+   * Update group.
+   *
+   * @param groupId the group id
+   * @param group the group
+   * @return the mono
+   */
+  @Operation(
+      description = "Update group.",
+      security = {
+          @SecurityRequirement(name = "bearer-jwt")
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "OK"),
+          @ApiResponse(responseCode = "400", description = "Bad request", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "500", description = "Internal server error", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
+  @PutMapping(
+      path = "/{groupId}",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<Group> updateGroup(
+      @Parameter(name = "groupId", description = "The ID of the group.", required = true)
+      @PathVariable String groupId,
+
+      @Valid @RequestBody GroupUpdate group) {
+
+    return authTemplate.oneWithAuthentication(auth -> groupService
+        .updateGroup(auth.getName(), groupId, group));
   }
 
-  @Override
-  public Flux<Group> getGroupsByIds(List<String> ids) {
-    return super.getGroupEntitiesByIds(ids)
-        .map(this::mapToGroup);
-  }
+  /**
+   * Delete group.
+   *
+   * @param groupId the group id
+   * @return the mono
+   */
+  @Operation(
+      description = "Delete group.",
+      security = {
+          @SecurityRequirement(name = "bearer-jwt")
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "OK"),
+          @ApiResponse(responseCode = "400", description = "Bad request", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "500", description = "Internal server error", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
+  @DeleteMapping(
+      path = "/{groupId}",
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<Void> deleteGroup(
+      @Parameter(name = "groupId", description = "The ID of the group.", required = true)
+      @PathVariable String groupId) {
 
-  @Override
-  public Flux<Group> getEditableGroups() {
-    return getCaller()
-        .manyWithUserContext(this::getEditableGroups)
-        .map(this::mapToGroup);
-  }
-
-  private Flux<GroupEntity> getEditableGroups(UserContext userContext) {
-    return getGroupRepository().findByOwnersIsContaining(userContext.getName(), SORT);
-  }
-
-  @Override
-  public Flux<Group> getUsableGroups() {
-    return getCaller()
-        .manyWithUserContext(this::getUsableGroups)
-        .map(this::mapToGroup);
-  }
-
-  private Flux<GroupEntity> getUsableGroups(UserContext userContext) {
-    final String name = userContext.getName();
-    return getGroupRepository().findByOwnersIsContainingOrMembersIsContaining(name, name)
-        .concatWith(getGroupLdapRepository().findByMembersIsContaining(name))
-        .sort(COMPARATOR);
-  }
-
-  @Override
-  public Flux<Group> getMembership() {
-    return getCaller()
-        .manyWithUserContext(this::getMembership)
-        .map(this::mapToGroup);
-  }
-
-  private Flux<GroupEntity> getMembership(UserContext userContext) {
-    final String name = userContext.getName();
-    if (userContext.hasRole(getLocalUserRole())) {
-      return getGroupRepository().findByMembersIsContaining(name)
-          .concatWith(getGroupLdapRepository().findByMembersIsContaining(name))
-          .sort(COMPARATOR);
-    }
-    return getGroupRepository().findByMembersIsContaining(name).sort(COMPARATOR);
-  }
-
-  @Override
-  public Mono<Set<String>> getMembershipIds() {
-    return getCaller().oneWithUserContext(userContext -> getMembership(userContext)
-        .map(GroupEntity::getId).collect(Collectors.toSet()));
-  }
-
-  @Override
-  public Mono<Status> getStatus() {
-    return getCaller().oneWithUserContext(this::getStatus);
-  }
-
-  private Mono<Status> getStatus(UserContext userContext) {
-    return getGroupRepository().countOwnedGroups(userContext.getName())
-        .zipWith(getMembershipSum(userContext))
-        .map(sizes -> Status.builder()
-            .ownedGroupSize(sizes.getT1())
-            .membershipSize(sizes.getT2())
-            .maxOwnedGroups(maxOwnedGroups)
-            .build());
-  }
-
-  private Mono<Long> getMembershipSum(UserContext userContext) {
-    if (userContext.hasRole(getLocalUserRole())) {
-      return getGroupRepository().countMembership(userContext.getName())
-          .zipWith(getGroupLdapRepository().countMembership(userContext.getName()))
-          .map(sizes -> sizes.getT1() + sizes.getT2());
-    }
-    return getGroupRepository().countMembership(userContext.getName());
+    return authTemplate.oneWithAuthentication(auth -> groupService
+        .deleteGroup(auth.getName(), groupId));
   }
 
 }

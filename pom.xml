@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.bremersee</groupId>
     <artifactId>common-service-parent</artifactId>
-    <version>3.1.2</version>
+    <version>6.0.2</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -25,9 +25,39 @@
 
     <start-class>org.bremersee.groupman.Application</start-class>
 
-    <groupman-api-spring-reactive.version>3.0.0</groupman-api-spring-reactive.version>
-    <lib-bundle.version>0.1.1</lib-bundle.version>
+    <openapi.jvmArguments>
+      -Dspring.application.admin.enabled=true -Dspring.profiles.active=local
+    </openapi.jvmArguments>
+
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
   </properties>
+
+  <developers>
+    <developer>
+      <id>bremersee</id>
+      <name>Christian Bremer</name>
+      <organization>bremersee.org</organization>
+      <organizationUrl>https://bremersee.org</organizationUrl>
+      <email>christian@bremersee.org</email>
+      <timezone>Europe/Berlin</timezone>
+      <roles>
+        <role>Developer</role>
+      </roles>
+    </developer>
+  </developers>
+
+  <organization>
+    <name>bremersee.org</name>
+    <url>https://bremersee.org</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
 
   <scm>
     <connection>scm:git:ssh://git@github.com:bremersee/groupman.git</connection>
@@ -59,34 +89,7 @@
     </site>
   </distributionManagement>
 
-  <!--
-  <repositories>
-    <repository>
-      <id>jcenter-snapshots</id>
-      <name>jcenter</name>
-      <url>https://oss.jfrog.org/artifactory/oss-snapshot-local/</url>
-    </repository>
-  </repositories>
-  -->
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.bremersee</groupId>
-        <artifactId>lib-bundle</artifactId>
-        <version>${lib-bundle.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
-    <dependency>
-      <groupId>org.bremersee</groupId>
-      <artifactId>groupman-api-spring-reactive</artifactId>
-      <version>${groupman-api-spring-reactive.version}</version>
-    </dependency>
     <dependency>
       <groupId>org.bremersee</groupId>
       <artifactId>common-exception-spring-boot-webflux-starter</artifactId>
@@ -97,16 +100,47 @@
     </dependency>
     <dependency>
       <groupId>org.bremersee</groupId>
+      <artifactId>spring-integration-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.bremersee</groupId>
       <artifactId>spring-integration-webflux</artifactId>
     </dependency>
     <dependency>
       <groupId>org.bremersee</groupId>
-      <artifactId>spring-integration-ldaptive</artifactId>
+      <artifactId>spring-integration-keycloak-webflux-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.bremersee</groupId>
+      <artifactId>spring-integration-security</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>serial</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-webflux</artifactId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -114,101 +148,23 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-registry-prometheus</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-oauth2-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-oauth2-jose</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-oauth2-resource-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.bremersee</groupId>
-      <artifactId>spring-integration-security-ldaptive</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.bremersee</groupId>
-      <artifactId>comparator</artifactId>
-    </dependency>
-
-    <!-- MongoDB -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>de.flapdoodle.embed</groupId>
-      <artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
-      <version>4.11.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mapstruct</groupId>
-      <artifactId>mapstruct</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-    <!-- Config client -->
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-config</artifactId>
+      <artifactId>spring-boot-starter-webclient</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-aop</artifactId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.retry</groupId>
-      <artifactId>spring-retry</artifactId>
-    </dependency>
-
-    <!-- Eureka client -->
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-    </dependency>
-    <!-- Caffeine-backed LoadBalancer Cache -->
-    <!--
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
-    </dependency>
-    -->
-
-    <!-- Jwt cache -->
-    <!--
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.codemonstur</groupId>
-      <artifactId>embedded-redis</artifactId>
-    </dependency>
-    -->
-
-    <!-- OpenAPI -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+      <version>3.0.2</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-devtools</artifactId>
@@ -219,35 +175,45 @@
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <optional>true</optional>
-    </dependency>
 
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
+      <groupId>org.bremersee</groupId>
+      <artifactId>spring-integration-security-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-test</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-oauth2-resource-server-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webclient-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-ldap</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.unboundid</groupId>
-      <artifactId>unboundid-ldapsdk</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

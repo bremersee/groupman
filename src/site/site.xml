@@ -1,50 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/DECORATION/1.8.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 http://maven.apache.org/xsd/decoration-1.8.0.xsd"
+<site xmlns="http://maven.apache.org/SITE/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/SITE/2.0.0 https://maven.apache.org/xsd/site-2.0.0.xsd"
 	name="Groupman"
 	combine.self="override">
+	<!-- description: https://maven.apache.org/doxia/doxia-sitetools/doxia-site-model/site.html -->
+
 	<skin>
 		<groupId>org.apache.maven.skins</groupId>
 		<artifactId>maven-fluido-skin</artifactId>
-		<version>1.7</version>
+		<version>2.1.0</version>
 	</skin>
-	<!--
-  <custom>
-      <fluidoSkin>
-          <topBarEnabled>true</topBarEnabled>
-          <sideBarEnabled>true</sideBarEnabled>
-      </fluidoSkin>
-  </custom>
-  -->
-	<bannerLeft>
-		<name>${project.name}</name>
-		<!-- <src>images/project.png</src> -->
-		<href>${project.url}</href>
+
+	<bannerLeft name="${project.name}" href="${project.url}">
 	</bannerLeft>
-	<!--
-  <bannerRight>
-      <src>images/company.png</src>
-      <href>${project.organization.url}</href>
-  </bannerRight>
-  -->
-	<!--suppress XmlDefaultAttributeValue -->
-	<version position="left"/>
-	<publishDate position="right" format="dd.MM.yyyy HH:mm:SS"/>
-	<poweredBy>
-		<logo img="#" alt=""/>
-	</poweredBy>
+
+	<version />
+	<publishDate position="right" format="yyyy-MM-dd HH:mm:ss z" />
+
 	<body>
-		<!--
-    <head>
-        <![CDATA[<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />]]>
-    </head>
-    <links>
-        <item name="Apache" href="http://www.apache.org"/>
-        <item name="Maven" href="https://maven.apache.org"/>
-    </links>
-    -->
-		<menu ref="reports"/>
+		<menu name="Reports" ref="reports" />
 		<footer><![CDATA[<p>&copy;${project.inceptionYear} ${project.organization.name}</p>]]></footer>
 	</body>
-</project>
+</site>
