@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.bremersee</groupId>
     <artifactId>common-service-parent</artifactId>
-    <version>6.0.2-SNAPSHOT</version>
+    <version>6.0.2</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -109,7 +109,6 @@
     <dependency>
       <groupId>org.bremersee</groupId>
       <artifactId>spring-integration-keycloak-webflux-client</artifactId>
-      <version>${jbox.version}</version>
     </dependency>
     <dependency>
       <groupId>org.bremersee</groupId>
@@ -180,7 +179,6 @@
     <dependency>
       <groupId>org.bremersee</groupId>
       <artifactId>spring-integration-security-test</artifactId>
-      <version>${jbox.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
