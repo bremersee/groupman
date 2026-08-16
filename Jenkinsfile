@@ -180,7 +180,7 @@ pipeline {
       steps {
         sh 'java -version'
         sh 'mvn -B --version'
-        sh 'mvn -B -P feature,allow-features clean test'
+        sh 'mvn -B -P feature,allow-features,allow-snapshots clean test'
       }
     }
   }
