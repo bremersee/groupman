@@ -58,7 +58,7 @@ public class UserService {
     Assert.hasText(realm, "Realm is required.");
     this.keycloakAdminClient = keycloakAdminClient;
     this.userMapper = userMapper;
-    this.realm = realm;
+    this.realm = isEmpty(realm) ? "master" : realm;
   }
 
   /**

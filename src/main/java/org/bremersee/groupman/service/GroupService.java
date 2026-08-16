@@ -89,7 +89,7 @@ public class GroupService {
     this.groupValidation = groupValidation;
     this.groupMapper = groupMapper;
     this.userMapper = userMapper;
-    this.realm = realm;
+    this.realm = isEmpty(realm) ? "master" : realm;
     this.mainGroupName = isEmpty(mainGroupName) ? "groupman" : mainGroupName;
   }
 
