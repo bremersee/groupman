@@ -19,7 +19,10 @@ package org.bremersee.groupman.service;
 import static java.util.Objects.requireNonNullElse;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
-import java.util.function.Predicate;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.mapper.GroupMapper;
@@ -38,7 +41,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 /**
  * The group service.
@@ -106,7 +108,10 @@ public class GroupService {
   public void init() {
     GroupRepresentation mainGroup = keycloakAdminClient
         .getGroupByPath(realm, "/" + mainGroupName)
-        .switchIfEmpty(keycloakAdminClient.saveGroup(realm, createNewMainGroup()))
+        .singleOptional()
+        .flatMap(optMainGroup -> optMainGroup
+            .map(Mono::just)
+            .orElseGet(() -> keycloakAdminClient.saveGroup(realm, createNewMainGroup())))
         .block();
     if (isEmpty(mainGroup)) {
       log.warn("Main group with name '{}' could not be created. Is keycloak admin api a MOCK?",
@@ -120,16 +125,16 @@ public class GroupService {
    * Create group.
    *
    * @param userId the user id
-   * @param groupDto the group dto
+   * @param groupCreateRequest the group dto
    * @return the mono
    */
-  public Mono<Group> createGroup(String userId, GroupCreate groupDto) {
-    groupValidation.validateGroup(groupDto);
+  public Mono<Group> createGroup(String userId, GroupCreate groupCreateRequest) {
+    groupValidation.validateGroup(groupCreateRequest);
     GroupRepresentation group = new GroupRepresentation();
-    groupMapper.mapInto(groupDto, group);
+    groupMapper.mapInto(groupCreateRequest, group);
     return getUserMainGroup(userId)
         .filter(g -> maxGroups < 0
-            || maxGroups < requireNonNullElse(g.getSubGroupCount(), 100L))
+            || maxGroups > requireNonNullElse(g.getSubGroupCount(), 0L))
         .switchIfEmpty(Mono
             .error(ServiceException.badRequest("Too many groups.", "too_many_groups")))
         .mapNotNull(GroupRepresentation::getId)
@@ -146,7 +151,8 @@ public class GroupService {
    */
   public Flux<Group> getGroups(String userId, String search) {
     return getUserMainGroup(userId)
-        .flatMapIterable(GroupRepresentation::getSubGroups)
+        .flatMapIterable(group -> Optional.ofNullable(group.getSubGroups())
+            .orElseGet(List::of))
         .map(groupMapper::mapToDto)
         .filter(new GroupSearchFilter(search));
   }
@@ -259,7 +265,15 @@ public class GroupService {
     return mainGroup;
   }
 
-  private Mono<GroupRepresentation> createNewUserMainGroup(String userId) {
+  /**
+   * Creates a new user main group representation without persisting.
+   *
+   * <p>The name of the group is the given user ID.
+   *
+   * @param userId the user ID
+   * @return the new user main group representation
+   */
+  private Mono<GroupRepresentation> newUserMainGroupRepresentation(String userId) {
     return keycloakAdminClient.getUserById(realm, userId, null)
         .map(user -> {
           GroupRepresentation mainGroup = new GroupRepresentation();
@@ -288,31 +302,20 @@ public class GroupService {
           .internalServerError("Main group is not initialized.", "main_group_is_missing"));
     }
     return keycloakAdminClient.getGroupByPath(realm, "/" + mainGroupName + "/" + userId)
-        .switchIfEmpty(createNewUserMainGroup(userId)
-            .flatMap(group -> keycloakAdminClient.createSubGroup(realm, mainGroupId, group)));
+        .singleOptional()
+        .flatMap(optUserMainGroup -> optUserMainGroup
+            .map(Mono::just)
+            .orElseGet(() -> newUserMainGroupRepresentation(userId)
+                .flatMap(g -> keycloakAdminClient.createSubGroup(realm, mainGroupId, g))));
   }
 
   private Mono<GroupRepresentation> getOwnedGroup(String userId, String groupId) {
     return getUserMainGroup(userId)
-        .zipWith(keycloakAdminClient.getGroupById(realm, groupId)
-            .switchIfEmpty(forbidden(groupId)))
-        .filter(isOwnedGroup())
-        .map(Tuple2::getT2)
-        .switchIfEmpty(forbidden(groupId));
-  }
-
-  private static Predicate<Tuple2<GroupRepresentation, GroupRepresentation>> isOwnedGroup() {
-    return tuple -> {
-      GroupRepresentation userMainGroup = tuple.getT1();
-      GroupRepresentation requestedGroup = tuple.getT2();
-      String path1 = userMainGroup.getPath();
-      String path2 = requestedGroup.getPath();
-      return !isEmpty(path1) && !isEmpty(path2) && path2.startsWith(path1 + "/");
-    };
-  }
-
-  private static <T> Mono<T> forbidden(String groupId) {
-    return Mono.error(ServiceException.forbidden("Group", groupId));
+        .mapNotNull(group -> Stream.ofNullable(group.getSubGroups())
+            .flatMap(Collection::stream)
+            .filter(g -> groupId.equals(g.getId()))
+            .findFirst()
+            .orElse(null));
   }
 
 }
