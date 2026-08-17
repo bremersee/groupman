@@ -56,6 +56,8 @@ class GroupServiceTest {
 
   private static final String USER_MAIN_GROUP_ID = "user-main-group-id";
 
+  private static final String USER_GROUP_ID = "user-group-id";
+
   private KeycloakAdminClient keycloakAdminClient;
 
   private GroupService target;
@@ -92,6 +94,7 @@ class GroupServiceTest {
     userMainGroup.setId(USER_MAIN_GROUP_ID);
     userMainGroup.setName(USER_ID);
     userMainGroup.setPath("/" + MAIN_GROUP_NAME + "/" + USER_ID);
+    userMainGroup.setParentId(MAIN_GROUP_NAME + "_id");
     userMainGroup.setSubGroupCount(subGroupCount);
     doReturn(Mono.just(userMainGroup))
         .when(keycloakAdminClient)
@@ -113,8 +116,8 @@ class GroupServiceTest {
     userMainGroup.setId(USER_MAIN_GROUP_ID);
     userMainGroup.setName(USER_ID);
     userMainGroup.setPath("/" + MAIN_GROUP_NAME + "/" + USER_ID);
+    userMainGroup.setParentId(MAIN_GROUP_NAME + "_id");
     userMainGroup.setSubGroupCount(1L);
-    userMainGroup.setSubGroups(List.of(getUsersGroup()));
     doReturn(Mono.just(userMainGroup))
         .when(keycloakAdminClient)
         .createSubGroup(eq(REALM), eq(MAIN_GROUP_NAME + "_id"), any());
@@ -122,9 +125,10 @@ class GroupServiceTest {
 
   private GroupRepresentation getUsersGroup() {
     GroupRepresentation subGroup = new GroupRepresentation();
-    subGroup.setId("user-sub-group-id");
+    subGroup.setId(USER_GROUP_ID);
     subGroup.setName("sub-group");
     subGroup.setDescription("foo bar");
+    subGroup.setParentId(USER_MAIN_GROUP_ID);
     subGroup.setPath("/" + MAIN_GROUP_NAME + "/" + USER_ID + "/sub-group");
     return subGroup;
   }
@@ -181,41 +185,19 @@ class GroupServiceTest {
   @Test
   void getGroups() {
     mockCreateUserMainGroup();
+    GroupRepresentation groupRepresentation = getUsersGroup();
+    doReturn(Flux.fromIterable(List.of(groupRepresentation)))
+        .when(keycloakAdminClient)
+        .getSubGroups(eq(REALM), eq(USER_MAIN_GROUP_ID), any());
     List<Group> expected = List.of(Group.builder()
-        .id("user-sub-group-id")
+        .id(USER_GROUP_ID)
         .name("sub-group")
         .description("foo bar")
         .build());
-    List<Group> actual = target.getGroups(USER_ID, null).collectList().block();
+    List<Group> actual = target.getGroups(USER_ID, null, null, null)
+        .collectList().block();
     assertThat(actual)
         .isEqualTo(expected);
-  }
-
-  /**
-   * Gets groups with matching search.
-   */
-  @Test
-  void getGroupsWithMatchingSearch() {
-    mockCreateUserMainGroup();
-    List<Group> expected = List.of(Group.builder()
-        .id("user-sub-group-id")
-        .name("sub-group")
-        .description("foo bar")
-        .build());
-    List<Group> actual = target.getGroups(USER_ID, "foo").collectList().block();
-    assertThat(actual)
-        .isEqualTo(expected);
-  }
-
-  /**
-   * Gets groups with non matching search.
-   */
-  @Test
-  void getGroupsWithNonMatchingSearch() {
-    mockCreateUserMainGroup();
-    List<Group> actual = target.getGroups(USER_ID, "foobar").collectList().block();
-    assertThat(actual)
-        .isEmpty();
   }
 
   /**
@@ -226,14 +208,14 @@ class GroupServiceTest {
     mockCreateUserMainGroup();
     doReturn(Mono.just(getUsersGroup()))
         .when(keycloakAdminClient)
-        .getGroupById(REALM, "user-sub-group-id");
+        .getGroupById(REALM, USER_GROUP_ID);
 
     Group expected = Group.builder()
-        .id("user-sub-group-id")
+        .id(USER_GROUP_ID)
         .name("sub-group")
         .description("foo bar")
         .build();
-    Group actual = target.getGroup(USER_ID, "user-sub-group-id").block();
+    Group actual = target.getGroup(USER_ID, USER_GROUP_ID).block();
     assertThat(actual)
         .isEqualTo(expected);
   }
@@ -246,7 +228,7 @@ class GroupServiceTest {
     mockCreateUserMainGroup();
     doReturn(Mono.just(getUsersGroup()))
         .when(keycloakAdminClient)
-        .getGroupById(REALM, "user-sub-group-id");
+        .getGroupById(REALM, USER_GROUP_ID);
     UserRepresentation userRepresentation = new UserRepresentation();
     userRepresentation.setId("a-user-id");
     userRepresentation.setUsername("group-member");
@@ -254,14 +236,14 @@ class GroupServiceTest {
     userRepresentation.setLastName("last");
     doReturn(Flux.fromIterable(List.of(userRepresentation)))
         .when(keycloakAdminClient)
-        .getGroupMembers(eq(REALM), eq("user-sub-group-id"), any(), any(), any());
+        .getGroupMembers(eq(REALM), eq(USER_GROUP_ID), any(), any(), any());
     List<User> expected = List.of(User.builder()
         .id("a-user-id")
         .username("group-member")
         .firstName("first")
         .lastName("last")
         .build());
-    List<User> actual = target.getMembers(USER_ID, "user-sub-group-id", null, null)
+    List<User> actual = target.getMembers(USER_ID, USER_GROUP_ID, null, null)
         .collectList()
         .block();
     assertThat(actual)
@@ -276,12 +258,12 @@ class GroupServiceTest {
     mockCreateUserMainGroup();
     doReturn(Mono.just(getUsersGroup()))
         .when(keycloakAdminClient)
-        .getGroupById(REALM, "user-sub-group-id");
+        .getGroupById(REALM, USER_GROUP_ID);
     doReturn(Mono.empty())
         .when(keycloakAdminClient)
-        .addUserToGroup(REALM, "a-user-id", "user-sub-group-id");
+        .addUserToGroup(REALM, "a-user-id", USER_GROUP_ID);
     StepVerifier
-        .create(target.addMember(USER_ID, "user-sub-group-id", "a-user-id"))
+        .create(target.addMember(USER_ID, USER_GROUP_ID, "a-user-id"))
         .verifyComplete();
   }
 
@@ -293,12 +275,12 @@ class GroupServiceTest {
     mockCreateUserMainGroup();
     doReturn(Mono.just(getUsersGroup()))
         .when(keycloakAdminClient)
-        .getGroupById(REALM, "user-sub-group-id");
+        .getGroupById(REALM, USER_GROUP_ID);
     doReturn(Mono.empty())
         .when(keycloakAdminClient)
-        .removeUserFromGroup(REALM, "a-user-id", "user-sub-group-id");
+        .removeUserFromGroup(REALM, "a-user-id", USER_GROUP_ID);
     StepVerifier
-        .create(target.removeMember(USER_ID, "user-sub-group-id", "a-user-id"))
+        .create(target.removeMember(USER_ID, USER_GROUP_ID, "a-user-id"))
         .verifyComplete();
   }
 
@@ -310,7 +292,7 @@ class GroupServiceTest {
     mockCreateUserMainGroup();
     doReturn(Mono.just(getUsersGroup()))
         .when(keycloakAdminClient)
-        .getGroupById(REALM, "user-sub-group-id");
+        .getGroupById(REALM, USER_GROUP_ID);
     GroupRepresentation groupRepresentation = getUsersGroup();
     groupRepresentation.setName("new name");
     groupRepresentation.setDescription("new description");
@@ -322,11 +304,11 @@ class GroupServiceTest {
         .description("new description")
         .build();
     Group expected = Group.builder()
-        .id("user-sub-group-id")
+        .id(USER_GROUP_ID)
         .name("new name")
         .description("new description")
         .build();
-    Group actual = target.updateGroup(USER_ID, "user-sub-group-id", groupUpdate).block();
+    Group actual = target.updateGroup(USER_ID, USER_GROUP_ID, groupUpdate).block();
     assertThat(actual)
         .isEqualTo(expected);
   }
@@ -339,12 +321,12 @@ class GroupServiceTest {
     mockCreateUserMainGroup();
     doReturn(Mono.just(getUsersGroup()))
         .when(keycloakAdminClient)
-        .getGroupById(REALM, "user-sub-group-id");
+        .getGroupById(REALM, USER_GROUP_ID);
     doReturn(Mono.empty())
         .when(keycloakAdminClient)
-        .deleteGroup(REALM, "user-sub-group-id");
+        .deleteGroup(REALM, USER_GROUP_ID);
     StepVerifier
-        .create(target.deleteGroup(USER_ID, "user-sub-group-id"))
+        .create(target.deleteGroup(USER_ID, USER_GROUP_ID))
         .verifyComplete();
   }
 }

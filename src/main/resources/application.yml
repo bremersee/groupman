@@ -4,6 +4,11 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: ${bremersee.keycloak.base-uri}/realms/${bremersee.keycloak.realm}/protocol/openid-connect/certs
+      client:
+        provider:
+          swagger-ui:
+            authorization-uri: ${bremersee.keycloak.base-uri}/realms/${bremersee.keycloak.realm}/protocol/openid-connect/auth
+            token-uri: ${bremersee.keycloak.base-uri}/realms/${bremersee.keycloak.realm}/protocol/openid-connect/token
 
 management:
   endpoints:
@@ -39,6 +44,7 @@ bremersee:
   web:
     cors:
       enabled: true
+      # a45ab2d3-cbfe-4d4f-946c-aa696ae9632d
   keycloak:
     base-uri: https://openid.bremersee.org
     realm: eixe
@@ -69,7 +75,10 @@ bremersee:
           target: "ROLE_ADMIN"
 
 springdoc:
+  api-docs:
+    enabled: true
   swagger-ui:
+    enabled: true
     oauth:
       client-id: samba-ad-dc-manager-pkce
       use-pkce-with-authorization-code-grant: true

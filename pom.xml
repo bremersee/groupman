@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.bremersee</groupId>
     <artifactId>common-service-parent</artifactId>
-    <version>6.0.2</version>
+    <version>6.0.3</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -26,7 +26,7 @@
     <start-class>org.bremersee.groupman.Application</start-class>
 
     <openapi.jvmArguments>
-      -Dspring.application.admin.enabled=true -Dspring.profiles.active=local
+      -Dspring.application.admin.enabled=true
     </openapi.jvmArguments>
 
     <maven.compiler.source>${java.version}</maven.compiler.source>

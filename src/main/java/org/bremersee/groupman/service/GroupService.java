@@ -19,10 +19,6 @@ package org.bremersee.groupman.service;
 import static java.util.Objects.requireNonNullElse;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.bremersee.exception.ServiceException;
 import org.bremersee.groupman.mapper.GroupMapper;
@@ -32,6 +28,7 @@ import org.bremersee.groupman.model.GroupCreate;
 import org.bremersee.groupman.model.GroupUpdate;
 import org.bremersee.groupman.model.User;
 import org.bremersee.groupman.validation.GroupValidation;
+import org.bremersee.keycloak.api.GetGroupsParameters;
 import org.bremersee.keycloak.api.model.GroupRepresentation;
 import org.bremersee.keycloak.api.webflux.KeycloakAdminClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -147,14 +144,22 @@ public class GroupService {
    *
    * @param userId the user id
    * @param search the search
+   * @param first the first
+   * @param max the max
    * @return the groups
    */
-  public Flux<Group> getGroups(String userId, String search) {
+  public Flux<Group> getGroups(String userId, String search, Integer first, Integer max) {
+    var paramBuilder = GetGroupsParameters.builder()
+        .first(first != null && first >= 0 ? first : null)
+        .max(max != null && max > 0 ? max : null);
+    if (!isEmpty(search)) {
+      paramBuilder.search(search);
+    }
     return getUserMainGroup(userId)
-        .flatMapIterable(group -> Optional.ofNullable(group.getSubGroups())
-            .orElseGet(List::of))
-        .map(groupMapper::mapToDto)
-        .filter(new GroupSearchFilter(search));
+        .mapNotNull(GroupRepresentation::getId)
+        .flatMapMany(groupId -> keycloakAdminClient
+            .getSubGroups(realm, groupId, paramBuilder.build()))
+        .map(groupMapper::mapToDto);
   }
 
   /**
@@ -229,18 +234,18 @@ public class GroupService {
    *
    * @param userId the user id
    * @param groupId the group id
-   * @param groupDto the group dto
+   * @param groupUpdateRequest the group update request
    * @return the mono
    */
   public Mono<Group> updateGroup(
       String userId,
       String groupId,
-      GroupUpdate groupDto) {
+      GroupUpdate groupUpdateRequest) {
 
-    groupValidation.validateGroup(groupDto);
+    groupValidation.validateGroup(groupUpdateRequest);
     return getOwnedGroup(userId, groupId)
         .flatMap(group -> {
-          groupMapper.mapInto(groupDto, group);
+          groupMapper.mapInto(groupUpdateRequest, group);
           return keycloakAdminClient.saveGroup(realm, group);
         })
         .map(groupMapper::mapToDto);
@@ -311,11 +316,11 @@ public class GroupService {
 
   private Mono<GroupRepresentation> getOwnedGroup(String userId, String groupId) {
     return getUserMainGroup(userId)
-        .mapNotNull(group -> Stream.ofNullable(group.getSubGroups())
-            .flatMap(Collection::stream)
-            .filter(g -> groupId.equals(g.getId()))
-            .findFirst()
-            .orElse(null));
+        .mapNotNull(GroupRepresentation::getId)
+        .flatMap(userMainGroupId -> keycloakAdminClient.getGroupById(realm, groupId)
+            .filter(group -> userMainGroupId.equals(group.getParentId())))
+        .switchIfEmpty(Mono.error(ServiceException
+            .notFoundWithErrorCode("Group", groupId, "group_not_found")));
   }
 
 }

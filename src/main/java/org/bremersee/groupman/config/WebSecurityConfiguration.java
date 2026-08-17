@@ -51,7 +51,7 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 })
 @Configuration
 @Slf4j
-public class WebSecurityConfiguration {
+class WebSecurityConfiguration {
 
   private final OAuth2ResourceServerProperties resourceServerProperties;
 
@@ -66,7 +66,7 @@ public class WebSecurityConfiguration {
    * @param corsConfigurationSource the cors configuration source
    * @param jwtAuthenticationConverter the jwt authentication converter
    */
-  public WebSecurityConfiguration(
+  WebSecurityConfiguration(
       OAuth2ResourceServerProperties resourceServerProperties,
       CorsConfigurationSource corsConfigurationSource,
       Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter) {
@@ -86,7 +86,7 @@ public class WebSecurityConfiguration {
    * @return the security filter chain
    */
   @Bean
-  public SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
+  SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
     return http
         .authorizeExchange(authorize -> authorize
             .pathMatchers(HttpMethod.OPTIONS, "/**")
@@ -107,6 +107,11 @@ public class WebSecurityConfiguration {
 
             .pathMatchers("/api/**")
             .authenticated()
+
+            .pathMatchers("/v3/**").permitAll()
+            .pathMatchers("/webjars/**").permitAll()
+            .pathMatchers("/swagger-ui/**").permitAll()
+            .pathMatchers("/swagger-ui.html").permitAll()
 
             .anyExchange()
             .permitAll()

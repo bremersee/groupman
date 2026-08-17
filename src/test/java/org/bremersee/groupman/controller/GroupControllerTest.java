@@ -98,7 +98,7 @@ class GroupControllerTest {
         .build();
     doReturn(Flux.just(expected))
         .when(groupService)
-        .getGroups(any(), any());
+        .getGroups(any(), any(), any(), any());
     webClient
         .get()
         .uri("/api/groups")

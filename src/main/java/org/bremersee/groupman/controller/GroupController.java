@@ -144,10 +144,16 @@ public class GroupController {
       produces = MediaType.APPLICATION_JSON_VALUE)
   public Flux<Group> getGroups(
       @Parameter(name = "search", description = "A String contained in name or description.")
-      @RequestParam(name = "search", required = false) String search) {
+      @RequestParam(name = "search", required = false) String search,
+
+      @Parameter(name = "first", description = "Pagination offset.")
+      @RequestParam(name = "first", required = false) Integer first,
+
+      @Parameter(name = "max", description = "Maximum results size (defaults to 100).")
+      @RequestParam(name = "max", required = false) Integer max) {
 
     return authTemplate.manyWithAuthentication(auth -> groupService
-        .getGroups(auth.getName(), search));
+        .getGroups(auth.getName(), search, first, max));
   }
 
   /**
@@ -156,10 +162,39 @@ public class GroupController {
    * @param groupId the group id
    * @return the group
    */
+  @Operation(
+      description = "Get group.",
+      security = {
+          @SecurityRequirement(name = "bearer-jwt")
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "OK"),
+          @ApiResponse(responseCode = "400", description = "Bad request", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "404", description = "Not found", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "500", description = "Internal server error", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
   @GetMapping(
       path = "/{groupId}",
       produces = MediaType.APPLICATION_JSON_VALUE)
-  public Mono<Group> getGroup(@PathVariable String groupId) {
+  public Mono<Group> getGroup(
+      @Parameter(name = "groupId", description = "The ID of the group.", required = true)
+      @PathVariable String groupId) {
+
     return authTemplate.oneWithAuthentication(auth -> groupService
         .getGroup(auth.getName(), groupId));
   }
@@ -188,6 +223,9 @@ public class GroupController {
               @Content(schema = @Schema(implementation = RestApiException.class))
           }),
           @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "404", description = "Not found", content = {
               @Content(schema = @Schema(implementation = RestApiException.class))
           }),
           @ApiResponse(responseCode = "500", description = "Internal server error", content = {
@@ -237,6 +275,9 @@ public class GroupController {
           @ApiResponse(responseCode = "403", description = "Forbidden", content = {
               @Content(schema = @Schema(implementation = RestApiException.class))
           }),
+          @ApiResponse(responseCode = "404", description = "Not found", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
           @ApiResponse(responseCode = "500", description = "Internal server error", content = {
               @Content(schema = @Schema(implementation = RestApiException.class))
           })
@@ -244,8 +285,7 @@ public class GroupController {
   )
   @PutMapping(
       path = "/{groupId}/members/{userId}",
-      produces = MediaType.APPLICATION_JSON_VALUE,
-      consumes = MediaType.APPLICATION_JSON_VALUE)
+      produces = MediaType.APPLICATION_JSON_VALUE)
   public Mono<Void> addMember(
       @Parameter(name = "groupId", description = "The ID of the group.", required = true)
       @PathVariable String groupId,
@@ -280,6 +320,9 @@ public class GroupController {
               @Content(schema = @Schema(implementation = RestApiException.class))
           }),
           @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "404", description = "Not found", content = {
               @Content(schema = @Schema(implementation = RestApiException.class))
           }),
           @ApiResponse(responseCode = "500", description = "Internal server error", content = {
@@ -326,6 +369,9 @@ public class GroupController {
           @ApiResponse(responseCode = "403", description = "Forbidden", content = {
               @Content(schema = @Schema(implementation = RestApiException.class))
           }),
+          @ApiResponse(responseCode = "404", description = "Not found", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
           @ApiResponse(responseCode = "500", description = "Internal server error", content = {
               @Content(schema = @Schema(implementation = RestApiException.class))
           })
@@ -367,6 +413,9 @@ public class GroupController {
               @Content(schema = @Schema(implementation = RestApiException.class))
           }),
           @ApiResponse(responseCode = "403", description = "Forbidden", content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = "404", description = "Not found", content = {
               @Content(schema = @Schema(implementation = RestApiException.class))
           }),
           @ApiResponse(responseCode = "500", description = "Internal server error", content = {
