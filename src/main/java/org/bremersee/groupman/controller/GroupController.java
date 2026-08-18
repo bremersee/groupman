@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.bremersee.exception.model.RestApiException;
 import org.bremersee.groupman.model.Group;
@@ -55,6 +56,7 @@ import reactor.core.publisher.Mono;
  */
 @RestController
 @RequestMapping(path = "/api/groups")
+@Tag(name = "group-manager", description = "RESTful group service API.")
 @Validated
 public class GroupController {
 

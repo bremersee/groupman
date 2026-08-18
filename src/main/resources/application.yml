@@ -82,6 +82,21 @@ springdoc:
     oauth:
       client-id: samba-ad-dc-manager-pkce
       use-pkce-with-authorization-code-grant: true
+  open-api:
+    # see: https://github.com/OAI/OpenAPI-Specification/blob/3.1.1/versions/3.1.1.md#info-object
+    info:
+      title: Group Manager API
+      summary: A group manager.
+      description: RESTful service for group manager application.
+      # termsOfService: https://example.com/terms/
+      # contact:
+      #   name: API Support
+      #   url: https://www.example.com/support
+      #   email: support@example.com
+      license:
+        name: Apache 2.0
+        url: https://www.apache.org/licenses/LICENSE-2.0.html
+      version: 4.0.0-SNAPSHOT
 
 ---
 
