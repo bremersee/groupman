@@ -117,6 +117,8 @@ public class GroupController {
    * Gets groups.
    *
    * @param search the search
+   * @param first the first
+   * @param max the max
    * @return the groups
    */
   @Operation(

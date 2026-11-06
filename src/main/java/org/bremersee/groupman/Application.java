@@ -28,6 +28,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Application {
 
   /**
+   * Instantiates a new application.
+   */
+  public Application() {
+    super();
+  }
+
+  /**
    * The entry point of application.
    *
    * @param args the input arguments
