@@ -23,13 +23,13 @@ pipeline {
   options {
     buildDiscarder(logRotator(numToKeepStr: '8', artifactNumToKeepStr: '8'))
   }
+  stages {
     stage('Tools') {
       steps {
         sh 'java -version'
         sh 'mvn -B --version'
       }
     }
-  stages {
     stage('Build') {
       steps {
         sh 'mvn -B -P build-system clean package'
