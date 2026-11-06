@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang=""><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman.controller</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.bremersee.exception.model.RestApiException;
+import org.bremersee.groupman.model.User;
+import org.bremersee.groupman.service.UserService;
+import org.springframework.http.MediaType;
+import org.springframework.util.Assert;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+
+/**
+ * The user controller.
+ *
+ * @author Christian Bremer
+ */
+@RestController
+@RequestMapping(path = &quot;/api/users&quot;)
+@Tag(name = &quot;user-manager&quot;, description = &quot;RESTful user service API.&quot;)
+@Validated
+public class UserController {
+
+  private final UserService userService;
+
+  /**
+   * Instantiates a new user controller.
+   *
+   * @param userService the user service
+   */
+<span class="fc" id="L57">  public UserController(UserService userService) {</span>
+<span class="fc" id="L58">    Assert.notNull(userService, &quot;User service must not be null.&quot;);</span>
+<span class="fc" id="L59">    this.userService = userService;</span>
+<span class="fc" id="L60">  }</span>
+
+  /**
+   * Find users.
+   *
+   * @param search A String contained in username, first or last name, or email. Default search
+   *     behavior is prefix-based (e.g., foo or foo*). Use *foo* for infix search and &quot;foo&quot; for
+   *     exact search.
+   * @param first pagination offset
+   * @param max maximum results size (defaults to 100)
+   * @return the flux
+   */
+  @Operation(
+      description = &quot;Find users.&quot;,
+      security = {
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+      }
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = &quot;200&quot;, description = &quot;OK&quot;),
+          @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;, content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;, content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden&quot;, content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          }),
+          @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;, content = {
+              @Content(schema = @Schema(implementation = RestApiException.class))
+          })
+      }
+  )
+  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+  public Flux&lt;User&gt; findUsers(
+      @Parameter(name = &quot;search&quot;, description = &quot;A String contained in username, first or last &quot;
+          + &quot;name, or email. Default search behavior is prefix-based (e.g., foo or foo*). Use &quot;
+          + &quot;*foo* for infix search and \&quot;foo\&quot; for exact search.&quot;)
+      @RequestParam(name = &quot;search&quot;) String search,
+
+      @Parameter(name = &quot;first&quot;, description = &quot;Pagination offset.&quot;)
+      @RequestParam(name = &quot;first&quot;, required = false) Integer first,
+
+      @Parameter(name = &quot;max&quot;, description = &quot;Maximum results size (defaults to 100).&quot;)
+      @RequestParam(name = &quot;max&quot;, required = false) Integer max) {
+
+<span class="fc" id="L108">    return userService.findUsers(search, first, max);</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

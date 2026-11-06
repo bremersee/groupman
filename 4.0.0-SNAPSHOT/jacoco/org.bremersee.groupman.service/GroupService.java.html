@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang=""><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GroupService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman.service</a> &gt; <span class="el_source">GroupService.java</span></div><h1>GroupService.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman.service;
+
+import static java.util.Objects.requireNonNullElse;
+import static org.springframework.util.ObjectUtils.isEmpty;
+
+import lombok.extern.slf4j.Slf4j;
+import org.bremersee.exception.ServiceException;
+import org.bremersee.groupman.mapper.GroupMapper;
+import org.bremersee.groupman.mapper.UserMapper;
+import org.bremersee.groupman.model.Group;
+import org.bremersee.groupman.model.GroupCreate;
+import org.bremersee.groupman.model.GroupUpdate;
+import org.bremersee.groupman.model.User;
+import org.bremersee.groupman.validation.GroupValidation;
+import org.bremersee.keycloak.api.GetGroupsParameters;
+import org.bremersee.keycloak.api.model.GroupRepresentation;
+import org.bremersee.keycloak.api.webflux.KeycloakAdminClient;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+/**
+ * The group service.
+ *
+ * @author Christian Bremer
+ */
+@Service
+<span class="fc" id="L48">@Slf4j</span>
+public class GroupService {
+
+  private final KeycloakAdminClient keycloakAdminClient;
+
+  private final GroupValidation groupValidation;
+
+  private final GroupMapper groupMapper;
+
+  private final UserMapper userMapper;
+
+  private final String realm;
+
+  private final int maxGroups;
+
+  private final String mainGroupName;
+
+  private String mainGroupId;
+
+  /**
+   * Instantiates a new group service.
+   *
+   * @param keycloakAdminClient the keycloak admin client
+   * @param groupValidation the group validation
+   * @param groupMapper the group mapper
+   * @param userMapper the user mapper
+   * @param realm the realm
+   * @param maxGroups the max groups (-1 == infinitive)
+   * @param mainGroupName the main group name
+   */
+  public GroupService(
+      KeycloakAdminClient keycloakAdminClient,
+      GroupValidation groupValidation,
+      GroupMapper groupMapper,
+      UserMapper userMapper,
+      @Value(&quot;${bremersee.keycloak.realm:master}&quot;) String realm,
+      @Value(&quot;${bremersee.groupman.max-groups:100}&quot;) int maxGroups,
+<span class="fc" id="L85">      @Value(&quot;${bremersee.groupman.main-group-name:groupman}&quot;) String mainGroupName) {</span>
+
+<span class="fc" id="L87">    Assert.notNull(keycloakAdminClient, &quot;Keycloak admin client must not be null.&quot;);</span>
+<span class="fc" id="L88">    Assert.notNull(groupValidation, &quot;Group validation must not be null.&quot;);</span>
+<span class="fc" id="L89">    Assert.notNull(groupMapper, &quot;Group mapper must not be null.&quot;);</span>
+<span class="fc" id="L90">    Assert.notNull(userMapper, &quot;User mapper must not be null.&quot;);</span>
+<span class="fc" id="L91">    Assert.hasText(realm, &quot;Realm is required.&quot;);</span>
+<span class="fc" id="L92">    this.keycloakAdminClient = keycloakAdminClient;</span>
+<span class="fc" id="L93">    this.groupValidation = groupValidation;</span>
+<span class="fc" id="L94">    this.groupMapper = groupMapper;</span>
+<span class="fc" id="L95">    this.userMapper = userMapper;</span>
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">    this.realm = isEmpty(realm) ? &quot;master&quot; : realm;</span>
+<span class="fc" id="L97">    this.maxGroups = maxGroups;</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">    this.mainGroupName = isEmpty(mainGroupName) ? &quot;groupman&quot; : mainGroupName;</span>
+<span class="fc" id="L99">  }</span>
+
+  /**
+   * Init.
+   */
+  @EventListener(ApplicationReadyEvent.class)
+  public void init() {
+<span class="fc" id="L106">    GroupRepresentation mainGroup = keycloakAdminClient</span>
+<span class="fc" id="L107">        .getGroupByPath(realm, &quot;/&quot; + mainGroupName)</span>
+<span class="fc" id="L108">        .singleOptional()</span>
+<span class="fc" id="L109">        .flatMap(optMainGroup -&gt; optMainGroup</span>
+<span class="fc" id="L110">            .map(Mono::just)</span>
+<span class="fc" id="L111">            .orElseGet(() -&gt; keycloakAdminClient.saveGroup(realm, createNewMainGroup())))</span>
+<span class="fc" id="L112">        .block();</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">    if (isEmpty(mainGroup)) {</span>
+<span class="fc" id="L114">      log.warn(&quot;Main group with name '{}' could not be created. Is keycloak admin api a MOCK?&quot;,</span>
+          mainGroupName);
+    } else {
+<span class="fc" id="L117">      mainGroupId = mainGroup.getId();</span>
+    }
+<span class="fc" id="L119">  }</span>
+
+  /**
+   * Create group.
+   *
+   * @param userId the user id
+   * @param groupCreateRequest the group dto
+   * @return the mono
+   */
+  public Mono&lt;Group&gt; createGroup(String userId, GroupCreate groupCreateRequest) {
+<span class="fc" id="L129">    groupValidation.validateGroup(groupCreateRequest);</span>
+<span class="fc" id="L130">    GroupRepresentation group = new GroupRepresentation();</span>
+<span class="fc" id="L131">    groupMapper.mapInto(groupCreateRequest, group);</span>
+<span class="fc" id="L132">    return getUserMainGroup(userId)</span>
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">        .filter(g -&gt; maxGroups &lt; 0</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            || maxGroups &gt; requireNonNullElse(g.getSubGroupCount(), 0L))</span>
+<span class="fc" id="L135">        .switchIfEmpty(Mono</span>
+<span class="fc" id="L136">            .error(ServiceException.badRequest(&quot;Too many groups.&quot;, &quot;too_many_groups&quot;)))</span>
+<span class="fc" id="L137">        .mapNotNull(GroupRepresentation::getId)</span>
+<span class="fc" id="L138">        .flatMap(id -&gt; keycloakAdminClient.createSubGroup(realm, id, group))</span>
+<span class="fc" id="L139">        .map(groupMapper::mapToDto);</span>
+  }
+
+  /**
+   * Gets groups.
+   *
+   * @param userId the user id
+   * @param search the search
+   * @param first the first
+   * @param max the max
+   * @return the groups
+   */
+  public Flux&lt;Group&gt; getGroups(String userId, String search, Integer first, Integer max) {
+<span class="fc" id="L152">    var paramBuilder = GetGroupsParameters.builder()</span>
+<span class="pc bpc" id="L153" title="3 of 4 branches missed.">        .first(first != null &amp;&amp; first &gt;= 0 ? first : null)</span>
+<span class="pc bpc" id="L154" title="3 of 4 branches missed.">        .max(max != null &amp;&amp; max &gt; 0 ? max : null);</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">    if (!isEmpty(search)) {</span>
+<span class="nc" id="L156">      paramBuilder.search(search);</span>
+    }
+<span class="fc" id="L158">    return getUserMainGroup(userId)</span>
+<span class="fc" id="L159">        .mapNotNull(GroupRepresentation::getId)</span>
+<span class="fc" id="L160">        .flatMapMany(groupId -&gt; keycloakAdminClient</span>
+<span class="fc" id="L161">            .getSubGroups(realm, groupId, paramBuilder.build()))</span>
+<span class="fc" id="L162">        .map(groupMapper::mapToDto);</span>
+  }
+
+  /**
+   * Gets group.
+   *
+   * @param userId the user id
+   * @param groupId the group id
+   * @return the group
+   */
+  public Mono&lt;Group&gt; getGroup(String userId, String groupId) {
+<span class="fc" id="L173">    return getOwnedGroup(userId, groupId)</span>
+<span class="fc" id="L174">        .map(groupMapper::mapToDto);</span>
+  }
+
+  /**
+   * Gets members.
+   *
+   * @param userId the user id
+   * @param groupId the group id
+   * @param first the first
+   * @param max the max
+   * @return the members
+   */
+  public Flux&lt;User&gt; getMembers(
+      String userId,
+      String groupId,
+      Integer first,
+      Integer max) {
+
+<span class="fc" id="L192">    return Flux.from(getOwnedGroup(userId, groupId))</span>
+<span class="fc" id="L193">        .flatMap(group -&gt; keycloakAdminClient</span>
+<span class="fc" id="L194">            .getGroupMembers(realm, groupId, null, first, max))</span>
+<span class="fc" id="L195">        .map(userMapper::mapToDto);</span>
+  }
+
+  /**
+   * Add member.
+   *
+   * @param userId the user id
+   * @param groupId the group id
+   * @param memberId the member id
+   * @return the mono
+   */
+  public Mono&lt;Void&gt; addMember(
+      String userId,
+      String groupId,
+      String memberId) {
+
+<span class="fc" id="L211">    return getOwnedGroup(userId, groupId)</span>
+<span class="fc" id="L212">        .flatMap(group -&gt; keycloakAdminClient.addUserToGroup(realm, memberId, groupId));</span>
+  }
+
+  /**
+   * Remove member.
+   *
+   * @param userId the user id
+   * @param groupId the group id
+   * @param memberId the member id
+   * @return the mono
+   */
+  public Mono&lt;Void&gt; removeMember(
+      String userId,
+      String groupId,
+      String memberId) {
+
+<span class="fc" id="L228">    return getOwnedGroup(userId, groupId)</span>
+<span class="fc" id="L229">        .flatMap(group -&gt; keycloakAdminClient.removeUserFromGroup(realm, memberId, groupId));</span>
+  }
+
+  /**
+   * Update group.
+   *
+   * @param userId the user id
+   * @param groupId the group id
+   * @param groupUpdateRequest the group update request
+   * @return the mono
+   */
+  public Mono&lt;Group&gt; updateGroup(
+      String userId,
+      String groupId,
+      GroupUpdate groupUpdateRequest) {
+
+<span class="fc" id="L245">    groupValidation.validateGroup(groupUpdateRequest);</span>
+<span class="fc" id="L246">    return getOwnedGroup(userId, groupId)</span>
+<span class="fc" id="L247">        .flatMap(group -&gt; {</span>
+<span class="fc" id="L248">          groupMapper.mapInto(groupUpdateRequest, group);</span>
+<span class="fc" id="L249">          return keycloakAdminClient.saveGroup(realm, group);</span>
+        })
+<span class="fc" id="L251">        .map(groupMapper::mapToDto);</span>
+  }
+
+  /**
+   * Delete group.
+   *
+   * @param userId the user id
+   * @param groupId the group id
+   * @return the mono
+   */
+  public Mono&lt;Void&gt; deleteGroup(String userId, String groupId) {
+<span class="fc" id="L262">    return getOwnedGroup(userId, groupId)</span>
+<span class="fc" id="L263">        .flatMap(group -&gt; keycloakAdminClient.deleteGroup(realm, groupId));</span>
+  }
+
+  private GroupRepresentation createNewMainGroup() {
+<span class="fc" id="L267">    GroupRepresentation mainGroup = new GroupRepresentation();</span>
+<span class="fc" id="L268">    mainGroup.setName(mainGroupName);</span>
+<span class="fc" id="L269">    mainGroup.setDescription(&quot;Main group for groupman&quot;);</span>
+<span class="fc" id="L270">    return mainGroup;</span>
+  }
+
+  /**
+   * Creates a new user main group representation without persisting.
+   *
+   * &lt;p&gt;The name of the group is the given user ID.
+   *
+   * @param userId the user ID
+   * @return the new user main group representation
+   */
+  private Mono&lt;GroupRepresentation&gt; newUserMainGroupRepresentation(String userId) {
+<span class="fc" id="L282">    return keycloakAdminClient.getUserById(realm, userId, null)</span>
+<span class="fc" id="L283">        .map(user -&gt; {</span>
+<span class="fc" id="L284">          GroupRepresentation mainGroup = new GroupRepresentation();</span>
+<span class="fc" id="L285">          mainGroup.setName(userId);</span>
+<span class="fc" id="L286">          StringBuilder nameBuilder = new StringBuilder();</span>
+<span class="pc bpc" id="L287" title="1 of 2 branches missed.">          if (!isEmpty(user.getFirstName())) {</span>
+<span class="nc" id="L288">            nameBuilder.append(user.getFirstName());</span>
+          }
+<span class="pc bpc" id="L290" title="1 of 2 branches missed.">          if (!isEmpty(user.getLastName())) {</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">            if (!isEmpty(user.getFirstName())) {</span>
+<span class="nc" id="L292">              nameBuilder.append(' ');</span>
+            }
+<span class="nc" id="L294">            nameBuilder.append(user.getLastName());</span>
+          }
+<span class="pc bpc" id="L296" title="1 of 2 branches missed.">          if (!nameBuilder.isEmpty()) {</span>
+<span class="nc" id="L297">            mainGroup.setDescription(&quot;Main group of &quot; + nameBuilder);</span>
+          }
+<span class="fc" id="L299">          return mainGroup;</span>
+        })
+<span class="fc" id="L301">        .switchIfEmpty(Mono.error(ServiceException.forbidden(&quot;User&quot;, userId)));</span>
+  }
+
+  private Mono&lt;GroupRepresentation&gt; getUserMainGroup(String userId) {
+<span class="pc bpc" id="L305" title="1 of 2 branches missed.">    if (isEmpty(mainGroupId)) {</span>
+<span class="nc" id="L306">      return Mono.error(ServiceException</span>
+<span class="nc" id="L307">          .internalServerError(&quot;Main group is not initialized.&quot;, &quot;main_group_is_missing&quot;));</span>
+    }
+<span class="fc" id="L309">    return keycloakAdminClient.getGroupByPath(realm, &quot;/&quot; + mainGroupName + &quot;/&quot; + userId)</span>
+<span class="fc" id="L310">        .singleOptional()</span>
+<span class="fc" id="L311">        .flatMap(optUserMainGroup -&gt; optUserMainGroup</span>
+<span class="fc" id="L312">            .map(Mono::just)</span>
+<span class="fc" id="L313">            .orElseGet(() -&gt; newUserMainGroupRepresentation(userId)</span>
+<span class="fc" id="L314">                .flatMap(g -&gt; keycloakAdminClient.createSubGroup(realm, mainGroupId, g))));</span>
+  }
+
+  private Mono&lt;GroupRepresentation&gt; getOwnedGroup(String userId, String groupId) {
+<span class="fc" id="L318">    return getUserMainGroup(userId)</span>
+<span class="fc" id="L319">        .mapNotNull(GroupRepresentation::getId)</span>
+<span class="fc" id="L320">        .flatMap(userMainGroupId -&gt; keycloakAdminClient.getGroupById(realm, groupId)</span>
+<span class="fc" id="L321">            .filter(group -&gt; userMainGroupId.equals(group.getParentId())))</span>
+<span class="fc" id="L322">        .switchIfEmpty(Mono.error(ServiceException</span>
+<span class="fc" id="L323">            .notFoundWithErrorCode(&quot;Group&quot;, groupId, &quot;group_not_found&quot;)));</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

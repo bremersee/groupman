@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang=""><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebSecurityConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">groupman</a> &gt; <a href="index.source.html" class="el_package">org.bremersee.groupman.config</a> &gt; <span class="el_source">WebSecurityConfiguration.java</span></div><h1>WebSecurityConfiguration.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bremersee.groupman.config;
+
+import static org.springframework.util.ObjectUtils.isEmpty;
+
+import lombok.extern.slf4j.Slf4j;
+import org.bremersee.spring.boot.autoconfigure.security.authentication.AuthenticationProperties;
+import org.bremersee.spring.security.ldaptive.authentication.ReactiveLdaptiveAuthenticationManager;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.actuate.info.InfoEndpoint;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.health.actuate.endpoint.HealthEndpoint;
+import org.springframework.boot.security.autoconfigure.actuate.web.reactive.EndpointRequest;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity.CsrfSpec;
+import org.springframework.security.config.web.server.ServerHttpSecurity.FormLoginSpec;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
+import org.springframework.security.oauth2.server.resource.web.server.BearerTokenServerAuthenticationEntryPoint;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.header.XFrameOptionsServerHttpHeadersWriter.Mode;
+import org.springframework.security.web.server.util.matcher.AndServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
+import org.springframework.util.Assert;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+
+/**
+ * The web security configuration.
+ *
+ * @author Christian Bremer
+ */
+@EnableWebFluxSecurity
+@EnableConfigurationProperties({
+    OAuth2ResourceServerProperties.class
+})
+@Configuration
+<span class="fc" id="L61">@Slf4j</span>
+class WebSecurityConfiguration {
+
+  private final AuthenticationProperties authenticationProperties;
+
+  private final OAuth2ResourceServerProperties resourceServerProperties;
+
+  private final CorsConfigurationSource corsConfigurationSource;
+
+  private final Converter&lt;Jwt, AbstractAuthenticationToken&gt; jwtAuthenticationConverter;
+
+  private final ReactiveLdaptiveAuthenticationManager ldaptiveAuthenticationManager;
+
+  private final ReactiveUserDetailsService userDetailsService;
+
+  /**
+   * Instantiates a new web security configuration.
+   *
+   * @param authenticationProperties the authentication properties
+   * @param resourceServerProperties the resource server properties
+   * @param corsConfigurationSource the cors configuration source
+   * @param jwtAuthenticationConverter the jwt authentication converter
+   */
+  WebSecurityConfiguration(
+      AuthenticationProperties authenticationProperties,
+      OAuth2ResourceServerProperties resourceServerProperties,
+      CorsConfigurationSource corsConfigurationSource,
+      Converter&lt;Jwt, AbstractAuthenticationToken&gt; jwtAuthenticationConverter,
+      ObjectProvider&lt;ReactiveLdaptiveAuthenticationManager&gt; ldaptiveAuthenticationManager,
+<span class="fc" id="L90">      ObjectProvider&lt;ReactiveUserDetailsService&gt; userDetailsService) {</span>
+
+<span class="fc" id="L92">    Assert.hasText(</span>
+<span class="fc" id="L93">        resourceServerProperties.getJwt().getJwkSetUri(),</span>
+        &quot;jwk-set-uri must not be empty.&quot;);
+<span class="fc" id="L95">    this.authenticationProperties = authenticationProperties;</span>
+<span class="fc" id="L96">    this.resourceServerProperties = resourceServerProperties;</span>
+<span class="fc" id="L97">    this.corsConfigurationSource = corsConfigurationSource;</span>
+<span class="fc" id="L98">    this.jwtAuthenticationConverter = jwtAuthenticationConverter;</span>
+<span class="fc" id="L99">    this.ldaptiveAuthenticationManager = ldaptiveAuthenticationManager.getIfAvailable();</span>
+<span class="fc" id="L100">    this.userDetailsService = userDetailsService.getIfAvailable();</span>
+<span class="fc" id="L101">  }</span>
+
+  /**
+   * Creates a security web filter chain.
+   *
+   * @param http the http
+   * @return the security filter chain
+   */
+  @Bean
+  SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
+<span class="fc" id="L111">    String[] actuatorReadRoles = authenticationProperties.getActuator().getReadRoles()</span>
+<span class="fc" id="L112">        .toArray(new String[0]);</span>
+<span class="fc" id="L113">    String[] actuatorWriteRoles = authenticationProperties.getActuator().getWriteRoles()</span>
+<span class="fc" id="L114">        .toArray(new String[0]);</span>
+<span class="fc" id="L115">    http</span>
+<span class="fc" id="L116">        .authorizeExchange(authorize -&gt; authorize</span>
+<span class="fc" id="L117">            .pathMatchers(HttpMethod.OPTIONS, &quot;/**&quot;)</span>
+<span class="fc" id="L118">            .permitAll()</span>
+
+<span class="fc" id="L120">            .matchers(</span>
+<span class="fc" id="L121">                EndpointRequest.to(InfoEndpoint.class),</span>
+<span class="fc" id="L122">                EndpointRequest.to(HealthEndpoint.class))</span>
+<span class="fc" id="L123">            .permitAll()</span>
+
+<span class="fc" id="L125">            .matchers(new AndServerWebExchangeMatcher(</span>
+<span class="fc" id="L126">                EndpointRequest.toAnyEndpoint(),</span>
+                new PathPatternParserServerWebExchangeMatcher(&quot;/**&quot;, HttpMethod.GET)))
+<span class="fc" id="L128">            .hasAnyAuthority(actuatorReadRoles)</span>
+
+<span class="fc" id="L130">            .matchers(EndpointRequest.toAnyEndpoint())</span>
+<span class="fc" id="L131">            .hasAnyAuthority(actuatorWriteRoles)</span>
+
+<span class="fc" id="L133">            .pathMatchers(&quot;/api/**&quot;)</span>
+<span class="fc" id="L134">            .authenticated()</span>
+
+<span class="fc" id="L136">            .pathMatchers(&quot;/v3/**&quot;).permitAll()</span>
+<span class="fc" id="L137">            .pathMatchers(&quot;/webjars/**&quot;).permitAll()</span>
+<span class="fc" id="L138">            .pathMatchers(&quot;/swagger-ui/**&quot;).permitAll()</span>
+<span class="fc" id="L139">            .pathMatchers(&quot;/swagger-ui.html&quot;).permitAll()</span>
+
+<span class="fc" id="L141">            .anyExchange()</span>
+<span class="fc" id="L142">            .permitAll()</span>
+        )
+
+<span class="fc" id="L145">        .csrf(CsrfSpec::disable)</span>
+
+<span class="fc" id="L147">        .cors(customizer -&gt; customizer</span>
+<span class="fc" id="L148">            .configurationSource(corsConfigurationSource))</span>
+
+<span class="fc" id="L150">        .headers(headerSpec -&gt; headerSpec</span>
+<span class="fc" id="L151">            .frameOptions(fos -&gt; fos.mode(Mode.SAMEORIGIN)))</span>
+
+<span class="fc" id="L153">        .formLogin(FormLoginSpec::disable)</span>
+
+<span class="fc" id="L155">        .oauth2ResourceServer(customizer -&gt; customizer</span>
+<span class="fc" id="L156">            .authenticationEntryPoint(new BearerTokenServerAuthenticationEntryPoint())</span>
+<span class="fc" id="L157">            .jwt(jwtCustomizer -&gt; jwtCustomizer</span>
+<span class="fc" id="L158">                .jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(</span>
+                    jwtAuthenticationConverter))
+<span class="fc" id="L160">                .jwkSetUri(resourceServerProperties.getJwt().getJwkSetUri())));</span>
+
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">    if (!isEmpty(ldaptiveAuthenticationManager)) {</span>
+<span class="nc" id="L163">      http.httpBasic(customizer -&gt; customizer</span>
+<span class="nc" id="L164">          .authenticationManager(ldaptiveAuthenticationManager));</span>
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">    } else if (!isEmpty(userDetailsService)) {</span>
+<span class="nc" id="L166">      var authenticationManager = new UserDetailsRepositoryReactiveAuthenticationManager(</span>
+          userDetailsService);
+<span class="nc" id="L168">      http.httpBasic(customizer -&gt; customizer</span>
+<span class="nc" id="L169">          .authenticationManager(authenticationManager));</span>
+    }
+
+<span class="fc" id="L172">    return http.build();</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
