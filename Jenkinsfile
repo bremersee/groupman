@@ -197,7 +197,7 @@ pipeline {
                 -e CONFIG_USER=$CONFIG_USER \
                 -e CONFIG_PASSWORD=$CONFIG_SECRET \
                 -e CONFIG_LABEL='develop' \
-                -e EUREKA_INSTANCE_NON_SECURE_PORT=$NON_SECURE_PORT \
+                -e EUREKA_INSTANCE_REGISTRY_NON_SECURE_PORT=$NON_SECURE_PORT \
                 -p $NON_SECURE_PORT:8080 \
                 $DOCKER_IMAGE:\$TAG
               sleep 10
