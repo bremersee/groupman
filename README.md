@@ -4,6 +4,4 @@
 
 A group management service.
 
-#### Maven Site
-
-- [Release](https://bremersee.github.io/groupman/4.0.0-SNAPSHOT/index.html)
+[Maven-Site](https://bremersee.github.io/groupman/4.0.0-SNAPSHOT/index.html)
