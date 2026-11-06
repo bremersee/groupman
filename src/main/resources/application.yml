@@ -10,6 +10,10 @@ spring:
             authorization-uri: ${bremersee.keycloak.base-uri}/realms/${bremersee.keycloak.realm}/protocol/openid-connect/auth
             token-uri: ${bremersee.keycloak.base-uri}/realms/${bremersee.keycloak.realm}/protocol/openid-connect/token
 
+eureka:
+  client:
+    enabled: false
+
 management:
   endpoints:
     web:
@@ -24,7 +28,7 @@ management:
       show-details: when_authorized
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8080
 
 logging:
   level:
@@ -44,7 +48,6 @@ bremersee:
   web:
     cors:
       enabled: true
-      # a45ab2d3-cbfe-4d4f-946c-aa696ae9632d
   keycloak:
     base-uri: https://openid.bremersee.org
     realm: eixe
@@ -73,6 +76,15 @@ bremersee:
           target: "ROLE_ADMIN"
         - source: "samba-admins"
           target: "ROLE_ADMIN"
+      groups-json-path: $.groups
+      groups-value-list: true
+      group-prefix: "GROUP_"
+      group-case-transformation: to_upper_case
+      group-string-replacements:
+        - regex: "[- ]"
+          replacement: "_"
+        - regex: "_ADMINS"
+          replacement: "_ADMIN"
 
 springdoc:
   api-docs:
@@ -85,6 +97,7 @@ springdoc:
   open-api:
     # see: https://github.com/OAI/OpenAPI-Specification/blob/3.1.1/versions/3.1.1.md#info-object
     info:
+      version: 4.0.0-SNAPSHOT
       title: Group Manager API
       summary: A group manager.
       description: RESTful service for group manager application.
@@ -96,7 +109,36 @@ springdoc:
       license:
         name: Apache 2.0
         url: https://www.apache.org/licenses/LICENSE-2.0.html
-      version: 4.0.0-SNAPSHOT
+    # Generates default server (localhost)
+    # servers:
+    #  - url: https://apps.eixe.bremersee.org/groupman
+    #    description: Group Manager API
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: in-memory
+
+bremersee:
+  authentication:
+    in-memory:
+      enabled: true
+      users:
+        - name: ${USER_NAME:user}
+          password: ${USER_PASSWORD:changeit}
+          authorities:
+            - ROLE_USER
+        - name: ${ACTUATOR_USER_NAME:actuator}
+          password: ${ACTUATOR_USER_PASSWORD:changeit}
+          authorities:
+            - ROLE_ACTUATOR
+        - name: ${ADMIN_NAME:admin}
+          password: ${ADMIN_PASSWORD:changeit}
+          authorities:
+            - ROLE_EUREKA_SERVER_ADMIN
+            - ROLE_ACTUATOR_ADMIN
 
 ---
 

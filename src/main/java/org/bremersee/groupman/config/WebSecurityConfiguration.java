@@ -16,7 +16,12 @@
 
 package org.bremersee.groupman.config;
 
+import static org.springframework.util.ObjectUtils.isEmpty;
+
 import lombok.extern.slf4j.Slf4j;
+import org.bremersee.spring.boot.autoconfigure.security.authentication.AuthenticationProperties;
+import org.bremersee.spring.security.ldaptive.authentication.ReactiveLdaptiveAuthenticationManager;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.health.actuate.endpoint.HealthEndpoint;
@@ -27,9 +32,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity.CsrfSpec;
+import org.springframework.security.config.web.server.ServerHttpSecurity.FormLoginSpec;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.oauth2.server.resource.web.server.BearerTokenServerAuthenticationEntryPoint;
@@ -53,41 +61,58 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 @Slf4j
 class WebSecurityConfiguration {
 
+  private final AuthenticationProperties authenticationProperties;
+
   private final OAuth2ResourceServerProperties resourceServerProperties;
 
   private final CorsConfigurationSource corsConfigurationSource;
 
   private final Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter;
 
+  private final ReactiveLdaptiveAuthenticationManager ldaptiveAuthenticationManager;
+
+  private final ReactiveUserDetailsService userDetailsService;
+
   /**
    * Instantiates a new web security configuration.
    *
+   * @param authenticationProperties the authentication properties
    * @param resourceServerProperties the resource server properties
    * @param corsConfigurationSource the cors configuration source
    * @param jwtAuthenticationConverter the jwt authentication converter
    */
   WebSecurityConfiguration(
+      AuthenticationProperties authenticationProperties,
       OAuth2ResourceServerProperties resourceServerProperties,
       CorsConfigurationSource corsConfigurationSource,
-      Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter) {
+      Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter,
+      ObjectProvider<ReactiveLdaptiveAuthenticationManager> ldaptiveAuthenticationManager,
+      ObjectProvider<ReactiveUserDetailsService> userDetailsService) {
 
     Assert.hasText(
         resourceServerProperties.getJwt().getJwkSetUri(),
         "jwk-set-uri must not be empty.");
+    this.authenticationProperties = authenticationProperties;
     this.resourceServerProperties = resourceServerProperties;
     this.corsConfigurationSource = corsConfigurationSource;
     this.jwtAuthenticationConverter = jwtAuthenticationConverter;
+    this.ldaptiveAuthenticationManager = ldaptiveAuthenticationManager.getIfAvailable();
+    this.userDetailsService = userDetailsService.getIfAvailable();
   }
 
   /**
-   * Creates security web filter chain.
+   * Creates a security web filter chain.
    *
    * @param http the http
    * @return the security filter chain
    */
   @Bean
   SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
-    return http
+    String[] actuatorReadRoles = authenticationProperties.getActuator().getReadRoles()
+        .toArray(new String[0]);
+    String[] actuatorWriteRoles = authenticationProperties.getActuator().getWriteRoles()
+        .toArray(new String[0]);
+    http
         .authorizeExchange(authorize -> authorize
             .pathMatchers(HttpMethod.OPTIONS, "/**")
             .permitAll()
@@ -100,10 +125,10 @@ class WebSecurityConfiguration {
             .matchers(new AndServerWebExchangeMatcher(
                 EndpointRequest.toAnyEndpoint(),
                 new PathPatternParserServerWebExchangeMatcher("/**", HttpMethod.GET)))
-            .hasAnyAuthority("ROLE_ACTUATOR", "ROLE_ACTUATOR_ADMIN", "ROLE_ADMIN")
+            .hasAnyAuthority(actuatorReadRoles)
 
             .matchers(EndpointRequest.toAnyEndpoint())
-            .hasAnyAuthority("ROLE_ACTUATOR_ADMIN", "ROLE_ADMIN")
+            .hasAnyAuthority(actuatorWriteRoles)
 
             .pathMatchers("/api/**")
             .authenticated()
@@ -125,14 +150,26 @@ class WebSecurityConfiguration {
         .headers(headerSpec -> headerSpec
             .frameOptions(fos -> fos.mode(Mode.SAMEORIGIN)))
 
+        .formLogin(FormLoginSpec::disable)
+
         .oauth2ResourceServer(customizer -> customizer
             .authenticationEntryPoint(new BearerTokenServerAuthenticationEntryPoint())
             .jwt(jwtCustomizer -> jwtCustomizer
                 .jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(
                     jwtAuthenticationConverter))
-                .jwkSetUri(resourceServerProperties.getJwt().getJwkSetUri())))
+                .jwkSetUri(resourceServerProperties.getJwt().getJwkSetUri())));
 
-        .build();
+    if (!isEmpty(ldaptiveAuthenticationManager)) {
+      http.httpBasic(customizer -> customizer
+          .authenticationManager(ldaptiveAuthenticationManager));
+    } else if (!isEmpty(userDetailsService)) {
+      var authenticationManager = new UserDetailsRepositoryReactiveAuthenticationManager(
+          userDetailsService);
+      http.httpBasic(customizer -> customizer
+          .authenticationManager(authenticationManager));
+    }
+
+    return http.build();
   }
 
 }

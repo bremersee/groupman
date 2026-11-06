@@ -16,7 +16,8 @@
 
 package org.bremersee.groupman.config;
 
-import org.bremersee.spring.boot.autoconfigure.keycloak.DecodeNotFoundKeycloakAdminApiCustomizer;
+import org.bremersee.spring.boot.autoconfigure.keycloak.ReactiveDecodeNotFoundKeycloakAdminApiCustomizer;
+import org.bremersee.spring.boot.autoconfigure.keycloak.ReactiveKeycloakAdminApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -41,8 +42,8 @@ public class KeycloakAdminApiConfiguration {
    * @return the decoding not found keycloak admin api customizer
    */
   @Bean
-  public DecodeNotFoundKeycloakAdminApiCustomizer decodeNotFoundKeycloakAdminApiCustomizer() {
-    return new DecodeNotFoundKeycloakAdminApiCustomizer();
+  public ReactiveKeycloakAdminApiCustomizer decodeNotFoundKeycloakAdminApiCustomizer() {
+    return new ReactiveDecodeNotFoundKeycloakAdminApiCustomizer();
   }
 
 }

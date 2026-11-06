@@ -1,8 +1,27 @@
-FROM openjdk:14.0.1-jdk-slim
-MAINTAINER Christian Bremer <bremersee@googlemail.com>
-ARG JAR_FILE
-ADD target/${JAR_FILE} /opt/app.jar
-ADD docker/entrypoint.sh /opt/entrypoint.sh
-RUN chmod 755 /opt/entrypoint.sh
-RUN mkdir /opt/log
-ENTRYPOINT ["/opt/entrypoint.sh"]
+FROM eclipse-temurin:25-jre-noble
+LABEL org.opencontainers.image.authors="christian@bremersee.org"
+
+EXPOSE 8080
+
+ENV ACTIVE_PROFILES=in-memory
+
+ENV CONFIG_CLIENT_ENABLED=false
+ENV CONFIG_URI=https://config.eixe.bremersee.org
+ENV CONFIG_USER=config
+ENV CONFIG_PASSWORD=changeit
+ENV CONFIG_LABEL=develop
+ENV EUREKA_INSTANCE_NON_SECURE_PORT=8080
+
+RUN mkdir -p /app
+
+COPY target/groupman.jar /app/app.jar
+
+WORKDIR /app
+
+ENTRYPOINT [ \
+  "java", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-Dspring.profiles.active=${ACTIVE_PROFILES}", \
+  "-jar", \
+  "app.jar" \
+]

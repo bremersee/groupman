@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.bremersee</groupId>
     <artifactId>common-service-parent</artifactId>
-    <version>6.0.3</version>
+    <version>6.1.4</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -29,8 +29,7 @@
       -Dspring.application.admin.enabled=true
     </openapi.jvmArguments>
 
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <java.version>25</java.version>
   </properties>
 
   <developers>
@@ -114,6 +113,10 @@
       <groupId>org.bremersee</groupId>
       <artifactId>spring-integration-security</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.bremersee</groupId>
+      <artifactId>spring-integration-security-ldaptive</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.immutables</groupId>
@@ -158,6 +161,30 @@
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
       <version>${springdoc.version}</version>
+    </dependency>
+
+    <!-- Config client -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-bootstrap</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-config</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aspectj</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.retry</groupId>
+      <artifactId>spring-retry</artifactId>
+    </dependency>
+
+    <!-- Eureka client -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
     </dependency>
 
     <dependency>
@@ -217,5 +244,24 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <finalName>groupman</finalName>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>jdeb</artifactId>
+          <groupId>org.vafer</groupId>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 
 </project>
