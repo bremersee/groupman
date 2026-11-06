@@ -117,6 +117,8 @@ public class GroupController {
    * Gets groups.
    *
    * @param search the search
+   * @param first the first
+   * @param max the max
    * @return the groups
    */
   @Operation(
@@ -154,8 +156,8 @@ public class GroupController {
       @Parameter(name = &quot;max&quot;, description = &quot;Maximum results size (defaults to 100).&quot;)
       @RequestParam(name = &quot;max&quot;, required = false) Integer max) {
 
-<span class="fc" id="L157">    return authTemplate.manyWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L158">        .getGroups(auth.getName(), search, first, max));</span>
+<span class="fc" id="L159">    return authTemplate.manyWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L160">        .getGroups(auth.getName(), search, first, max));</span>
   }
 
   /**
@@ -197,8 +199,8 @@ public class GroupController {
       @Parameter(name = &quot;groupId&quot;, description = &quot;The ID of the group.&quot;, required = true)
       @PathVariable String groupId) {
 
-<span class="fc" id="L200">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L201">        .getGroup(auth.getName(), groupId));</span>
+<span class="fc" id="L202">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L203">        .getGroup(auth.getName(), groupId));</span>
   }
 
   /**
@@ -248,8 +250,8 @@ public class GroupController {
       @Parameter(name = &quot;max&quot;, description = &quot;Maximum results size (defaults to 100).&quot;)
       @RequestParam(name = &quot;max&quot;, required = false) Integer max) {
 
-<span class="fc" id="L251">    return authTemplate.manyWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L252">        .getMembers(auth.getName(), groupId, first, max));</span>
+<span class="fc" id="L253">    return authTemplate.manyWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L254">        .getMembers(auth.getName(), groupId, first, max));</span>
   }
 
   /**
@@ -295,8 +297,8 @@ public class GroupController {
       @Parameter(name = &quot;userId&quot;, description = &quot;The ID of the user (member).&quot;, required = true)
       @PathVariable String userId) {
 
-<span class="fc" id="L298">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L299">        .addMember(auth.getName(), groupId, userId));</span>
+<span class="fc" id="L300">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L301">        .addMember(auth.getName(), groupId, userId));</span>
   }
 
   /**
@@ -342,8 +344,8 @@ public class GroupController {
       @Parameter(name = &quot;userId&quot;, description = &quot;The ID of the user (member).&quot;, required = true)
       @PathVariable String userId) {
 
-<span class="fc" id="L345">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L346">        .removeMember(auth.getName(), groupId, userId));</span>
+<span class="fc" id="L347">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L348">        .removeMember(auth.getName(), groupId, userId));</span>
   }
 
   /**
@@ -389,8 +391,8 @@ public class GroupController {
 
       @Valid @RequestBody GroupUpdate group) {
 
-<span class="fc" id="L392">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L393">        .updateGroup(auth.getName(), groupId, group));</span>
+<span class="fc" id="L394">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L395">        .updateGroup(auth.getName(), groupId, group));</span>
   }
 
   /**
@@ -432,8 +434,8 @@ public class GroupController {
       @Parameter(name = &quot;groupId&quot;, description = &quot;The ID of the group.&quot;, required = true)
       @PathVariable String groupId) {
 
-<span class="fc" id="L435">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L436">        .deleteGroup(auth.getName(), groupId));</span>
+<span class="fc" id="L437">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L438">        .deleteGroup(auth.getName(), groupId));</span>
   }
 
 }
