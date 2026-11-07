@@ -56,8 +56,9 @@ pipeline {
       }
       steps {
         sh '''
-          echo 'Building API in branch ${env.BRANCH_NAME}'
-          git clone -b ${env.BRANCH_NAME} git@github.com:bremersee/$API_NAME.git target/$API_NAME
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          echo \$BRANCH_NAME
+          git clone -b \$BRANCH_NAME git@github.com:bremersee/$API_NAME.git target/$API_NAME
           mvn -B -P build-system,openapi verify
           cp -rf target/openapi.yaml target/$API_NAME/src/main/resources/openapi
           PARENT_VERSION=$(mvn help:evaluate -Dexpression=project.parent.version -q -DforceStdout)
