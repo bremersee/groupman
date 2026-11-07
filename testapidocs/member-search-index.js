@@ -1,1 +1,0 @@
-memberSearchIndex = [{"p":"org.bremersee.groupman.metrics","c":"MetricsTest","l":"MetricsTest()","url":"%3Cinit%3E()"}]
