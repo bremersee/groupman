@@ -5,15 +5,14 @@ pipeline {
   environment {
     CODECOV_TOKEN = credentials('groupman-codecov-token')
     NAME='groupman'
-    SERVICE_NAME='groupman'
     API_NAME='groupman-api'
     NON_SECURE_PORT=10200
     DOCKER_IMAGE='bremersee/groupman'
     DOCKER_HOSTS='app1 app2'
-    BUILD_API=true
+    BUILD_API=false
     DOCKER_PUSH=false
     DEPLOY_ON_APP_SERVER=false
-    SITE=true
+    SITE=false
     CLEAN=true
   }
   tools {
