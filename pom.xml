@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.bremersee</groupId>
     <artifactId>common-service-parent</artifactId>
-    <version>6.1.4</version>
+    <version>6.1.6</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -31,6 +31,29 @@
 
     <java.version>25</java.version>
   </properties>
+
+  <repositories>
+    <repository>
+      <id>bremersee-releases</id>
+      <url>https://mvn-repo.eixe.bremersee.org/releases</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>bremersee-snapshots</id>
+      <url>https://mvn-repo.eixe.bremersee.org/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
   <developers>
     <developer>
@@ -82,9 +105,7 @@
     </snapshotRepository>
     <site>
       <id>bremersee-sites</id>
-      <url>
-        dav:https://nexus.bremersee.org/repository/maven-sites/groupman/${project.version}
-      </url>
+      <url>https://webdav.eixe.bremersee.org/maven-sites/eureka/${project.version}</url>
     </site>
   </distributionManagement>
 

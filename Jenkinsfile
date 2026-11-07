@@ -10,10 +10,10 @@ pipeline {
     NON_SECURE_PORT=10200
     DOCKER_IMAGE='bremersee/groupman'
     DOCKER_HOSTS='app1 app2'
-    BUILD_API=false
+    BUILD_API=true
     DOCKER_PUSH=false
     DEPLOY_ON_APP_SERVER=false
-    SITE=false
+    SITE=true
     CLEAN=true
   }
   tools {
