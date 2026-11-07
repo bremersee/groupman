@@ -56,7 +56,7 @@ pipeline {
       }
       steps {
         sh '''
-          echo 'Building API in branch ' + ${env.BRANCH_NAME}
+          echo 'Building API in branch ${env.BRANCH_NAME}'
           git clone -b ${env.BRANCH_NAME} git@github.com:bremersee/$API_NAME.git target/$API_NAME
           mvn -B -P build-system,openapi verify
           cp -rf target/openapi.yaml target/$API_NAME/src/main/resources/openapi
