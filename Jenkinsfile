@@ -44,21 +44,43 @@ pipeline {
         }
       }
     }
-    stage('Build API') {
+    stage('Build API develop') {
       when {
         allOf {
           environment name: 'BUILD_API', value: 'true'
           anyOf {
             branch 'develop'
+          }
+        }
+      }
+      steps {
+        sh '''
+          git clone -b develop git@github.com:bremersee/$API_NAME.git target/$API_NAME
+          mvn -B -P build-system,openapi verify
+          cp -rf target/openapi.yaml target/$API_NAME/src/main/resources/openapi
+          PARENT_VERSION=$(mvn help:evaluate -Dexpression=project.parent.version -q -DforceStdout)
+          PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          mvn -f target/$API_NAME/pom.xml versions:update-parent -DparentVersion=\$PARENT_VERSION
+          mvn -f target/$API_NAME/pom.xml versions:set -DnewVersion=\$PROJECT_VERSION
+          git -C target/$API_NAME add .
+          git -C target/$API_NAME commit -m "Updates api"
+          git -C target/$API_NAME push
+          rm -rf target/$API_NAME
+        '''
+      }
+    }
+    stage('Build API main') {
+      when {
+        allOf {
+          environment name: 'BUILD_API', value: 'true'
+          anyOf {
             branch 'main'
           }
         }
       }
       steps {
         sh '''
-          BRANCH_NAME=\$(git rev-parse --abbrev-ref HEAD)
-          echo \$BRANCH_NAME
-          git clone -b \$BRANCH_NAME git@github.com:bremersee/$API_NAME.git target/$API_NAME
+          git clone -b main git@github.com:bremersee/$API_NAME.git target/$API_NAME
           mvn -B -P build-system,openapi verify
           cp -rf target/openapi.yaml target/$API_NAME/src/main/resources/openapi
           PARENT_VERSION=$(mvn help:evaluate -Dexpression=project.parent.version -q -DforceStdout)
