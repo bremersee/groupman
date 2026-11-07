@@ -56,7 +56,7 @@ pipeline {
       }
       steps {
         sh '''
-          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          BRANCH_NAME=\$(git rev-parse --abbrev-ref HEAD)
           echo \$BRANCH_NAME
           git clone -b \$BRANCH_NAME git@github.com:bremersee/$API_NAME.git target/$API_NAME
           mvn -B -P build-system,openapi verify
