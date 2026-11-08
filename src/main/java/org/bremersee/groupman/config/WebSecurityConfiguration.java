@@ -18,7 +18,6 @@ package org.bremersee.groupman.config;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
-import lombok.extern.slf4j.Slf4j;
 import org.bremersee.spring.boot.autoconfigure.security.authentication.AuthenticationProperties;
 import org.bremersee.spring.security.ldaptive.authentication.ReactiveLdaptiveAuthenticationManager;
 import org.springframework.beans.factory.ObjectProvider;
@@ -55,10 +54,9 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
  */
 @EnableWebFluxSecurity
 @EnableConfigurationProperties({
-    OAuth2ResourceServerProperties.class
+    AuthenticationProperties.class, OAuth2ResourceServerProperties.class
 })
 @Configuration
-@Slf4j
 class WebSecurityConfiguration {
 
   private final AuthenticationProperties authenticationProperties;

@@ -7,12 +7,13 @@ pipeline {
     NAME='groupman'
     API_NAME='groupman-api'
     NON_SECURE_PORT=10200
+    PROFILES='eureka-client,api,springdoc,jwt,ldap,ldap-auth'
     DOCKER_IMAGE='bremersee/groupman'
     DOCKER_HOSTS='app1 app2'
     BUILD_API=false
     DOCKER_PUSH=true
-    DEPLOY_ON_APP_SERVER=false
-    SITE=false
+    DEPLOY_ON_APP_SERVER=true
+    SITE=true
     CLEAN=true
   }
   tools {
@@ -214,7 +215,7 @@ pipeline {
                 --interactive \
                 --name=$NAME \
                 --restart=unless-stopped \
-                -e ACTIVE_PROFILES=\$DOCKER_HOST,api,springdoc,jwt,ldap,ldap-auth \
+                -e ACTIVE_PROFILES=\$DOCKER_HOST,$PROFILES \
                 -e CONFIG_CLIENT_ENABLED='true' \
                 -e CONFIG_URI='https://config.eixe.bremersee.org' \
                 -e CONFIG_USER=$CONFIG_USER \

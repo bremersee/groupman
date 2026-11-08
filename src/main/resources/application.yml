@@ -92,7 +92,7 @@ springdoc:
   swagger-ui:
     enabled: true
     oauth:
-      client-id: samba-ad-dc-manager-pkce
+      client-id: local-pkce
       use-pkce-with-authorization-code-grant: true
   open-api:
     # see: https://github.com/OAI/OpenAPI-Specification/blob/3.1.1/versions/3.1.1.md#info-object
