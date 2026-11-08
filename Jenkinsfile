@@ -4,6 +4,7 @@ pipeline {
   }
   environment {
     CODECOV_TOKEN = credentials('groupman-codecov-token')
+    BRANCH_NAME="${GIT_BRANCH.split("/").size() > 1 ? GIT_BRANCH.split("/")[1] : GIT_BRANCH}"
     NAME='groupman'
     API_NAME='groupman-api'
     NON_SECURE_PORT=10200
@@ -11,9 +12,9 @@ pipeline {
     DOCKER_IMAGE='bremersee/groupman'
     DOCKER_HOSTS='app1 app2'
     BUILD_API=false
-    DOCKER_PUSH=true
-    DEPLOY_ON_APP_SERVER=true
-    SITE=true
+    DOCKER_PUSH=false
+    DEPLOY_ON_APP_SERVER=false
+    SITE=false
     CLEAN=true
   }
   tools {
@@ -28,6 +29,7 @@ pipeline {
       steps {
         sh 'java -version'
         sh 'mvn -B --version'
+        sh 'echo $BRANCH_NAME'
       }
     }
     stage('Build') {
