@@ -16,5 +16,5 @@ groupman,org.bremersee.groupman.service,UserService,2,54,2,4,0,17,2,3,0,2
 groupman,org.bremersee.groupman,Application,5,3,0,0,2,2,1,1,1,1
 groupman,org.bremersee.groupman.config,OpenApiConfiguration,0,3,0,0,0,2,0,1,0,1
 groupman,org.bremersee.groupman.config,KeycloakAdminApiConfiguration,0,7,0,0,0,3,0,2,0,2
-groupman,org.bremersee.groupman.config,WebSecurityConfiguration,28,242,2,2,5,50,4,9,2,9
+groupman,org.bremersee.groupman.config,WebSecurityConfiguration,28,238,2,2,5,49,4,8,2,8
 groupman,org.bremersee.groupman.validation,GroupValidation,8,34,2,4,4,10,2,4,0,3
