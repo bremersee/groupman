@@ -97,11 +97,11 @@
   <distributionManagement>
     <repository>
       <id>bremersee-releases</id>
-      <url>https://nexus.bremersee.org/repository/maven-releases</url>
+      <url>https://mvn-repo.eixe.bremersee.org/releases</url>
     </repository>
     <snapshotRepository>
       <id>bremersee-snapshots</id>
-      <url>https://nexus.bremersee.org/repository/maven-snapshots</url>
+      <url>https://mvn-repo.eixe.bremersee.org/snapshots</url>
     </snapshotRepository>
     <site>
       <id>bremersee-sites</id>

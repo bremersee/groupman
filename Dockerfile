@@ -1,7 +1,9 @@
 FROM eclipse-temurin:25-jre-noble
 LABEL org.opencontainers.image.authors="christian@bremersee.org"
 
-EXPOSE 8080
+ARG port
+
+EXPOSE $port
 
 ENV ACTIVE_PROFILES=in-memory
 
@@ -10,7 +12,7 @@ ENV CONFIG_URI=https://config.eixe.bremersee.org
 ENV CONFIG_USER=config
 ENV CONFIG_PASSWORD=changeit
 ENV CONFIG_LABEL=develop
-ENV SERVER_PORT=8080
+ENV SERVER_PORT=$port
 
 RUN mkdir -p /app
 
