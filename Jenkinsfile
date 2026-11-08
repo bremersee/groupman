@@ -11,9 +11,9 @@ pipeline {
     PROFILES='eureka-client,api,springdoc,jwt,ldap,ldap-auth'
     DOCKER_IMAGE='bremersee/groupman'
     DOCKER_HOSTS='app1 app2'
-    BUILD_API=false
+    BUILD_API=true
     DOCKER_PUSH=false
-    DEPLOY_ON_APP_SERVER=false
+    DEPLOY_ON_APP_SERVER=true
     SITE=false
     CLEAN=true
   }
@@ -46,43 +46,19 @@ pipeline {
         }
       }
     }
-    stage('Build API develop') {
+    stage('Build API') {
       when {
         allOf {
           environment name: 'BUILD_API', value: 'true'
           anyOf {
             branch 'develop'
-          }
-        }
-      }
-      steps {
-        sh '''
-          git clone -b develop git@github.com:bremersee/$API_NAME.git target/$API_NAME
-          mvn -B -P build-system,openapi verify
-          cp -rf target/openapi.yaml target/$API_NAME/src/main/resources/openapi
-          PARENT_VERSION=$(mvn help:evaluate -Dexpression=project.parent.version -q -DforceStdout)
-          PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          mvn -f target/$API_NAME/pom.xml versions:update-parent -DparentVersion=\$PARENT_VERSION
-          mvn -f target/$API_NAME/pom.xml versions:set -DnewVersion=\$PROJECT_VERSION
-          git -C target/$API_NAME add .
-          git -C target/$API_NAME commit -m "Updates api"
-          git -C target/$API_NAME push
-          rm -rf target/$API_NAME
-        '''
-      }
-    }
-    stage('Build API main') {
-      when {
-        allOf {
-          environment name: 'BUILD_API', value: 'true'
-          anyOf {
             branch 'main'
           }
         }
       }
       steps {
         sh '''
-          git clone -b main git@github.com:bremersee/$API_NAME.git target/$API_NAME
+          git clone -b $BRANCH_NAME git@github.com:bremersee/$API_NAME.git target/$API_NAME
           mvn -B -P build-system,openapi verify
           cp -rf target/openapi.yaml target/$API_NAME/src/main/resources/openapi
           PARENT_VERSION=$(mvn help:evaluate -Dexpression=project.parent.version -q -DforceStdout)
@@ -222,7 +198,7 @@ pipeline {
                 -e CONFIG_URI='https://config.eixe.bremersee.org' \
                 -e CONFIG_USER=$CONFIG_USER \
                 -e CONFIG_PASSWORD=$CONFIG_SECRET \
-                -e CONFIG_LABEL='develop' \
+                -e CONFIG_LABEL=$BRANCH_NAME \
                 -e SERVER_PORT=$NON_SECURE_PORT \
                 -p $NON_SECURE_PORT:$NON_SECURE_PORT \
                 $DOCKER_IMAGE:\$TAG
