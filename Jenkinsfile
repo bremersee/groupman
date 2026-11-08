@@ -4,18 +4,18 @@ pipeline {
   }
   environment {
     CODECOV_TOKEN = credentials('groupman-codecov-token')
-    BRANCH_NAME="${GIT_BRANCH.split("/").size() > 1 ? GIT_BRANCH.split("/")[1] : GIT_BRANCH}"
-    NAME='groupman'
-    API_NAME='groupman-api'
-    NON_SECURE_PORT=10200
-    PROFILES='eureka-client,api,springdoc,jwt,ldap,ldap-auth'
-    DOCKER_IMAGE='bremersee/groupman'
-    DOCKER_HOSTS='app1 app2'
-    BUILD_API=true
-    DOCKER_PUSH=false
-    DEPLOY_ON_APP_SERVER=true
-    SITE=false
-    CLEAN=true
+    BRANCH_NAME = "${GIT_BRANCH.split("/").size() > 1 ? GIT_BRANCH.split("/")[1] : GIT_BRANCH}"
+    NAME = 'groupman'
+    API_NAME = 'groupman-api'
+    NON_SECURE_PORT = 10200
+    PROFILES = 'eureka-client,api,springdoc,jwt,ldap,ldap-auth'
+    DOCKER_IMAGE = 'bremersee/groupman'
+    DOCKER_HOSTS = 'app1 app2'
+    BUILD_API = false
+    DOCKER_PUSH = false
+    DEPLOY_ON_APP_SERVER = true
+    SITE = true
+    CLEAN = true
   }
   tools {
     jdk 'jdk25'
