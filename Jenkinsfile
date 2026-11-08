@@ -66,7 +66,7 @@ pipeline {
           mvn -f target/$API_NAME/pom.xml versions:update-parent -DparentVersion=\$PARENT_VERSION
           mvn -f target/$API_NAME/pom.xml versions:set -DnewVersion=\$PROJECT_VERSION
           git -C target/$API_NAME add .
-          git -C target/$API_NAME commit -m "Updates api"
+          git -C target/$API_NAME commit --allow-empty -m "Updates api"
           git -C target/$API_NAME push
           rm -rf target/$API_NAME
         '''
