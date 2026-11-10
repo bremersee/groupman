@@ -78,6 +78,8 @@ class WebSecurityConfiguration {
    * @param resourceServerProperties the resource server properties
    * @param corsConfigurationSource the cors configuration source
    * @param jwtAuthenticationConverter the jwt authentication converter
+   * @param ldaptiveAuthenticationManager the ldaptive authentication manager
+   * @param userDetailsService the user details service
    */
   WebSecurityConfiguration(
       AuthenticationProperties authenticationProperties,

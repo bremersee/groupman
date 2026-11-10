@@ -13,7 +13,7 @@ pipeline {
     DOCKER_HOSTS = 'app1 app2'
     BUILD_API = false
     DOCKER_PUSH = false
-    DEPLOY_ON_APP_SERVER = true
+    DEPLOY_ON_APP_SERVER = false
     SITE = true
     CLEAN = true
   }
