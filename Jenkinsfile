@@ -65,13 +65,10 @@ pipeline {
           PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           mvn -f target/$API_NAME/pom.xml versions:update-parent -DparentVersion=\$PARENT_VERSION
           mvn -f target/$API_NAME/pom.xml versions:set -DnewVersion=\$PROJECT_VERSION
-          tee target/$API_NAME/README.md <<EOF
-          # $API_NAME
-
-          RESTful API clients of [$NAME](https://github.com/bremersee/$NAME) service.
-
-          [Maven-Site](https://bremersee.github.io/$API_NAME/\$PROJECT_VERSION/index.html)
-          EOF
+          echo "# "$API_NAME > target/$API_NAME/README.md
+          echo "" >> target/$API_NAME/README.md
+          echo "RESTful API clients of ["$NAME"](https://github.com/bremersee/"$NAME" service." >> target/$API_NAME/README.md
+          echo "[Maven-Site](https://bremersee.github.io/"$API_NAME/\$PROJECT_VERSION"/index.html)" >> target/$API_NAME/README.md
           git -C target/$API_NAME add .
           git -C target/$API_NAME commit --allow-empty -m "Updates api"
           git -C target/$API_NAME push
