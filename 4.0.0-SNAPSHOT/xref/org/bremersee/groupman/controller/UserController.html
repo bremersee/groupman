@@ -80,43 +80,44 @@
 <a class="jxr_linenumber" name="L72" href="#L72">72</a>    @Operation(
 <a class="jxr_linenumber" name="L73" href="#L73">73</a>        description = <span class="jxr_string">"Find users."</span>,
 <a class="jxr_linenumber" name="L74" href="#L74">74</a>        security = {
-<a class="jxr_linenumber" name="L75" href="#L75">75</a>            @SecurityRequirement(name = <span class="jxr_string">"bearer-jwt"</span>)
-<a class="jxr_linenumber" name="L76" href="#L76">76</a>        }
-<a class="jxr_linenumber" name="L77" href="#L77">77</a>    )
-<a class="jxr_linenumber" name="L78" href="#L78">78</a>    @ApiResponses(
-<a class="jxr_linenumber" name="L79" href="#L79">79</a>        value = {
-<a class="jxr_linenumber" name="L80" href="#L80">80</a>            @ApiResponse(responseCode = <span class="jxr_string">"200"</span>, description = <span class="jxr_string">"OK"</span>),
-<a class="jxr_linenumber" name="L81" href="#L81">81</a>            @ApiResponse(responseCode = <span class="jxr_string">"400"</span>, description = <span class="jxr_string">"Bad request"</span>, content = {
-<a class="jxr_linenumber" name="L82" href="#L82">82</a>                @Content(schema = @Schema(implementation = RestApiException.<strong class="jxr_keyword">class</strong>))
-<a class="jxr_linenumber" name="L83" href="#L83">83</a>            }),
-<a class="jxr_linenumber" name="L84" href="#L84">84</a>            @ApiResponse(responseCode = <span class="jxr_string">"401"</span>, description = <span class="jxr_string">"Unauthorized"</span>, content = {
-<a class="jxr_linenumber" name="L85" href="#L85">85</a>                @Content(schema = @Schema(implementation = RestApiException.<strong class="jxr_keyword">class</strong>))
-<a class="jxr_linenumber" name="L86" href="#L86">86</a>            }),
-<a class="jxr_linenumber" name="L87" href="#L87">87</a>            @ApiResponse(responseCode = <span class="jxr_string">"403"</span>, description = <span class="jxr_string">"Forbidden"</span>, content = {
-<a class="jxr_linenumber" name="L88" href="#L88">88</a>                @Content(schema = @Schema(implementation = RestApiException.<strong class="jxr_keyword">class</strong>))
-<a class="jxr_linenumber" name="L89" href="#L89">89</a>            }),
-<a class="jxr_linenumber" name="L90" href="#L90">90</a>            @ApiResponse(responseCode = <span class="jxr_string">"500"</span>, description = <span class="jxr_string">"Internal server error"</span>, content = {
-<a class="jxr_linenumber" name="L91" href="#L91">91</a>                @Content(schema = @Schema(implementation = RestApiException.<strong class="jxr_keyword">class</strong>))
-<a class="jxr_linenumber" name="L92" href="#L92">92</a>            })
-<a class="jxr_linenumber" name="L93" href="#L93">93</a>        }
-<a class="jxr_linenumber" name="L94" href="#L94">94</a>    )
-<a class="jxr_linenumber" name="L95" href="#L95">95</a>    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-<a class="jxr_linenumber" name="L96" href="#L96">96</a>    <strong class="jxr_keyword">public</strong> Flux&lt;User&gt; findUsers(
-<a class="jxr_linenumber" name="L97" href="#L97">97</a>        @Parameter(name = <span class="jxr_string">"search"</span>, description = <span class="jxr_string">"A String contained in username, first or last "</span>
-<a class="jxr_linenumber" name="L98" href="#L98">98</a>            + <span class="jxr_string">"name, or email. Default search behavior is prefix-based (e.g., foo or foo*). Use "</span>
-<a class="jxr_linenumber" name="L99" href="#L99">99</a>            + <span class="jxr_string">"*foo* for infix search and \&quot;foo\&quot; for exact search."</span>)
-<a class="jxr_linenumber" name="L100" href="#L100">100</a>       @RequestParam(name = <span class="jxr_string">"search"</span>) String search,
-<a class="jxr_linenumber" name="L101" href="#L101">101</a> 
-<a class="jxr_linenumber" name="L102" href="#L102">102</a>       @Parameter(name = <span class="jxr_string">"first"</span>, description = <span class="jxr_string">"Pagination offset."</span>)
-<a class="jxr_linenumber" name="L103" href="#L103">103</a>       @RequestParam(name = <span class="jxr_string">"first"</span>, required = false) Integer first,
-<a class="jxr_linenumber" name="L104" href="#L104">104</a> 
-<a class="jxr_linenumber" name="L105" href="#L105">105</a>       @Parameter(name = <span class="jxr_string">"max"</span>, description = <span class="jxr_string">"Maximum results size (defaults to 100)."</span>)
-<a class="jxr_linenumber" name="L106" href="#L106">106</a>       @RequestParam(name = <span class="jxr_string">"max"</span>, required = false) Integer max) {
-<a class="jxr_linenumber" name="L107" href="#L107">107</a> 
-<a class="jxr_linenumber" name="L108" href="#L108">108</a>     <strong class="jxr_keyword">return</strong> userService.findUsers(search, first, max);
-<a class="jxr_linenumber" name="L109" href="#L109">109</a>   }
-<a class="jxr_linenumber" name="L110" href="#L110">110</a> 
-<a class="jxr_linenumber" name="L111" href="#L111">111</a> }
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>            @SecurityRequirement(name = <span class="jxr_string">"bearer-jwt"</span>),
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>            @SecurityRequirement(name = <span class="jxr_string">"basic-auth"</span>)
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>        }
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>    )
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>    @ApiResponses(
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>        value = {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>            @ApiResponse(responseCode = <span class="jxr_string">"200"</span>, description = <span class="jxr_string">"OK"</span>),
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>            @ApiResponse(responseCode = <span class="jxr_string">"400"</span>, description = <span class="jxr_string">"Bad request"</span>, content = {
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>                @Content(schema = @Schema(implementation = RestApiException.<strong class="jxr_keyword">class</strong>))
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>            }),
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>            @ApiResponse(responseCode = <span class="jxr_string">"401"</span>, description = <span class="jxr_string">"Unauthorized"</span>, content = {
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>                @Content(schema = @Schema(implementation = RestApiException.<strong class="jxr_keyword">class</strong>))
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>            }),
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>            @ApiResponse(responseCode = <span class="jxr_string">"403"</span>, description = <span class="jxr_string">"Forbidden"</span>, content = {
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>                @Content(schema = @Schema(implementation = RestApiException.<strong class="jxr_keyword">class</strong>))
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>            }),
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>            @ApiResponse(responseCode = <span class="jxr_string">"500"</span>, description = <span class="jxr_string">"Internal server error"</span>, content = {
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>                @Content(schema = @Schema(implementation = RestApiException.<strong class="jxr_keyword">class</strong>))
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>            })
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>        }
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>    )
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>    <strong class="jxr_keyword">public</strong> Flux&lt;User&gt; findUsers(
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>        @Parameter(name = <span class="jxr_string">"search"</span>, description = <span class="jxr_string">"A String contained in username, first or last "</span>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>            + <span class="jxr_string">"name, or email. Default search behavior is prefix-based (e.g., foo or foo*). Use "</span>
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>           + <span class="jxr_string">"*foo* for infix search and \&quot;foo\&quot; for exact search."</span>)
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>       @RequestParam(name = <span class="jxr_string">"search"</span>) String search,
+<a class="jxr_linenumber" name="L102" href="#L102">102</a> 
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>       @Parameter(name = <span class="jxr_string">"first"</span>, description = <span class="jxr_string">"Pagination offset."</span>)
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>       @RequestParam(name = <span class="jxr_string">"first"</span>, required = false) Integer first,
+<a class="jxr_linenumber" name="L105" href="#L105">105</a> 
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>       @Parameter(name = <span class="jxr_string">"max"</span>, description = <span class="jxr_string">"Maximum results size (defaults to 100)."</span>)
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>       @RequestParam(name = <span class="jxr_string">"max"</span>, required = false) Integer max) {
+<a class="jxr_linenumber" name="L108" href="#L108">108</a> 
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>     <strong class="jxr_keyword">return</strong> userService.findUsers(search, first, max);
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>   }
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> 
+<a class="jxr_linenumber" name="L112" href="#L112">112</a> }
 </pre>
 <hr/>
 <div id="footer">© 2019–2026 <a href="https://bremersee.org">bremersee.org</a></div>

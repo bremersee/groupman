@@ -72,7 +72,8 @@ public class UserController {
   @Operation(
       description = &quot;Find users.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -105,7 +106,7 @@ public class UserController {
       @Parameter(name = &quot;max&quot;, description = &quot;Maximum results size (defaults to 100).&quot;)
       @RequestParam(name = &quot;max&quot;, required = false) Integer max) {
 
-<span class="fc" id="L108">    return userService.findUsers(search, first, max);</span>
+<span class="fc" id="L109">    return userService.findUsers(search, first, max);</span>
   }
 
 }

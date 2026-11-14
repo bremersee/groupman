@@ -85,7 +85,8 @@ public class GroupController {
   @Operation(
       description = &quot;Create group.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -109,8 +110,8 @@ public class GroupController {
       consumes = MediaType.APPLICATION_JSON_VALUE,
       produces = MediaType.APPLICATION_JSON_VALUE)
   public Mono&lt;Group&gt; createGroup(@Valid @RequestBody GroupCreate group) {
-<span class="fc" id="L112">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L113">        .createGroup(auth.getName(), group));</span>
+<span class="fc" id="L113">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L114">        .createGroup(auth.getName(), group));</span>
   }
 
   /**
@@ -124,7 +125,8 @@ public class GroupController {
   @Operation(
       description = &quot;Get groups.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -156,8 +158,8 @@ public class GroupController {
       @Parameter(name = &quot;max&quot;, description = &quot;Maximum results size (defaults to 100).&quot;)
       @RequestParam(name = &quot;max&quot;, required = false) Integer max) {
 
-<span class="fc" id="L159">    return authTemplate.manyWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L160">        .getGroups(auth.getName(), search, first, max));</span>
+<span class="fc" id="L161">    return authTemplate.manyWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L162">        .getGroups(auth.getName(), search, first, max));</span>
   }
 
   /**
@@ -169,7 +171,8 @@ public class GroupController {
   @Operation(
       description = &quot;Get group.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -199,8 +202,8 @@ public class GroupController {
       @Parameter(name = &quot;groupId&quot;, description = &quot;The ID of the group.&quot;, required = true)
       @PathVariable String groupId) {
 
-<span class="fc" id="L202">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L203">        .getGroup(auth.getName(), groupId));</span>
+<span class="fc" id="L205">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L206">        .getGroup(auth.getName(), groupId));</span>
   }
 
   /**
@@ -214,7 +217,8 @@ public class GroupController {
   @Operation(
       description = &quot;Get members.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -250,8 +254,8 @@ public class GroupController {
       @Parameter(name = &quot;max&quot;, description = &quot;Maximum results size (defaults to 100).&quot;)
       @RequestParam(name = &quot;max&quot;, required = false) Integer max) {
 
-<span class="fc" id="L253">    return authTemplate.manyWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L254">        .getMembers(auth.getName(), groupId, first, max));</span>
+<span class="fc" id="L257">    return authTemplate.manyWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L258">        .getMembers(auth.getName(), groupId, first, max));</span>
   }
 
   /**
@@ -264,7 +268,8 @@ public class GroupController {
   @Operation(
       description = &quot;Add member.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -297,8 +302,8 @@ public class GroupController {
       @Parameter(name = &quot;userId&quot;, description = &quot;The ID of the user (member).&quot;, required = true)
       @PathVariable String userId) {
 
-<span class="fc" id="L300">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L301">        .addMember(auth.getName(), groupId, userId));</span>
+<span class="fc" id="L305">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L306">        .addMember(auth.getName(), groupId, userId));</span>
   }
 
   /**
@@ -311,7 +316,8 @@ public class GroupController {
   @Operation(
       description = &quot;Remove member.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -344,8 +350,8 @@ public class GroupController {
       @Parameter(name = &quot;userId&quot;, description = &quot;The ID of the user (member).&quot;, required = true)
       @PathVariable String userId) {
 
-<span class="fc" id="L347">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L348">        .removeMember(auth.getName(), groupId, userId));</span>
+<span class="fc" id="L353">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L354">        .removeMember(auth.getName(), groupId, userId));</span>
   }
 
   /**
@@ -358,7 +364,8 @@ public class GroupController {
   @Operation(
       description = &quot;Update group.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -391,8 +398,8 @@ public class GroupController {
 
       @Valid @RequestBody GroupUpdate group) {
 
-<span class="fc" id="L394">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L395">        .updateGroup(auth.getName(), groupId, group));</span>
+<span class="fc" id="L401">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L402">        .updateGroup(auth.getName(), groupId, group));</span>
   }
 
   /**
@@ -404,7 +411,8 @@ public class GroupController {
   @Operation(
       description = &quot;Delete group.&quot;,
       security = {
-          @SecurityRequirement(name = &quot;bearer-jwt&quot;)
+          @SecurityRequirement(name = &quot;bearer-jwt&quot;),
+          @SecurityRequirement(name = &quot;basic-auth&quot;)
       }
   )
   @ApiResponses(
@@ -434,8 +442,8 @@ public class GroupController {
       @Parameter(name = &quot;groupId&quot;, description = &quot;The ID of the group.&quot;, required = true)
       @PathVariable String groupId) {
 
-<span class="fc" id="L437">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
-<span class="fc" id="L438">        .deleteGroup(auth.getName(), groupId));</span>
+<span class="fc" id="L445">    return authTemplate.oneWithAuthentication(auth -&gt; groupService</span>
+<span class="fc" id="L446">        .deleteGroup(auth.getName(), groupId));</span>
   }
 
 }

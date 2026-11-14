@@ -16,6 +16,7 @@
 
 package org.bremersee.groupman.config;
 
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.OAuthFlow;
 import io.swagger.v3.oas.annotations.security.OAuthFlows;
@@ -42,14 +43,19 @@ import org.springframework.context.annotation.Configuration;
         )
     )
 )
+@SecurityScheme(
+    name = &quot;basic-auth&quot;,
+    scheme = &quot;basic&quot;,
+    type = SecuritySchemeType.HTTP,
+    in = SecuritySchemeIn.HEADER)
 class OpenApiConfiguration {
 
   /**
    * Instantiates a new OpenAPI configuration.
    */
   OpenApiConfiguration() {
-<span class="fc" id="L51">    super();</span>
-<span class="fc" id="L52">  }</span>
+<span class="fc" id="L57">    super();</span>
+<span class="fc" id="L58">  }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
