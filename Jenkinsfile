@@ -88,6 +88,7 @@ pipeline {
         sh '''
           mvn -B -P build-system,gh-pages-site site site:stage
           git clone -b gh-pages git@github.com:bremersee/$NAME.git target/gh-pages
+          rm -rf target/*-SNAPSHOT
           cp -rf target/staging/* target/gh-pages
           git -C target/gh-pages add .
           git -C target/gh-pages commit -m "Maven site"
