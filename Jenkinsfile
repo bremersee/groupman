@@ -67,7 +67,7 @@ pipeline {
           mvn -f target/$API_NAME/pom.xml versions:set -DnewVersion=\$PROJECT_VERSION
           echo "# "$API_NAME > target/$API_NAME/README.md
           echo "" >> target/$API_NAME/README.md
-          echo "RESTful API clients of ["$NAME"](https://github.com/bremersee/"$NAME" service." >> target/$API_NAME/README.md
+          echo "RESTful API clients of ["$NAME"](https://github.com/bremersee/"$NAME)" service." >> target/$API_NAME/README.md
           echo "" >> target/$API_NAME/README.md
           echo "[Maven-Site](https://bremersee.github.io/"$API_NAME/\$PROJECT_VERSION"/index.html)" >> target/$API_NAME/README.md
           echo "" >> target/$API_NAME/README.md
