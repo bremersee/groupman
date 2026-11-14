@@ -110,8 +110,8 @@ springdoc:
         name: Apache 2.0
         url: https://www.apache.org/licenses/LICENSE-2.0.html
     # Generates default server (localhost)
-    # servers:
-    #  - url: https://apps.eixe.bremersee.org/groupman
+    #servers:
+    #  - url: https://apps.eixe.bremersee.org/${spring.application.name}
     #    description: Group Manager API
 
 ---

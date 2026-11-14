@@ -11,7 +11,7 @@ pipeline {
     PROFILES = 'eureka-client,api,springdoc,jwt,ldap,ldap-auth'
     DOCKER_IMAGE = 'bremersee/groupman'
     DOCKER_HOSTS = 'app1 app2'
-    BUILD_API = false
+    BUILD_API = true
     DOCKER_PUSH = false
     DEPLOY_ON_APP_SERVER = false
     SITE = true

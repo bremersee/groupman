@@ -72,7 +72,8 @@ public class UserController {
   @Operation(
       description = "Find users.",
       security = {
-          @SecurityRequirement(name = "bearer-jwt")
+          @SecurityRequirement(name = "bearer-jwt"),
+          @SecurityRequirement(name = "basic-auth")
       }
   )
   @ApiResponses(

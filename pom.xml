@@ -19,6 +19,8 @@
   <description>A group management service</description>
   <url>https://github.com/bremersee/groupman</url>
 
+  <inceptionYear>2019</inceptionYear>
+
   <properties>
     <github.repo>groupman</github.repo>
     <gh-pages-staging-dir>${project.build.directory}/staging</gh-pages-staging-dir>
