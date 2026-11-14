@@ -14,7 +14,7 @@ pipeline {
     BUILD_API = true
     DOCKER_PUSH = false
     DEPLOY_ON_APP_SERVER = false
-    SITE = true
+    SITE = false
     CLEAN = true
   }
   tools {
@@ -65,6 +65,13 @@ pipeline {
           PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           mvn -f target/$API_NAME/pom.xml versions:update-parent -DparentVersion=\$PARENT_VERSION
           mvn -f target/$API_NAME/pom.xml versions:set -DnewVersion=\$PROJECT_VERSION
+          tee target/$API_NAME/README.md <<EOF
+          # $API_NAME
+
+          RESTful API clients of [$NAME](https://github.com/bremersee/$NAME) service.
+
+          [Maven-Site](https://bremersee.github.io/$API_NAME/\$PROJECT_VERSION/index.html)
+          EOF
           git -C target/$API_NAME add .
           git -C target/$API_NAME commit --allow-empty -m "Updates api"
           git -C target/$API_NAME push
