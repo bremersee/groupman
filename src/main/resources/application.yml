@@ -97,7 +97,7 @@ springdoc:
   open-api:
     # see: https://github.com/OAI/OpenAPI-Specification/blob/3.1.1/versions/3.1.1.md#info-object
     info:
-      version: 4.0.0
+      version: 4.0.1-SNAPSHOT
       title: Group Manager API
       summary: A group manager.
       description: RESTful service for group manager application.
