@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-package org.bremersee.groupman.repository;
+package org.bremersee.groupman.model;
 
-import reactor.core.publisher.Mono;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 
 /**
- * The custom group repository interface.
+ * The group base.
  *
  * @author Christian Bremer
  */
-public interface GroupRepositoryCustom {
+public interface GroupBase {
 
   /**
-   * Count owned groups.
+   * Gets name.
    *
-   * @param userName the user name
-   * @return the size of owned groups
+   * @return the name
    */
-  Mono<Long> countOwnedGroups(String userName);
+  @JsonProperty(value = "name", required = true)
+  String getName();
 
   /**
-   * Count membership.
+   * Gets description.
    *
-   * @param userName the user name
-   * @return the size of membership
+   * @return the description
    */
-  Mono<Long> countMembership(String userName);
+  @Nullable
+  String getDescription();
 
 }

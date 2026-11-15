@@ -1,68 +1,18 @@
-bremersee:
-  ldaptive:
-    enabled: false
-  exception-mapping:
-    api-paths:
-      - /api/**
-    default-exception-mapping-config:
-      include-stack-trace: true
-      include-cause: true
-      include-application-name: true
-      include-exception-class-name: true
-      include-handler: true
-      include-path: true
-    exception-mappings:
-      - exception-class-name: org.springframework.dao.DuplicateKeyException
-        status: 409
-        message: "Group already exists."
-        code: "GRP:1000"
-      - exception-class-name: org.springframework.dao.OptimisticLockingFailureException
-        status: 409
-        message: "Version is not up to date."
-        code: "GRP:1001"
-      - exception-class-name: java.lang.UnsupportedOperationException
-        status: 400
-        code: "GRP:1002"
-  groupman:
-    local-role: "ROLE_LOCAL_USER"
-  actuator:
-    auth:
-      enable: auto
-      enable-cors: true
-  cors:
-    enable: true
-  auth:
-    resource-server: auto
-    path-matchers:
-      - ant-pattern: "/v3/**"
-        access-mode: permit_all
-      - ant-pattern: "/webjars/**"
-        access-mode: permit_all
-      - ant-pattern: "/swagger-ui.html"
-        access-mode: permit_all
-      - ant-pattern: "/api/admin/**"
-        roles:
-          - "ROLE_ADMIN"
-          - "ROLE_GROUP_ADMIN"
-  redis:
-    embedded: true
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${bremersee.keycloak.base-uri}/realms/${bremersee.keycloak.realm}/protocol/openid-connect/certs
+      client:
+        provider:
+          swagger-ui:
+            authorization-uri: ${bremersee.keycloak.base-uri}/realms/${bremersee.keycloak.realm}/protocol/openid-connect/auth
+            token-uri: ${bremersee.keycloak.base-uri}/realms/${bremersee.keycloak.realm}/protocol/openid-connect/token
 
 eureka:
   client:
     enabled: false
-
-spring:
-  data:
-    mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/test}
-      auto-index-creation: true
-  sleuth:
-    enabled: ${SLEUTH_ENABLED:false}
-    sampler:
-      probability: ${SLEUTH_PROBABILITY:1.0}
-  zipkin:
-    enabled: ${ZIPKIN_ENABLED:false}
-    base-url: ${ZIPKIN_BASE_URL:http://localhost:9411/}
 
 management:
   endpoints:
@@ -76,10 +26,6 @@ management:
   endpoint:
     health:
       show-details: when_authorized
-  # Redis health check is broken: https://github.com/spring-projects/spring-boot/issues/22061 (will be fixed in 2.4.0)
-  health:
-    redis:
-      enabled: false
 
 server:
   port: ${SERVER_PORT:8080}
@@ -91,85 +37,122 @@ logging:
     com.netflix.discovery.shared.resolver: warn
     org.springframework.cloud.configclient: warn
 
----
-
-spring:
-  profiles: in-memory
-
 bremersee:
-  auth:
-    in-memory-users:
-      - name: "admin"
-        password: "admin"
-        authorities:
-          - "ROLE_USER"
-          - "ROLE_ADMIN"
-      - name: "actuator"
-        password: "actuator"
-        authorities:
-          - "ROLE_ACTUATOR"
-          - "ROLE_ACTUATOR_ADMIN"
-      - name: "user"
-        password: "user"
-        authorities:
-          - "ROLE_USER"
+  exception-mapping:
+    api-paths:
+      - /api/**
+    default-exception-mapping-config:
+      include-handler: true
+      include-stack-trace: true
+      include-cause: true
+  web:
+    cors:
+      enabled: true
+  keycloak:
+    base-uri: https://openid.bremersee.org
+    realm: eixe
+    admin-client:
+      enabled: false
+      login-realm: master
+      client-id: admin-cli
+      username: admin
+      password: change-it
+  authentication:
+    jwt-converter:
+      name-json-path: $.sub
+      first-name-json-path: $.given_name
+      last-name-json-path: $.family_name
+      roles-json-path: $.realm_access.roles
+      roles-value-list: true
+      role-prefix: "ROLE_"
+      role-case-transformation: to_upper_case
+      role-string-replacements:
+        - regex: "[- ]"
+          replacement: "_"
+        - regex: "_ADMINS"
+          replacement: "_ADMIN"
+      role-mapping:
+        - source: "Domain Admins"
+          target: "ROLE_ADMIN"
+        - source: "samba-admins"
+          target: "ROLE_ADMIN"
+      groups-json-path: $.groups
+      groups-value-list: true
+      group-prefix: "GROUP_"
+      group-case-transformation: to_upper_case
+      group-string-replacements:
+        - regex: "[- ]"
+          replacement: "_"
+        - regex: "_ADMINS"
+          replacement: "_ADMIN"
 
----
-
-spring:
-  profiles: mongodb
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration
-
----
-
-spring:
-  profiles: ldap
-
-bremersee:
-  ldaptive:
+springdoc:
+  api-docs:
     enabled: true
-    use-unbound-id-provider: true
-    ldap-url: ${LDAP_URL:ldaps://example.org:636}
-    use-ssl: ${LDAP_SSL:true}
-    use-start-tls: ${LDAP_START_TLS:false}
-    bind-dn: ${LDAP_BIND_DN:areader@example.org}
-    bind-credentials: ${LDAP_BIND_PASSWORD:changeit}
-    pooled: true
-    min-pool-size: 3
-    max-pool-size: 10
-    validate-on-check-in: false
-    validate-on-check-out: false
-    validate-periodically: true
-    validate-period: 300
-    idle-time: 600
-    block-wait-time: 10000
-    search-validator:
-      search-request:
-        base-dn: ${LDAP_BASE_DN:cn=Users,dc=eixe,dc=bremersee,dc=org}
-        search-filter:
-          filter: ${LDAP_VALIDATION_FILTER:(cn=Administrator)}
-        size-limit: 1
-        search-scope: ONELEVEL
-        return-attributes:
-          - cn
-  domain-controller:
-    group-base-dn: ${LDAP_GROUP_DN:cn=Users,dc=eixe,dc=bremersee,dc=org}
-    user-base-dn: ${LDAP_USER_DN:cn=Users,dc=eixe,dc=bremersee,dc=org}
-    admin-name: 'Administrator'
-    ignored-ldap-groups:
-      - 'Allowed RODC Password Replication Group'
-      - 'Cert Publishers'
-      - 'Denied RODC Password Replication Group'
-      - 'DnsAdmins'
-      - 'DnsUpdateProxy'
-      - 'Domain Admins'
-      - 'Domain Computers'
-      - 'Domain Guests'
-      - 'Domain Users'
-      - 'Enterprise Admins'
-      - 'Enterprise Read-only Domain Controllers'
-      - 'Group Policy Creator Owners'
-      - 'RAS and IAS Servers'
-      - 'Read-only Domain Controllers'
+  swagger-ui:
+    enabled: true
+    oauth:
+      client-id: local-pkce
+      use-pkce-with-authorization-code-grant: true
+  open-api:
+    # see: https://github.com/OAI/OpenAPI-Specification/blob/3.1.1/versions/3.1.1.md#info-object
+    info:
+      version: 4.0.0
+      title: Group Manager API
+      summary: A group manager.
+      description: RESTful service for group manager application.
+      # termsOfService: https://example.com/terms/
+      # contact:
+      #   name: API Support
+      #   url: https://www.example.com/support
+      #   email: support@example.com
+      license:
+        name: Apache 2.0
+        url: https://www.apache.org/licenses/LICENSE-2.0.html
+    # Generates default server (localhost)
+    #servers:
+    #  - url: https://apps.eixe.bremersee.org/${spring.application.name}
+    #    description: Group Manager API
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: in-memory
+
+bremersee:
+  authentication:
+    in-memory:
+      enabled: true
+      users:
+        - name: ${USER_NAME:user}
+          password: ${USER_PASSWORD:changeit}
+          authorities:
+            - ROLE_USER
+        - name: ${ACTUATOR_USER_NAME:actuator}
+          password: ${ACTUATOR_USER_PASSWORD:changeit}
+          authorities:
+            - ROLE_ACTUATOR
+        - name: ${ADMIN_NAME:admin}
+          password: ${ADMIN_PASSWORD:changeit}
+          authorities:
+            - ROLE_EUREKA_SERVER_ADMIN
+            - ROLE_ACTUATOR_ADMIN
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  security:
+    user:
+      name: testuser
+      password: changeit
+      roles:
+        - "USER"
+        - "LOCAL_USER"
+        - "ADMIN"
+        - "ACTUATOR_ADMIN"
