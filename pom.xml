@@ -107,7 +107,7 @@
     </snapshotRepository>
     <site>
       <id>bremersee-sites</id>
-      <url>https://webdav.eixe.bremersee.org/maven-sites/eureka/${project.version}</url>
+      <url>https://bremersee.github.io/groupman/${project.version}</url>
     </site>
   </distributionManagement>
 
