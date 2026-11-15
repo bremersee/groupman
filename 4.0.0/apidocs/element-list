@@ -1,0 +1,7 @@
+org.bremersee.groupman
+org.bremersee.groupman.config
+org.bremersee.groupman.controller
+org.bremersee.groupman.mapper
+org.bremersee.groupman.model
+org.bremersee.groupman.service
+org.bremersee.groupman.validation

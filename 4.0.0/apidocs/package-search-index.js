@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html","k":"18"},{"l":"org.bremersee.groupman"},{"l":"org.bremersee.groupman.config"},{"l":"org.bremersee.groupman.controller"},{"l":"org.bremersee.groupman.mapper"},{"l":"org.bremersee.groupman.model"},{"l":"org.bremersee.groupman.service"},{"l":"org.bremersee.groupman.validation"}];updateSearchResults();
